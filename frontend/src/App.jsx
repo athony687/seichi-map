@@ -33,7 +33,31 @@ function Route({ spots }) {
   return null
 }
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
+
 function Card({ spot, onClose }) {
+  const [intro, setIntro] = useState(spot.intro_short_en)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    setIntro(spot.intro_short_en)
+    setLoading(true)
+    fetch(`${BACKEND_URL}/generate-intro`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        spot_name_en: spot.spot_name_en,
+        anime_title_en: spot.anime_title_en,
+        scene_description: spot.scene_description,
+        area: spot.area,
+      }),
+    })
+      .then(r => r.json())
+      .then(data => { if (data.intro) setIntro(data.intro) })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [spot.id])
+
   return (
     <div style={{
       position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)',
@@ -46,7 +70,12 @@ function Card({ spot, onClose }) {
       }}>✕</button>
       <div style={{ fontSize: 13, color: '#888', marginBottom: 4 }}>{spot.anime_title_ja}</div>
       <div style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>{spot.spot_name_ja}</div>
-      <div style={{ fontSize: 14, color: '#444', lineHeight: 1.6 }}>{spot.intro_short_en}</div>
+      <div style={{ fontSize: 14, color: '#444', lineHeight: 1.6, minHeight: 60 }}>
+        {loading ? <span style={{ color: '#aaa' }}>Generating introduction…</span> : intro}
+      </div>
+      <div style={{ fontSize: 11, color: '#bbb', marginTop: 8, textAlign: 'right' }}>
+        {!loading && '✨ AI generated'}
+      </div>
     </div>
   )
 }
