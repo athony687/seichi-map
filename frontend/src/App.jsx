@@ -235,7 +235,7 @@ function App() {
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
-      <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+      <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyBorDA8AUKDI5pfNlZHIEeBOMZ2zrqco7k'}>
         <Map
           style={{ width: '100%', height: '100%' }}
           defaultCenter={TOKYO}
