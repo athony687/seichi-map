@@ -1,7 +1,37 @@
 import { useEffect, useState } from 'react'
-import { APIProvider, Map, Marker } from '@vis.gl/react-google-maps'
+import { APIProvider, Map, Marker, useMap } from '@vis.gl/react-google-maps'
 
 const TOKYO = { lat: 35.6762, lng: 139.6503 }
+
+function Route({ spots }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (!map || spots.length < 2) return
+
+    const service = new google.maps.DirectionsService()
+    const renderer = new google.maps.DirectionsRenderer({ suppressMarkers: true })
+    renderer.setMap(map)
+
+    const waypoints = spots.slice(1, -1).map(s => ({
+      location: { lat: s.lat, lng: s.lng },
+      stopover: true,
+    }))
+
+    service.route({
+      origin: { lat: spots[0].lat, lng: spots[0].lng },
+      destination: { lat: spots[spots.length - 1].lat, lng: spots[spots.length - 1].lng },
+      waypoints,
+      travelMode: google.maps.TravelMode.WALKING,
+    }, (result, status) => {
+      if (status === 'OK') renderer.setDirections(result)
+    })
+
+    return () => renderer.setMap(null)
+  }, [map, spots])
+
+  return null
+}
 
 function Card({ spot, onClose }) {
   return (
@@ -42,6 +72,7 @@ function App() {
           disableDefaultUI={false}
           onClick={() => setSelected(null)}
         >
+          <Route spots={spots} />
           {spots.map(spot => (
             <Marker
               key={spot.id}
