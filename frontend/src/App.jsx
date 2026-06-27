@@ -4,7 +4,11 @@ import { APIProvider, Map, Marker, useMap } from '@vis.gl/react-google-maps'
 const TOKYO = { lat: 35.6762, lng: 139.6503 }
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
 const PROXIMITY_METERS = 120
-const DEMO_DURATION_MS = 30000
+const DEMO_SPEEDS = [
+  { label: '10s', ms: 10000 },
+  { label: '30s', ms: 30000 },
+  { label: '60s', ms: 60000 },
+]
 
 function haversine(a, b) {
   const R = 6371000
@@ -152,7 +156,7 @@ function Card({ spot, onClose }) {
   )
 }
 
-function DemoControls({ demoMode, setDemoMode, playing, onPlay, onPause, onReset, progress, hasPath }) {
+function DemoControls({ demoMode, setDemoMode, playing, onPlay, onPause, onReset, progress, hasPath, speedMs, setSpeedMs }) {
   return (
     <div style={{
       position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)',
@@ -191,9 +195,23 @@ function DemoControls({ demoMode, setDemoMode, playing, onPlay, onPause, onReset
           >
             ⏮
           </button>
-          <div style={{
-            width: 90, height: 5, background: '#e8e8e8', borderRadius: 3, overflow: 'hidden',
-          }}>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {DEMO_SPEEDS.map(s => (
+              <button
+                key={s.ms}
+                onClick={() => { setSpeedMs(s.ms); onReset() }}
+                style={{
+                  fontSize: 11, fontWeight: 700, padding: '3px 7px', borderRadius: 10,
+                  border: 'none', cursor: 'pointer',
+                  background: speedMs === s.ms ? '#1a73e8' : '#e8e8e8',
+                  color: speedMs === s.ms ? '#fff' : '#666',
+                }}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+          <div style={{ width: 70, height: 5, background: '#e8e8e8', borderRadius: 3, overflow: 'hidden' }}>
             <div style={{
               width: `${progress * 100}%`, height: '100%',
               background: '#1a73e8', borderRadius: 3, transition: 'width 0.1s linear',
@@ -214,6 +232,7 @@ function App() {
   const [demoMode, setDemoMode] = useState(true)
   const [playing, setPlaying] = useState(false)
   const [demoProgress, setDemoProgress] = useState(0)
+  const [speedMs, setSpeedMs] = useState(30000)
   const triggeredRef = useRef(new Set())
 
   useEffect(() => {
@@ -250,7 +269,7 @@ function App() {
   // Animation loop
   useEffect(() => {
     if (!playing || !demoMode || routePath.length === 0) return
-    const step = 100 / DEMO_DURATION_MS
+    const step = 100 / speedMs
     const id = setInterval(() => {
       setDemoProgress(prev => {
         const next = prev + step
@@ -259,7 +278,7 @@ function App() {
       })
     }, 100)
     return () => clearInterval(id)
-  }, [playing, demoMode, routePath.length])
+  }, [playing, demoMode, routePath.length, speedMs])
 
   const demoPos = useMemo(
     () => (demoMode && routePath.length) ? interpolatePath(routePath, demoProgress) : null,
@@ -330,6 +349,8 @@ function App() {
         onReset={handleReset}
         progress={demoProgress}
         hasPath={routePath.length > 0}
+        speedMs={speedMs}
+        setSpeedMs={setSpeedMs}
       />
       {selected && <Card spot={selected} onClose={() => setSelected(null)} />}
     </div>
