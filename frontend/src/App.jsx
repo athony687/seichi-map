@@ -117,6 +117,7 @@ function Card({ spot, onClose }) {
   const [intro, setIntro] = useState(introCache[spot.id] || spot.intro_short_en)
   const [loading, setLoading] = useState(!introCache[spot.id])
   const [aiOk, setAiOk] = useState(!!introCache[spot.id])
+  const [expanded, setExpanded] = useState(false)
 
   useEffect(() => {
     if (introCache[spot.id]) {
@@ -163,11 +164,14 @@ function Card({ spot, onClose }) {
       boxShadow: '0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)',
       zIndex: 10, overflow: 'hidden',
     }}>
-      {/* ヘッダー帯 */}
-      <div style={{
-        background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
-        padding: '14px 44px 14px 18px',
-      }}>
+      {/* ヘッダー帯（タップで展開） */}
+      <div
+        onClick={() => setExpanded(e => !e)}
+        style={{
+          background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
+          padding: '14px 44px 14px 18px', cursor: 'pointer',
+        }}
+      >
         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', fontWeight: 600,
           letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 4 }}>
           {spot.anime_title_en}
@@ -180,6 +184,10 @@ function Card({ spot, onClose }) {
             📍 {spot.area}
           </div>
         )}
+        {/* 展開インジケーター */}
+        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginTop: 6 }}>
+          {expanded ? '▲ close' : '▼ read more'}
+        </div>
       </div>
 
       {/* 閉じるボタン */}
@@ -191,24 +199,26 @@ function Card({ spot, onClose }) {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>✕</button>
 
-      {/* 本文 */}
-      <div style={{ padding: '14px 18px 12px' }}>
-        <div style={{ fontSize: 14, color: '#333', lineHeight: 1.7, minHeight: 56 }}>
-          {loading ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#aaa', paddingTop: 4 }}>
-              <div style={{
-                width: 15, height: 15, border: '2px solid #e0e0e0',
-                borderTop: '2px solid #7c3aed', borderRadius: '50%',
-                animation: 'spin 0.8s linear infinite', flexShrink: 0,
-              }} />
-              <span style={{ fontSize: 13 }}>Generating introduction…</span>
-            </div>
-          ) : intro}
+      {/* 本文（展開時のみ表示） */}
+      {expanded && (
+        <div style={{ padding: '14px 18px 12px' }}>
+          <div style={{ fontSize: 14, color: '#333', lineHeight: 1.7 }}>
+            {loading ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#aaa', paddingTop: 4 }}>
+                <div style={{
+                  width: 15, height: 15, border: '2px solid #e0e0e0',
+                  borderTop: '2px solid #7c3aed', borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite', flexShrink: 0,
+                }} />
+                <span style={{ fontSize: 13 }}>Generating introduction…</span>
+              </div>
+            ) : intro}
+          </div>
+          <div style={{ fontSize: 11, color: '#bbb', marginTop: 8, textAlign: 'right' }}>
+            {!loading && (aiOk ? '✨ AI generated' : '📄 description')}
+          </div>
         </div>
-        <div style={{ fontSize: 11, color: '#bbb', marginTop: 8, textAlign: 'right' }}>
-          {!loading && (aiOk ? '✨ AI generated' : '📄 description')}
-        </div>
-      </div>
+      )}
     </div>
   )
 }
