@@ -185,7 +185,13 @@ function Card({ spot, onClose }) {
           </div>
         )}
         {/* 展開インジケーター */}
-        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginTop: 6 }}>
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 4,
+          marginTop: 8, padding: '4px 10px', borderRadius: 20,
+          background: 'rgba(255,255,255,0.25)',
+          fontSize: 12, fontWeight: 700, color: '#fff',
+          letterSpacing: '0.03em',
+        }}>
           {expanded ? '▲ close' : '▼ read more'}
         </div>
       </div>
