@@ -8,19 +8,19 @@ const THEME = '#7c3aed'
 const THEME_DARK = '#4c1d95'
 
 const MAP_STYLES = [
-  { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#fffbe6' }] },
-  { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: '#fff8d6' }] },
+  { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#fefdf5' }] },
+  { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: '#fdfbec' }] },
   { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#ade8f4' }] },
   { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#2a7ab5' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#ffe066' }] },
-  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#ffc200' }] },
-  { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#fff9c4' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#fde68a' }] },
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#fbbf24' }] },
+  { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#fef9e7' }] },
   { featureType: 'road.local', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
   { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#d4f5a0' }] },
   { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#3a7d1e' }] },
-  { featureType: 'poi', elementType: 'labels.icon', stylers: [{ saturation: 30 }] },
-  { featureType: 'transit.line', elementType: 'geometry', stylers: [{ color: '#ffd54f' }] },
-  { featureType: 'transit.station', elementType: 'geometry', stylers: [{ color: '#fff3cd' }] },
+  { featureType: 'poi', elementType: 'labels.icon', stylers: [{ saturation: 20 }] },
+  { featureType: 'transit.line', elementType: 'geometry', stylers: [{ color: '#fde68a' }] },
+  { featureType: 'transit.station', elementType: 'geometry', stylers: [{ color: '#fefce8' }] },
 ]
 
 // 聖地ピン用 SVG（紫の星マーク）
