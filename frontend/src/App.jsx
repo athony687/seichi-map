@@ -125,7 +125,16 @@ function Card({ spot, onClose }) {
       <div style={{ fontSize: 13, color: '#888', marginBottom: 4 }}>{spot.anime_title_ja}</div>
       <div style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>{spot.spot_name_ja}</div>
       <div style={{ fontSize: 14, color: '#444', lineHeight: 1.6, minHeight: 60 }}>
-        {loading ? <span style={{ color: '#aaa' }}>Generating introduction…</span> : intro}
+        {loading ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#aaa', paddingTop: 8 }}>
+            <div style={{
+              width: 16, height: 16, border: '2px solid #e0e0e0',
+              borderTop: '2px solid #1a73e8', borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite', flexShrink: 0,
+            }} />
+            <span style={{ fontSize: 13 }}>Generating introduction…</span>
+          </div>
+        ) : intro}
       </div>
       <div style={{ fontSize: 11, color: '#bbb', marginTop: 8, textAlign: 'right' }}>
         {!loading && '✨ AI generated'}
