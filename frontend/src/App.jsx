@@ -4,6 +4,29 @@ import { APIProvider, Map, Marker, useMap } from '@vis.gl/react-google-maps'
 const TOKYO = { lat: 35.6762, lng: 139.6503 }
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
 const PROXIMITY_METERS = 120
+const THEME = '#7c3aed'
+const THEME_DARK = '#4c1d95'
+
+const MAP_STYLES = [
+  { featureType: 'all', elementType: 'geometry', stylers: [{ saturation: -30 }, { lightness: 5 }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#b3cde8' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#f8f8f8' }] },
+  { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#efefef' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#d5eacc' }] },
+  { featureType: 'transit.station', elementType: 'labels.icon', stylers: [{ saturation: -50 }] },
+]
+
+// 聖地ピン用 SVG（紫の星マーク）
+const SPOT_ICON = {
+  path: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
+  fillColor: '#7c3aed',
+  fillOpacity: 1,
+  strokeColor: '#fff',
+  strokeWeight: 1.5,
+  scale: 1.6,
+  anchor: { x: 12, y: 12 },
+}
+
 const DEMO_SPEEDS = [
   { label: '10s', ms: 10000 },
   { label: '30s', ms: 30000 },
@@ -134,7 +157,7 @@ function Card({ spot, onClose }) {
     }}>
       {/* ヘッダー帯 */}
       <div style={{
-        background: 'linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%)',
+        background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
         padding: '14px 44px 14px 18px',
       }}>
         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', fontWeight: 600,
@@ -167,7 +190,7 @@ function Card({ spot, onClose }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#aaa', paddingTop: 4 }}>
               <div style={{
                 width: 15, height: 15, border: '2px solid #e0e0e0',
-                borderTop: '2px solid #1a73e8', borderRadius: '50%',
+                borderTop: '2px solid #7c3aed', borderRadius: '50%',
                 animation: 'spin 0.8s linear infinite', flexShrink: 0,
               }} />
               <span style={{ fontSize: 13 }}>Generating introduction…</span>
@@ -196,7 +219,7 @@ function DemoControls({ demoMode, setDemoMode, playing, onPlay, onPause, onReset
         style={{
           fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 12,
           border: 'none', cursor: 'pointer',
-          background: demoMode ? '#1a73e8' : '#e0e0e0',
+          background: demoMode ? '#7c3aed' : '#e0e0e0',
           color: demoMode ? '#fff' : '#555',
         }}
       >
@@ -229,7 +252,7 @@ function DemoControls({ demoMode, setDemoMode, playing, onPlay, onPause, onReset
                 style={{
                   fontSize: 11, fontWeight: 700, padding: '3px 7px', borderRadius: 10,
                   border: 'none', cursor: 'pointer',
-                  background: speedMs === s.ms ? '#1a73e8' : '#e8e8e8',
+                  background: speedMs === s.ms ? '#7c3aed' : '#e8e8e8',
                   color: speedMs === s.ms ? '#fff' : '#666',
                 }}
               >
@@ -240,7 +263,7 @@ function DemoControls({ demoMode, setDemoMode, playing, onPlay, onPause, onReset
           <div style={{ width: 70, height: 5, background: '#e8e8e8', borderRadius: 3, overflow: 'hidden' }}>
             <div style={{
               width: `${progress * 100}%`, height: '100%',
-              background: '#1a73e8', borderRadius: 3, transition: 'width 0.1s linear',
+              background: '#7c3aed', borderRadius: 3, transition: 'width 0.1s linear',
             }} />
           </div>
         </>
@@ -345,6 +368,7 @@ function App() {
           defaultZoom={14}
           gestureHandling="greedy"
           disableDefaultUI={false}
+          styles={MAP_STYLES}
           onClick={() => setSelected(null)}
         >
           <Route spots={spots} onPathReady={setRoutePath} />
@@ -353,6 +377,7 @@ function App() {
               key={spot.id}
               position={{ lat: spot.lat, lng: spot.lng }}
               title={spot.spot_name_en}
+              icon={SPOT_ICON}
               onClick={() => setSelected(spot)}
             />
           ))}
@@ -361,7 +386,14 @@ function App() {
               position={demoPos}
               title="You are here"
               zIndex={999}
-              label={{ text: '●', color: '#1a73e8', fontSize: '18px', fontWeight: 'bold' }}
+              icon={{
+                path: google.maps.SymbolPath.CIRCLE,
+                fillColor: THEME,
+                fillOpacity: 1,
+                strokeColor: '#fff',
+                strokeWeight: 3,
+                scale: 10,
+              }}
             />
           )}
         </Map>
