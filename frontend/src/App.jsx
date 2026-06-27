@@ -34,18 +34,6 @@ const SPOT_ICON = {
   anchor: { x: 12, y: 12 },
 }
 
-const TOURIST_SPOTS = [
-  { id: 't-tsutenkaku',    name: '通天閣',       nameEn: 'Tsutenkaku Tower',      lat: 34.6524, lng: 135.5063 },
-  { id: 't-kiyomizudera', name: '清水寺',       nameEn: 'Kiyomizudera Temple',   lat: 34.9949, lng: 135.7850 },
-  { id: 't-todaiji',      name: '東大寺',       nameEn: 'Todaiji Temple',         lat: 34.6888, lng: 135.8398 },
-  { id: 't-kinkakuji',    name: '金閣寺',       nameEn: 'Kinkakuji Temple',       lat: 35.0394, lng: 135.7292 },
-  { id: 't-fushimiinari', name: '伏見稲荷大社', nameEn: 'Fushimi Inari Shrine',  lat: 34.9671, lng: 135.7727 },
-  { id: 't-arashiyama',   name: '嵐山',         nameEn: 'Arashiyama',             lat: 35.0094, lng: 135.6752 },
-  { id: 't-dotonbori',    name: '道頓堀',       nameEn: 'Dotonbori',              lat: 34.6687, lng: 135.5013 },
-  { id: 't-narapark',     name: '奈良公園',     nameEn: 'Nara Park',              lat: 34.6845, lng: 135.8326 },
-  { id: 't-himeji',       name: '姫路城',       nameEn: 'Himeji Castle',          lat: 34.8394, lng: 134.6939 },
-  { id: 't-osaka-castle', name: '大阪城',       nameEn: 'Osaka Castle',           lat: 34.6873, lng: 135.5262 },
-]
 
 const DEMO_SPEEDS = [
   { label: '10s', ms: 10000 },
@@ -328,6 +316,7 @@ function DemoControls({ demoMode, setDemoMode, playing, onPlay, onPause, onReset
 
 function App() {
   const [spots, setSpots] = useState([])
+  const [touristSpots, setTouristSpots] = useState([])
   const [selected, setSelected] = useState(null)
   const [selectedTourist, setSelectedTourist] = useState(null)
   const [routePath, setRoutePath] = useState([])
@@ -338,6 +327,10 @@ function App() {
   const [demoProgress, setDemoProgress] = useState(0)
   const [speedMs, setSpeedMs] = useState(30000)
   const triggeredRef = useRef(new Set())
+
+  useEffect(() => {
+    fetch('/tourist_spots.json').then(r => r.json()).then(setTouristSpots).catch(() => {})
+  }, [])
 
   useEffect(() => {
     fetch('/seichi_data.json')
@@ -427,7 +420,7 @@ function App() {
           onClick={() => { setSelected(null); setSelectedTourist(null) }}
         >
           <Route spots={spots} onPathReady={setRoutePath} />
-          {TOURIST_SPOTS.map(t => (
+          {touristSpots.map(t => (
             <Marker
               key={t.id}
               position={{ lat: t.lat, lng: t.lng }}
