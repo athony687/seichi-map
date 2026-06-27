@@ -81,15 +81,18 @@ const introCache = {}
 function Card({ spot, onClose }) {
   const [intro, setIntro] = useState(introCache[spot.id] || spot.intro_short_en)
   const [loading, setLoading] = useState(!introCache[spot.id])
+  const [aiOk, setAiOk] = useState(!!introCache[spot.id])
 
   useEffect(() => {
     if (introCache[spot.id]) {
       setIntro(introCache[spot.id])
       setLoading(false)
+      setAiOk(true)
       return
     }
     setIntro(spot.intro_short_en)
     setLoading(true)
+    setAiOk(false)
     fetch(`${BACKEND_URL}/generate-intro`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -101,14 +104,19 @@ function Card({ spot, onClose }) {
         area: spot.area,
       }),
     })
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error('server error'); return r.json() })
       .then(data => {
         if (data.intro) {
           introCache[spot.id] = data.intro
           setIntro(data.intro)
+          setAiOk(true)
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        // 通信・API失敗 → JSON の元テキストをそのまま表示
+        setIntro(spot.intro_short_en)
+        setAiOk(false)
+      })
       .finally(() => setLoading(false))
   }, [spot.id])
 
@@ -137,7 +145,7 @@ function Card({ spot, onClose }) {
         ) : intro}
       </div>
       <div style={{ fontSize: 11, color: '#bbb', marginTop: 8, textAlign: 'right' }}>
-        {!loading && '✨ AI generated'}
+        {!loading && (aiOk ? '✨ AI generated' : '📄 description')}
       </div>
     </div>
   )
