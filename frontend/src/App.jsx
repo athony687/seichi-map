@@ -431,7 +431,7 @@ function App() {
                 fillOpacity: 0.9,
                 strokeColor: '#fff',
                 strokeWeight: 2,
-                scale: 8,
+                scale: 5,
               }}
               onClick={() => { setSelectedTourist(t); setSelected(null) }}
             />
