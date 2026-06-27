@@ -3,7 +3,7 @@ import { APIProvider, Map, Marker, useMap } from '@vis.gl/react-google-maps'
 
 const TOKYO = { lat: 35.6762, lng: 139.6503 }
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
-const PROXIMITY_METERS = 120
+const PROXIMITY_METERS = 10000
 const THEME = '#7c3aed'
 const THEME_DARK = '#4c1d95'
 
