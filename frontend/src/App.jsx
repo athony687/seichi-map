@@ -77,23 +77,23 @@ function interpolatePath(path, t) {
   return path[path.length - 1]
 }
 
-function Route({ spots, onPathReady }) {
+function Route({ spots, origin, onPathReady }) {
   const map = useMap()
 
   useEffect(() => {
-    if (!map || spots.length < 2) return
+    if (!map || !origin || spots.length < 1) return
 
     const service = new google.maps.DirectionsService()
     const renderer = new google.maps.DirectionsRenderer({ suppressMarkers: true })
     renderer.setMap(map)
 
-    const waypoints = spots.slice(1, -1).map(s => ({
+    const waypoints = spots.slice(0, -1).map(s => ({
       location: { lat: s.lat, lng: s.lng },
       stopover: true,
     }))
 
     service.route({
-      origin: { lat: spots[0].lat, lng: spots[0].lng },
+      origin: { lat: origin.lat, lng: origin.lng },
       destination: { lat: spots[spots.length - 1].lat, lng: spots[spots.length - 1].lng },
       waypoints,
       travelMode: google.maps.TravelMode.WALKING,
@@ -106,7 +106,7 @@ function Route({ spots, onPathReady }) {
     })
 
     return () => renderer.setMap(null)
-  }, [map, spots])
+  }, [map, origin, spots])
 
   return null
 }
@@ -569,7 +569,7 @@ function App() {
           styles={MAP_STYLES}
           onClick={() => { setSelected(null); setSelectedTourist(null) }}
         >
-          <Route spots={nearbySpots} onPathReady={setRoutePath} />
+          <Route spots={nearbySpots} origin={livePos} onPathReady={setRoutePath} />
           {touristSpots.map(t => (
             <Marker
               key={t.id}
