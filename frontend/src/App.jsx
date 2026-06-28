@@ -1,5 +1,6 @@
-import { useEffect, useState, useRef, useMemo } from 'react'
+import { useEffect, useState, useRef, useMemo, memo } from 'react'
 import { APIProvider, Map, Marker, useMap } from '@vis.gl/react-google-maps'
+import { MarkerClusterer } from '@googlemaps/markerclusterer'
 
 const TOKYO = { lat: 35.6762, lng: 139.6503 }
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
@@ -106,6 +107,55 @@ function Route({ spots, onPathReady }) {
 
     return () => renderer.setMap(null)
   }, [map, spots])
+
+  return null
+}
+
+// 選択中スポット専用マーカー（パルスをここだけで持つ）
+function SelectedSpotMarker({ spot, onClick }) {
+  const [pulse, setPulse] = useState(false)
+  useEffect(() => {
+    const id = setInterval(() => setPulse(p => !p), 500)
+    return () => clearInterval(id)
+  }, [])
+  return (
+    <Marker
+      position={{ lat: spot.lat, lng: spot.lng }}
+      title={spot.spot_name_en}
+      icon={{ ...SPOT_ICON, scale: pulse ? 1.6 : 1.1, fillColor: '#a855f7' }}
+      zIndex={100}
+      onClick={onClick}
+    />
+  )
+}
+
+// 聖地ピンのクラスタリング管理（Reactの再描画から切り離し）
+function ClusteredSpotMarkers({ spots, selectedId, onSelect }) {
+  const map = useMap()
+  const clustererRef = useRef(null)
+
+  useEffect(() => {
+    if (!map) return
+    clustererRef.current = new MarkerClusterer({ map })
+    return () => { clustererRef.current?.setMap(null); clustererRef.current = null }
+  }, [map])
+
+  useEffect(() => {
+    if (!clustererRef.current) return
+    clustererRef.current.clearMarkers()
+    const markers = spots
+      .filter(s => s.id !== selectedId)
+      .map(spot => {
+        const m = new google.maps.Marker({
+          position: { lat: spot.lat, lng: spot.lng },
+          title: spot.spot_name_en,
+          icon: SPOT_ICON,
+        })
+        m.addListener('click', () => onSelect(spot))
+        return m
+      })
+    clustererRef.current.addMarkers(markers)
+  }, [spots, selectedId])
 
   return null
 }
@@ -385,7 +435,6 @@ function App() {
   const [selected, setSelected] = useState(null)
   const [selectedTourist, setSelectedTourist] = useState(null)
   const [routePath, setRoutePath] = useState([])
-  const [pulse, setPulse] = useState(false)
 
   // Demo mode state
   const [demoMode, setDemoMode] = useState(true)
@@ -489,13 +538,6 @@ function App() {
     }
   }, [activePos, spots])
 
-  // 選択中ピンのパルスアニメーション
-  useEffect(() => {
-    if (!selected) { setPulse(false); return }
-    const id = setInterval(() => setPulse(p => !p), 500)
-    return () => clearInterval(id)
-  }, [selected])
-
   const handleReset = () => {
     setDemoProgress(0)
     setPlaying(false)
@@ -544,19 +586,14 @@ function App() {
               onClick={() => { setSelectedTourist(t); setSelected(null) }}
             />
           ))}
-          {spots.map(spot => (
-            <Marker
-              key={spot.id}
-              position={{ lat: spot.lat, lng: spot.lng }}
-              title={spot.spot_name_en}
-              icon={selected?.id === spot.id
-                ? { ...SPOT_ICON, scale: pulse ? 1.6 : 1.1, fillColor: '#a855f7' }
-                : SPOT_ICON
-              }
-              zIndex={selected?.id === spot.id ? 100 : 1}
-              onClick={() => setSelected(spot)}
-            />
-          ))}
+          <ClusteredSpotMarkers
+            spots={spots}
+            selectedId={selected?.id}
+            onSelect={setSelected}
+          />
+          {selected && (
+            <SelectedSpotMarker spot={selected} onClick={() => setSelected(selected)} />
+          )}
           {activePos && (
             <Marker
               position={activePos}
