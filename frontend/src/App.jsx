@@ -335,6 +335,20 @@ function DemoControls({ demoMode, setDemoMode, playing, onPlay, onPause, onReset
   )
 }
 
+function useLiveGPS(enabled) {
+  const [pos, setPos] = useState(TOKYO)
+  useEffect(() => {
+    if (!enabled || !navigator.geolocation) return
+    const id = navigator.geolocation.watchPosition(
+      ({ coords }) => setPos({ lat: coords.latitude, lng: coords.longitude }),
+      () => setPos(TOKYO),
+      { enableHighAccuracy: true, maximumAge: 5000 },
+    )
+    return () => navigator.geolocation.clearWatch(id)
+  }, [enabled])
+  return pos
+}
+
 function App() {
   const [spots, setSpots] = useState([])
   const [touristSpots, setTouristSpots] = useState([])
@@ -349,6 +363,8 @@ function App() {
   const [demoProgress, setDemoProgress] = useState(0)
   const [speedMs, setSpeedMs] = useState(30000)
   const triggeredRef = useRef(new Set())
+
+  const livePos = useLiveGPS(!demoMode)
 
   useEffect(() => {
     fetch('/tourist_spots.json').then(r => r.json()).then(setTouristSpots).catch(() => {})
@@ -404,13 +420,15 @@ function App() {
     [demoMode, routePath, demoProgress],
   )
 
-  // Proximity trigger: auto-show card when demo marker nears a spot
+  const activePos = demoMode ? demoPos : livePos
+
+  // Proximity trigger: auto-show card when marker nears a spot (demo or live)
   useEffect(() => {
-    if (!demoPos || !spots.length) return
+    if (!activePos || !spots.length) return
 
     // 表示中のカードが範囲外に出たら閉じる
     setSelected(prev => {
-      if (prev && haversine(demoPos, { lat: prev.lat, lng: prev.lng }) > PROXIMITY_METERS) {
+      if (prev && haversine(activePos, { lat: prev.lat, lng: prev.lng }) > PROXIMITY_METERS) {
         triggeredRef.current.delete(prev.id)
         return null
       }
@@ -420,7 +438,7 @@ function App() {
     // 新しい聖地に近づいたらカードを出す
     for (const spot of spots) {
       if (
-        haversine(demoPos, { lat: spot.lat, lng: spot.lng }) < PROXIMITY_METERS &&
+        haversine(activePos, { lat: spot.lat, lng: spot.lng }) < PROXIMITY_METERS &&
         !triggeredRef.current.has(spot.id)
       ) {
         triggeredRef.current.add(spot.id)
@@ -428,7 +446,7 @@ function App() {
         break
       }
     }
-  }, [demoPos, spots])
+  }, [activePos, spots])
 
   // 選択中ピンのパルスアニメーション
   useEffect(() => {
@@ -495,14 +513,14 @@ function App() {
               onClick={() => setSelected(spot)}
             />
           ))}
-          {demoPos && (
+          {activePos && (
             <Marker
-              position={demoPos}
+              position={activePos}
               title="You are here"
               zIndex={999}
               icon={{
                 path: google.maps.SymbolPath.CIRCLE,
-                fillColor: THEME,
+                fillColor: demoMode ? THEME : '#1d6ef5',
                 fillOpacity: 1,
                 strokeColor: '#fff',
                 strokeWeight: 3,
