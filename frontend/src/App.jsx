@@ -3,7 +3,7 @@ import { APIProvider, Map, Marker, useMap } from '@vis.gl/react-google-maps'
 
 const TOKYO = { lat: 35.6762, lng: 139.6503 }
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
-const PROXIMITY_METERS = 3000
+const PROXIMITY_METERS = 1000
 const THEME = '#7c3aed'
 const THEME_DARK = '#4c1d95'
 
@@ -36,9 +36,9 @@ const SPOT_ICON = {
 
 
 const DEMO_SPEEDS = [
-  { label: '10s', ms: 10000 },
   { label: '30s', ms: 30000 },
   { label: '60s', ms: 60000 },
+  { label: '90s', ms: 90000 },
 ]
 
 function haversine(a, b) {
