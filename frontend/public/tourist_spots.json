@@ -1,12 +1,177 @@
 [
-  { "id": "t-tsutenkaku",    "name": "通天閣",       "nameEn": "Tsutenkaku Tower",     "lat": 34.6524, "lng": 135.5063 },
-  { "id": "t-kiyomizudera", "name": "清水寺",       "nameEn": "Kiyomizudera Temple",  "lat": 34.9949, "lng": 135.7850 },
-  { "id": "t-todaiji",      "name": "東大寺",       "nameEn": "Todaiji Temple",        "lat": 34.6888, "lng": 135.8398 },
-  { "id": "t-kinkakuji",    "name": "金閣寺",       "nameEn": "Kinkakuji Temple",      "lat": 35.0394, "lng": 135.7292 },
-  { "id": "t-fushimiinari", "name": "伏見稲荷大社", "nameEn": "Fushimi Inari Shrine", "lat": 34.9671, "lng": 135.7727 },
-  { "id": "t-arashiyama",   "name": "嵐山",         "nameEn": "Arashiyama",            "lat": 35.0094, "lng": 135.6752 },
-  { "id": "t-dotonbori",    "name": "道頓堀",       "nameEn": "Dotonbori",             "lat": 34.6687, "lng": 135.5013 },
-  { "id": "t-narapark",     "name": "奈良公園",     "nameEn": "Nara Park",             "lat": 34.6845, "lng": 135.8326 },
-  { "id": "t-himeji",       "name": "姫路城",       "nameEn": "Himeji Castle",         "lat": 34.8394, "lng": 134.6939 },
-  { "id": "t-osaka-castle", "name": "大阪城",       "nameEn": "Osaka Castle",          "lat": 34.6873, "lng": 135.5262 }
+  {
+    "id": "t-tsutenkaku",
+    "name": "通天閣",
+    "nameEn": "Tsutenkaku Tower",
+    "lat": 34.6524,
+    "lng": 135.5063
+  },
+  {
+    "id": "t-kiyomizudera",
+    "name": "清水寺",
+    "nameEn": "Kiyomizudera Temple",
+    "lat": 34.9949,
+    "lng": 135.785
+  },
+  {
+    "id": "t-todaiji",
+    "name": "東大寺",
+    "nameEn": "Todaiji Temple",
+    "lat": 34.6888,
+    "lng": 135.8398
+  },
+  {
+    "id": "t-kinkakuji",
+    "name": "金閣寺",
+    "nameEn": "Kinkakuji Temple",
+    "lat": 35.0394,
+    "lng": 135.7292
+  },
+  {
+    "id": "t-fushimiinari",
+    "name": "伏見稲荷大社",
+    "nameEn": "Fushimi Inari Shrine",
+    "lat": 34.9671,
+    "lng": 135.7727
+  },
+  {
+    "id": "t-arashiyama",
+    "name": "嵐山",
+    "nameEn": "Arashiyama",
+    "lat": 35.0094,
+    "lng": 135.6752
+  },
+  {
+    "id": "t-dotonbori",
+    "name": "道頓堀",
+    "nameEn": "Dotonbori",
+    "lat": 34.6687,
+    "lng": 135.5013
+  },
+  {
+    "id": "t-narapark",
+    "name": "奈良公園",
+    "nameEn": "Nara Park",
+    "lat": 34.6845,
+    "lng": 135.8326
+  },
+  {
+    "id": "t-himeji",
+    "name": "姫路城",
+    "nameEn": "Himeji Castle",
+    "lat": 34.8394,
+    "lng": 134.6939
+  },
+  {
+    "id": "t-osaka-castle",
+    "name": "大阪城",
+    "nameEn": "Osaka Castle",
+    "lat": 34.6873,
+    "lng": 135.5262
+  },
+  {
+    "id": "t-sensoji",
+    "name": "浅草寺",
+    "nameEn": "Sensoji Temple",
+    "lat": 35.7148,
+    "lng": 139.7967
+  },
+  {
+    "id": "t-skytree",
+    "name": "東京スカイツリー",
+    "nameEn": "Tokyo Skytree",
+    "lat": 35.7101,
+    "lng": 139.8107
+  },
+  {
+    "id": "t-shibuya",
+    "name": "渋谷スクランブル交差点",
+    "nameEn": "Shibuya Crossing",
+    "lat": 35.6595,
+    "lng": 139.7004
+  },
+  {
+    "id": "t-tokyotower",
+    "name": "東京タワー",
+    "nameEn": "Tokyo Tower",
+    "lat": 35.6586,
+    "lng": 139.7454
+  },
+  {
+    "id": "t-meijijingu",
+    "name": "明治神宮",
+    "nameEn": "Meiji Jingu Shrine",
+    "lat": 35.6764,
+    "lng": 139.6993
+  },
+  {
+    "id": "t-akarenga",
+    "name": "横浜赤レンガ倉庫",
+    "nameEn": "Yokohama Red Brick Warehouse",
+    "lat": 35.453,
+    "lng": 139.6427
+  },
+  {
+    "id": "t-chinatown",
+    "name": "横浜中華街",
+    "nameEn": "Yokohama Chinatown",
+    "lat": 35.4437,
+    "lng": 139.6464
+  },
+  {
+    "id": "t-kamakura-daibutsu",
+    "name": "鎌倉大仏（高徳院）",
+    "nameEn": "Great Buddha of Kamakura",
+    "lat": 35.3168,
+    "lng": 139.5358
+  },
+  {
+    "id": "t-enoshima",
+    "name": "江ノ島",
+    "nameEn": "Enoshima",
+    "lat": 35.299,
+    "lng": 139.4805
+  },
+  {
+    "id": "t-disney",
+    "name": "東京ディズニーリゾート",
+    "nameEn": "Tokyo Disney Resort",
+    "lat": 35.6329,
+    "lng": 139.8804
+  },
+  {
+    "id": "t-kamogawa",
+    "name": "鴨川シーワールド",
+    "nameEn": "Kamogawa Sea World",
+    "lat": 35.1115,
+    "lng": 140.1027
+  },
+  {
+    "id": "t-tokyo-station",
+    "name": "東京駅",
+    "nameEn": "Tokyo Station",
+    "lat": 35.6812,
+    "lng": 139.7671
+  },
+  {
+    "id": "t-saitama-arena",
+    "name": "さいたまスーパーアリーナ",
+    "nameEn": "Saitama Super Arena",
+    "lat": 35.8954,
+    "lng": 139.6307
+  },
+  {
+    "id": "t-omiya-hikawa",
+    "name": "大宮氷川神社",
+    "nameEn": "Omiya Hikawa Shrine",
+    "lat": 35.917,
+    "lng": 139.63
+  },
+  {
+    "id": "t-budokan",
+    "name": "日本武道館",
+    "nameEn": "Nippon Budokan",
+    "lat": 35.6933,
+    "lng": 139.7498
+  }
 ]
