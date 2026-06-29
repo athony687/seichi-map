@@ -109,6 +109,7 @@ function DemoEngine({ spots, startPos, playing, onPosChange, selectedId }) {
   const targetRef   = useRef(null)
   const visitedRef  = useRef(new Set())
   const wobbleRef   = useRef(0)
+  const pauseUntilRef = useRef(0)
   const selectedRef = useRef(selectedId)
   const startPosRef = useRef(startPos)
 
@@ -155,8 +156,12 @@ function DemoEngine({ spots, startPos, playing, onPosChange, selectedId }) {
       if (dist < ARRIVE_DEG) {
         visitedRef.current.add(id)
         targetRef.current = null
+        pauseUntilRef.current = Date.now() + 5000
         return
       }
+
+      // スポット到達後の待機中はその場で止まる
+      if (Date.now() < pauseUntilRef.current) return
 
       // 向きにゆるい揺らぎ
       wobbleRef.current = wobbleRef.current * 0.85 + (Math.random() - 0.5) * 0.3
