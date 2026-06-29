@@ -109,7 +109,6 @@ function DemoEngine({ spots, startPos, playing, onPosChange, selectedId }) {
   const targetRef   = useRef(null)
   const visitedRef  = useRef(new Set())
   const wobbleRef   = useRef(0)
-  const lastCamRef  = useRef(0)
   const selectedRef = useRef(selectedId)
   const startPosRef = useRef(startPos)
 
@@ -168,16 +167,6 @@ function DemoEngine({ spots, startPos, playing, onPosChange, selectedId }) {
       }
       posRef.current = newPos
       onPosChange({ ...newPos })
-
-      // カメラ: 2.5秒ごとにマーカーを追う（カード表示中は動かさない）
-      if (map && !selectedRef.current) {
-        const now = Date.now()
-        if (now - lastCamRef.current > 2500) {
-          map.panTo(newPos)
-          map.setZoom(11)
-          lastCamRef.current = now
-        }
-      }
     }, DEMO_TICK_MS)
 
     return () => clearInterval(tick)
@@ -189,10 +178,6 @@ function DemoEngine({ spots, startPos, playing, onPosChange, selectedId }) {
     if (selectedId) {
       const spot = spots.find(s => s.id === selectedId)
       if (spot) { map.panTo({ lat: spot.lat, lng: spot.lng }); map.setZoom(15) }
-    } else if (posRef.current) {
-      map.panTo(posRef.current)
-      map.setZoom(11)
-      lastCamRef.current = Date.now()
     }
   }, [selectedId, map])
 
