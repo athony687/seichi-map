@@ -436,7 +436,6 @@ function App() {
   const [demoPos, setDemoPos]           = useState(null)   // 擬似マーカー位置
 
   const triggeredRef = useRef(new Set())
-  const spotJustSelectedRef = useRef(false)
   const [locateTick, setLocateTick] = useState(0)
   const { pos: livePos, status: gpsStatus } = useLiveGPS(!demoMode)
 
@@ -507,11 +506,8 @@ function App() {
     setSelected(null)
   }
 
-  // マーカークリック → 地図クリックへの伝播ガード
   const handleSpotSelect = useCallback((spot) => {
-    spotJustSelectedRef.current = true
     setSelected(spot)
-    setTimeout(() => { spotJustSelectedRef.current = false }, 600)
   }, [])
 
   const handleMapClick = (e) => {
@@ -526,9 +522,8 @@ function App() {
       triggeredRef.current.clear()
       setSelected(null)
     } else {
-      // latLng なし（ズームボタン等のUI操作）や直後のマーカークリックは無視
-      if (!ll || spotJustSelectedRef.current) return
-      setSelected(null)
+      // 地図タップで観光スポットポップアップだけ閉じる
+      // 聖地カードは ✕ ボタンでのみ閉じる（パン後の遅延クリックでの誤閉じ防止）
       setSelectedTourist(null)
     }
   }
