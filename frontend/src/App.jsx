@@ -1,8 +1,9 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { APIProvider, Map, Marker, useMap } from '@vis.gl/react-google-maps'
 import { MarkerClusterer } from '@googlemaps/markerclusterer'
 
 const TOKYO = { lat: 35.6762, lng: 139.6503 }
+const TOKYO_STATION = { lat: 35.6812, lng: 139.7671 }
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
 const PROXIMITY_METERS = 100
 const THEME = '#7c3aed'
@@ -204,21 +205,30 @@ function DemoEngine({ spots, startPos, playing, onPosChange, selectedId }) {
 }
 
 // ── ライブモードのカメラ制御 ─────────────────────────────────────────────
-function LiveCamera({ livePos, selected }) {
+function LiveCamera({ livePos, selected, locateTick }) {
   const map = useMap()
   const livePosRef = useRef(livePos)
   useEffect(() => { livePosRef.current = livePos }, [livePos])
 
+  // スポット選択 / 解除でカメラ切替
   useEffect(() => {
     if (!map) return
     if (selected) {
       map.panTo({ lat: selected.lat, lng: selected.lng })
       map.setZoom(15)
-    } else {
-      if (livePosRef.current) map.panTo(livePosRef.current)
+    } else if (livePosRef.current) {
+      map.panTo(livePosRef.current)
       map.setZoom(13)
     }
   }, [selected?.id, map])
+
+  // GPS ボタン押下で現在地へ
+  useEffect(() => {
+    if (!map || !locateTick || !livePosRef.current) return
+    map.panTo(livePosRef.current)
+    map.setZoom(14)
+  }, [locateTick, map])
+
   return null
 }
 
@@ -366,15 +376,15 @@ function TouristPopup({ spot, onClose }) {
 
 // ── GPS フック ────────────────────────────────────────────────────────────
 function useLiveGPS(enabled) {
-  const [pos, setPos]       = useState(TOKYO)
+  const [pos, setPos]       = useState(null)
   const [status, setStatus] = useState('idle')
   useEffect(() => {
-    if (!enabled) { setStatus('idle'); return }
-    if (!navigator.geolocation) { setStatus('error'); return }
+    if (!enabled) { setStatus('idle'); setPos(null); return }
+    if (!navigator.geolocation) { setPos(TOKYO_STATION); setStatus('error'); return }
     setStatus('pending')
     const id = navigator.geolocation.watchPosition(
       ({ coords }) => { setPos({ lat: coords.latitude, lng: coords.longitude }); setStatus('ok') },
-      () => { setPos(TOKYO); setStatus('error') },
+      () => { setPos(TOKYO_STATION); setStatus('error') },
       { enableHighAccuracy: true, maximumAge: 5000 },
     )
     return () => navigator.geolocation.clearWatch(id)
@@ -382,25 +392,33 @@ function useLiveGPS(enabled) {
   return { pos, status }
 }
 
-function GpsWidget({ status }) {
-  const labels = {
+function GpsLocateButton({ status, onLocate }) {
+  const cfg = {
     idle:    null,
-    pending: { icon: '⏳', text: 'Getting location…',          color: '#888' },
-    ok:      { icon: '📍', text: 'GPS active',                 color: '#16a34a' },
-    error:   { icon: '⚠️', text: 'GPS off — using Tokyo St.', color: '#dc2626' },
+    pending: { icon: '⌛', label: 'Locating…',    color: '#9ca3af', bg: '#f9fafb', disabled: true },
+    ok:      { icon: '📍', label: 'My Location',  color: '#1d6ef5', bg: '#eff6ff', disabled: false },
+    error:   { icon: '⚠️', label: 'Tokyo Sta.',   color: '#dc2626', bg: '#fef2f2', disabled: false },
   }
-  const l = labels[status]
-  if (!l) return null
+  const c = cfg[status]
+  if (!c) return null
   return (
-    <div style={{
-      position: 'absolute', bottom: 90, right: 12, zIndex: 10,
-      background: 'rgba(255,255,255,0.95)', borderRadius: 20,
-      padding: '6px 12px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-      display: 'flex', alignItems: 'center', gap: 6,
-      fontSize: 12, fontWeight: 600, color: l.color, maxWidth: 220,
-    }}>
-      <span>{l.icon}</span><span>{l.text}</span>
-    </div>
+    <button
+      onClick={c.disabled ? undefined : onLocate}
+      style={{
+        position: 'absolute', bottom: 24, right: 16, zIndex: 10,
+        background: c.bg, border: `2px solid ${c.color}`,
+        color: c.color, borderRadius: 16,
+        padding: '6px 12px',
+        display: 'flex', alignItems: 'center', gap: 6,
+        cursor: c.disabled ? 'default' : 'pointer',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+        fontSize: 13, fontWeight: 700, opacity: c.disabled ? 0.6 : 1,
+        userSelect: 'none',
+      }}
+    >
+      <span style={{ fontSize: 16 }}>{c.icon}</span>
+      <span>{c.label}</span>
+    </button>
   )
 }
 
@@ -419,6 +437,7 @@ function App() {
 
   const triggeredRef = useRef(new Set())
   const spotJustSelectedRef = useRef(false)
+  const [locateTick, setLocateTick] = useState(0)
   const { pos: livePos, status: gpsStatus } = useLiveGPS(!demoMode)
 
   // データ読み込み
@@ -489,15 +508,15 @@ function App() {
   }
 
   // マーカークリック → 地図クリックへの伝播ガード
-  const handleSpotSelect = (spot) => {
+  const handleSpotSelect = useCallback((spot) => {
     spotJustSelectedRef.current = true
     setSelected(spot)
     setTimeout(() => { spotJustSelectedRef.current = false }, 100)
-  }
+  }, [])
 
   const handleMapClick = (e) => {
+    const ll = e.detail?.latLng
     if (startPosMode) {
-      const ll = e.detail?.latLng
       if (!ll) return
       const lat = typeof ll.lat === 'function' ? ll.lat() : ll.lat
       const lng = typeof ll.lng === 'function' ? ll.lng() : ll.lng
@@ -507,7 +526,8 @@ function App() {
       triggeredRef.current.clear()
       setSelected(null)
     } else {
-      if (spotJustSelectedRef.current) return
+      // latLng なし（ズームボタン等のUI操作）や直後のマーカークリックは無視
+      if (!ll || spotJustSelectedRef.current) return
       setSelected(null)
       setSelectedTourist(null)
     }
@@ -541,7 +561,7 @@ function App() {
             />
           )}
           {!demoMode && (
-            <LiveCamera livePos={livePos} selected={selected} />
+            <LiveCamera livePos={livePos} selected={selected} locateTick={locateTick} />
           )}
 
           {/* 観光スポットピン */}
@@ -652,7 +672,12 @@ function App() {
         </div>
       )}
 
-      {!demoMode && <GpsWidget status={gpsStatus} />}
+      {!demoMode && (
+        <GpsLocateButton
+          status={gpsStatus}
+          onLocate={() => setLocateTick(t => t + 1)}
+        />
+      )}
       {selected && (
         <Card spot={selected} currentPos={activePos} onClose={() => setSelected(null)} />
       )}
