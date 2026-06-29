@@ -136,7 +136,7 @@ function DemoEngine({ spots, startPos, playing, onPosChange, selectedId }) {
       // 次のターゲットを選ぶ
       if (!targetRef.current) {
         const eligible = spots.filter(s =>
-          haversine(sp, { lat: s.lat, lng: s.lng }) <= 100000 &&
+          haversine(sp, { lat: s.lat, lng: s.lng }) <= 60000 &&
           !visitedRef.current.has(s.id)
         )
         if (!eligible.length) { visitedRef.current = new Set(); return }
@@ -446,9 +446,9 @@ function App() {
   // activePos: デモ中は擬似マーカー、ライブ中はGPS
   const activePos = demoMode ? demoPos : livePos
 
-  // 近接判定
+  // 近接判定（デモモードのみ自動開閉。LIVEモードはユーザー操作のみ）
   useEffect(() => {
-    if (!activePos || !spots.length) return
+    if (!activePos || !spots.length || !demoMode) return
 
     setSelected(prev => {
       if (prev && haversine(activePos, { lat: prev.lat, lng: prev.lng }) > PROXIMITY_METERS) {
@@ -468,7 +468,7 @@ function App() {
         break
       }
     }
-  }, [activePos, spots])
+  }, [activePos, spots, demoMode])
 
   const handleReset = () => {
     setPlaying(false)
