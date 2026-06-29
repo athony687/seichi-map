@@ -4,12 +4,12 @@ import { MarkerClusterer } from '@googlemaps/markerclusterer'
 
 const TOKYO = { lat: 35.6762, lng: 139.6503 }
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
-const PROXIMITY_METERS = 1000
+const PROXIMITY_METERS = 100
 const THEME = '#7c3aed'
 const THEME_DARK = '#4c1d95'
 const DEMO_STEP = 0.0005  // degrees per tick (≈55m)
 const DEMO_TICK_MS = 150
-const ARRIVE_DEG = 0.009  // ≈1km, spot "arrived"
+const ARRIVE_DEG = 0.001  // ≈110m, spot "arrived"
 
 const MAP_STYLES = [
   { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#fefdf5' }] },
@@ -111,7 +111,6 @@ function DemoEngine({ spots, startPos, playing, onPosChange, selectedId }) {
   const wobbleRef   = useRef(0)
   const selectedRef = useRef(selectedId)
   const startPosRef = useRef(startPos)
-  const lastCamRef  = useRef(0)
 
   useEffect(() => { selectedRef.current = selectedId }, [selectedId])
 
@@ -169,13 +168,9 @@ function DemoEngine({ spots, startPos, playing, onPosChange, selectedId }) {
       posRef.current = newPos
       onPosChange({ ...newPos })
 
-      // カメラ: マーカーを追う（ズーム変更なし・スポット表示中は止める）
+      // カメラ: マーカーを即時追従（setCenter = アニメなし・毎tick更新）
       if (map && !selectedRef.current) {
-        const now = Date.now()
-        if (now - lastCamRef.current > 600) {
-          map.panTo(newPos)
-          lastCamRef.current = now
-        }
+        map.setCenter(newPos)
       }
     }, DEMO_TICK_MS)
 
@@ -190,7 +185,6 @@ function DemoEngine({ spots, startPos, playing, onPosChange, selectedId }) {
       if (spot) { map.panTo({ lat: spot.lat, lng: spot.lng }); map.setZoom(15) }
     } else if (posRef.current) {
       map.panTo(posRef.current)
-      lastCamRef.current = Date.now()
     }
   }, [selectedId, map])
 
