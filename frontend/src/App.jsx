@@ -201,13 +201,16 @@ function DemoEngine({ spots, startPos, playing, onPosChange, selectedId }) {
 // ── ライブモードのカメラ制御 ─────────────────────────────────────────────
 function LiveCamera({ livePos, selected }) {
   const map = useMap()
+  const livePosRef = useRef(livePos)
+  useEffect(() => { livePosRef.current = livePos }, [livePos])
+
   useEffect(() => {
     if (!map) return
     if (selected) {
       map.panTo({ lat: selected.lat, lng: selected.lng })
       map.setZoom(15)
     } else {
-      map.panTo(livePos)
+      if (livePosRef.current) map.panTo(livePosRef.current)
       map.setZoom(13)
     }
   }, [selected?.id, map])
@@ -410,6 +413,7 @@ function App() {
   const [demoPos, setDemoPos]           = useState(null)   // 擬似マーカー位置
 
   const triggeredRef = useRef(new Set())
+  const spotJustSelectedRef = useRef(false)
   const { pos: livePos, status: gpsStatus } = useLiveGPS(!demoMode)
 
   // データ読み込み
@@ -479,6 +483,13 @@ function App() {
     setSelected(null)
   }
 
+  // マーカークリック → 地図クリックへの伝播ガード
+  const handleSpotSelect = (spot) => {
+    spotJustSelectedRef.current = true
+    setSelected(spot)
+    setTimeout(() => { spotJustSelectedRef.current = false }, 100)
+  }
+
   const handleMapClick = (e) => {
     if (startPosMode) {
       const ll = e.detail?.latLng
@@ -491,6 +502,7 @@ function App() {
       triggeredRef.current.clear()
       setSelected(null)
     } else {
+      if (spotJustSelectedRef.current) return
       setSelected(null)
       setSelectedTourist(null)
     }
@@ -543,7 +555,7 @@ function App() {
           <ClusteredSpotMarkers
             spots={spots}
             selectedId={selected?.id}
-            onSelect={demoMode ? null : setSelected}
+            onSelect={demoMode ? null : handleSpotSelect}
           />
           {selected && (
             <SelectedSpotMarker spot={selected} onClick={() => {}} />
