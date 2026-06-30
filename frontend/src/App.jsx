@@ -268,7 +268,7 @@ function Card({ spot, currentPos, onClose }) {
 
   return (
     <div style={{
-      position: 'absolute', bottom: 16, left: 12, right: 12,
+      position: 'absolute', bottom: 60, left: 12, right: 12,
       maxWidth: 380, margin: '0 auto',
       background: 'white', borderRadius: 20,
       boxShadow: '0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)',
@@ -343,7 +343,7 @@ function Card({ spot, currentPos, onClose }) {
 function TouristPopup({ spot, onClose }) {
   return (
     <div style={{
-      position: 'absolute', bottom: 16, left: 12, right: 12,
+      position: 'absolute', bottom: 60, left: 12, right: 12,
       maxWidth: 380, margin: '0 auto',
       background: 'white', borderRadius: 16,
       boxShadow: '0 8px 32px rgba(0,0,0,0.15)', zIndex: 10, overflow: 'hidden',
@@ -600,18 +600,18 @@ function App() {
 
       {/* コントロールバー */}
       <div style={{
-        position: 'absolute', bottom: 24, left: 12,
-        background: 'rgba(255,255,255,0.95)', borderRadius: 24, padding: '8px 12px',
+        position: 'absolute', bottom: 8, left: 12,
+        background: 'rgba(255,255,255,0.95)', borderRadius: 20, padding: '5px 8px',
         boxShadow: '0 2px 10px rgba(0,0,0,0.18)',
-        display: 'flex', gap: 6, alignItems: 'center',
+        display: 'flex', gap: 4, alignItems: 'center',
         zIndex: 10, userSelect: 'none',
-        maxWidth: 'calc(100vw - 24px)', flexWrap: 'wrap', justifyContent: 'center',
+        maxWidth: 'calc(100vw - 24px)', flexWrap: 'wrap',
       }}>
         {/* DEMO / LIVE 切替 */}
         <button
           onClick={() => { setDemoMode(m => !m); handleReset() }}
           style={{
-            fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 12,
+            fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 10,
             border: 'none', cursor: 'pointer',
             background: demoMode ? THEME : '#e0e0e0',
             color: demoMode ? '#fff' : '#555',
@@ -625,13 +625,13 @@ function App() {
           <button
             onClick={() => setStartPosMode(m => !m)}
             style={{
-              fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 12,
+              fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 10,
               border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
               background: startPosMode ? '#f59e0b' : startPos ? '#ede9ff' : THEME,
               color: startPosMode ? '#fff' : startPos ? THEME : '#fff',
             }}
           >
-            {startPosMode ? '📍 Tap map…' : startPos ? '📍 Change Start' : '📍 Set Start'}
+            {startPosMode ? '📍 Tap…' : startPos ? '📍 Change' : '📍 Set Start'}
           </button>
 
           {/* 再生 / 一時停止 */}
@@ -639,7 +639,7 @@ function App() {
             onClick={() => setPlaying(p => !p)}
             disabled={!startPos}
             style={{
-              fontSize: 20, background: 'none', border: 'none', lineHeight: 1,
+              fontSize: 17, background: 'none', border: 'none', lineHeight: 1,
               cursor: startPos ? 'pointer' : 'default', opacity: startPos ? 1 : 0.35,
             }}
           >
@@ -649,7 +649,7 @@ function App() {
           {/* 最初に戻す */}
           <button
             onClick={handleReset}
-            style={{ fontSize: 20, background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}
+            style={{ fontSize: 17, background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}
           >
             ⏮
           </button>
@@ -659,7 +659,7 @@ function App() {
       {/* 位置指定中のオーバーレイヒント */}
       {startPosMode && (
         <div style={{
-          position: 'absolute', bottom: 80, left: 12,
+          position: 'absolute', bottom: 56, left: 12,
           background: 'rgba(245,158,11,0.95)', borderRadius: 16, padding: '8px 18px',
           color: '#fff', fontWeight: 700, fontSize: 13, zIndex: 10, whiteSpace: 'nowrap',
           boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
