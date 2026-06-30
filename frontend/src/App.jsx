@@ -634,9 +634,9 @@ function App() {
 
       {/* 検索バー（既存ヘッダー右側に重ねる） */}
       <div style={{
-        position: 'fixed', top: 0, right: 12, height: 50,
+        position: 'fixed', top: 0, left: 105, right: 8, height: 50,
         display: 'flex', alignItems: 'center',
-        zIndex: 2000, width: 170,
+        zIndex: 2000,
       }}>
         <div style={{ position: 'relative', width: '100%' }}>
           <span style={{
@@ -654,7 +654,7 @@ function App() {
             style={{
               width: '100%', boxSizing: 'border-box',
               border: 'none', borderRadius: 14, padding: '6px 26px 6px 26px',
-              fontSize: 16, transform: 'scale(0.75)', transformOrigin: 'right center',
+              fontSize: 16,
               background: 'rgba(255,255,255,0.15)', color: '#fff',
               outline: 'none',
             }}
