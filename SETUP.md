@@ -2,7 +2,7 @@
 
 ## 前提条件
 
-- Node.js v18 以上が入っていること → https://nodejs.org
+- Node.js 20 LTS 以上が入っていること → https://nodejs.org
 
 ## 手順
 
@@ -15,7 +15,10 @@ cd seichi-map/frontend
 npm install
 
 # 3. APIキーを設定（.envファイルを作る）
-echo "VITE_GOOGLE_MAPS_API_KEY=APIキーをここに貼る" > .env
+(Mac/Linux)
+echo "VITE_GOOGLE_MAPS_API_KEY=(APIキーをここに貼る)" > .env
+(windows)
+"VITE_GOOGLE_MAPS_API_KEY=(APIキーをここに貼る)" | Out-File -Encoding utf8 .env
 
 # 4. 起動
 npm run dev
