@@ -30,7 +30,7 @@ const MAP_STYLES = [
 
 const BLUE_SPOT_ICON = {
   path: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
-  fillColor: '#1d6ef5',
+  fillColor: '#16a34a',
   fillOpacity: 1,
   strokeColor: '#fff',
   strokeWeight: 1.5,
@@ -632,16 +632,18 @@ function App() {
         </Map>
       </APIProvider>
 
-      {/* ヘッダー（検索バー） */}
-      <div style={{
-        position: 'fixed', top: 0, left: 0, right: 0, height: 48,
-        background: '#1a1a1a', zIndex: 9999,
-        display: 'flex', alignItems: 'center', padding: '0 16px',
-      }}>
-        <div style={{ position: 'relative', flex: 1, maxWidth: 400 }}>
+      {/* 検索バー（既存ヘッダー右側に重ねる） */}
+      {showSuggestions && (
+        <div
+          onClick={() => setShowSuggestions(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 1999 }}
+        />
+      )}
+      <div style={{ position: 'fixed', top: 8, right: 12, zIndex: 2000, width: 170 }}>
+        <div style={{ position: 'relative' }}>
           <span style={{
-            position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
-            fontSize: 14, pointerEvents: 'none',
+            position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)',
+            fontSize: 12, pointerEvents: 'none',
           }}>🔍</span>
           <input
             type="text"
@@ -649,12 +651,11 @@ function App() {
             value={searchQuery}
             onChange={e => { setSearchQuery(e.target.value); setSearchAnime(null); setShowSuggestions(true) }}
             onFocus={() => setShowSuggestions(true)}
-            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
             style={{
               width: '100%', boxSizing: 'border-box',
-              border: 'none', borderRadius: 20, padding: '7px 32px 7px 34px',
-              fontSize: 13, fontWeight: 500,
-              background: 'rgba(255,255,255,0.12)', color: '#fff',
+              border: 'none', borderRadius: 14, padding: '5px 24px 5px 24px',
+              fontSize: 12,
+              background: 'rgba(255,255,255,0.15)', color: '#fff',
               outline: 'none',
             }}
           />
@@ -662,35 +663,34 @@ function App() {
             <button
               onClick={() => { setSearchQuery(''); setSearchAnime(null); setShowSuggestions(false) }}
               style={{
-                position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
-                background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)',
-                fontSize: 14, cursor: 'pointer', padding: 0, lineHeight: 1,
+                position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)',
+                fontSize: 12, cursor: 'pointer', padding: 0, lineHeight: 1,
               }}
             >✕</button>
           )}
-          {showSuggestions && suggestions.length > 0 && (
-            <div style={{
-              position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4,
-              background: 'white', borderRadius: 12,
-              boxShadow: '0 4px 16px rgba(0,0,0,0.18)', overflow: 'hidden', zIndex: 10000,
-            }}>
-              {suggestions.slice(0, 6).map(title => (
-                <div
-                  key={title}
-                  onMouseDown={() => { setSearchQuery(title); setSearchAnime(title); setShowSuggestions(false) }}
-                  style={{
-                    padding: '9px 14px', cursor: 'pointer', fontSize: 13,
-                    color: '#333', borderBottom: '1px solid #f3f4f6',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'white'}
-                >
-                  {title}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
+        {showSuggestions && suggestions.length > 0 && (
+          <div style={{
+            position: 'absolute', top: '100%', right: 0, width: 220, marginTop: 4,
+            background: 'white', borderRadius: 10,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.2)', overflow: 'hidden',
+          }}>
+            {suggestions.slice(0, 6).map(title => (
+              <div
+                key={title}
+                onMouseDown={() => { setSearchQuery(title); setSearchAnime(title); setShowSuggestions(false) }}
+                onTouchEnd={() => { setSearchQuery(title); setSearchAnime(title); setShowSuggestions(false) }}
+                style={{
+                  padding: '9px 12px', cursor: 'pointer', fontSize: 12,
+                  color: '#333', borderBottom: '1px solid #f3f4f6',
+                }}
+              >
+                {title}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* コントロールバー */}
