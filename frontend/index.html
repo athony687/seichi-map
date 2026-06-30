@@ -5,14 +5,16 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/png" href="/icon-192.png" />
   <link rel="apple-touch-icon" href="/icon-192.png" />
-  <link rel="manifest" href="/manifest.json" />npm run dev
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#7c3aed" />
   <title>Anime Seichi Map</title>
 </head>
 
 <body>
-  <header style="background-color: black; height: 50px; position: fixed; top: 0; width: 100%; z-index: 1000;">
+  <header class="wrapper">
+    <h1 class="header-logo">Seichi Map</h1>
   </header>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
