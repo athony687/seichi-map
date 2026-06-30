@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { APIProvider, Map, Marker, useMap } from '@vis.gl/react-google-maps'
 import { MarkerClusterer } from '@googlemaps/markerclusterer'
 
@@ -27,6 +27,26 @@ const MAP_STYLES = [
   { featureType: 'transit.line', elementType: 'geometry', stylers: [{ color: '#fde68a' }] },
   { featureType: 'transit.station', elementType: 'geometry', stylers: [{ color: '#fefce8' }] },
 ]
+
+const BLUE_SPOT_ICON = {
+  path: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
+  fillColor: '#1d6ef5',
+  fillOpacity: 1,
+  strokeColor: '#fff',
+  strokeWeight: 1.5,
+  scale: 1.0,
+  anchor: { x: 12, y: 12 },
+}
+
+const DIM_SPOT_ICON = {
+  path: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
+  fillColor: '#9ca3af',
+  fillOpacity: 0.5,
+  strokeColor: '#e5e7eb',
+  strokeWeight: 1,
+  scale: 0.9,
+  anchor: { x: 12, y: 12 },
+}
 
 const SPOT_ICON = {
   path: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
@@ -73,7 +93,7 @@ function SelectedSpotMarker({ spot, onClick }) {
 }
 
 // ── 聖地ピンクラスタリング（Reactの再描画から切り離し）────────────────
-function ClusteredSpotMarkers({ spots, selectedId, onSelect }) {
+function ClusteredSpotMarkers({ spots, selectedId, onSelect, highlightAnime }) {
   const map = useMap()
   const clustererRef = useRef(null)
 
@@ -89,16 +109,19 @@ function ClusteredSpotMarkers({ spots, selectedId, onSelect }) {
     const markers = spots
       .filter(s => s.id !== selectedId)
       .map(spot => {
+        const icon = highlightAnime
+          ? (spot.anime_title_en === highlightAnime ? BLUE_SPOT_ICON : DIM_SPOT_ICON)
+          : SPOT_ICON
         const m = new google.maps.Marker({
           position: { lat: spot.lat, lng: spot.lng },
           title: spot.spot_name_en,
-          icon: SPOT_ICON,
+          icon,
         })
         if (onSelect) m.addListener('click', () => onSelect(spot))
         return m
       })
     clustererRef.current.addMarkers(markers)
-  }, [spots, selectedId, onSelect])
+  }, [spots, selectedId, onSelect, highlightAnime])
 
   return null
 }
@@ -436,6 +459,19 @@ function App() {
   const [locateTick, setLocateTick] = useState(0)
   const { pos: livePos, status: gpsStatus } = useLiveGPS(!demoMode)
 
+  const [searchQuery, setSearchQuery]       = useState('')
+  const [searchAnime, setSearchAnime]       = useState(null)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+
+  const animeTitles = useMemo(() =>
+    [...new Set(spots.map(s => s.anime_title_en))].sort(), [spots])
+
+  const suggestions = useMemo(() =>
+    searchQuery.length > 0
+      ? animeTitles.filter(t => t.toLowerCase().includes(searchQuery.toLowerCase()))
+      : [],
+    [searchQuery, animeTitles])
+
 
   // データ読み込み
   useEffect(() => {
@@ -574,6 +610,7 @@ function App() {
             spots={spots}
             selectedId={selected?.id}
             onSelect={demoMode ? null : handleSpotSelect}
+            highlightAnime={searchAnime}
           />
           {selected && (
             <SelectedSpotMarker spot={selected} onClick={() => {}} />
@@ -594,6 +631,67 @@ function App() {
           )}
         </Map>
       </APIProvider>
+
+      {/* ヘッダー（検索バー） */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: 48,
+        background: '#1a1a1a', zIndex: 20,
+        display: 'flex', alignItems: 'center', padding: '0 16px',
+      }}>
+        <div style={{ position: 'relative', flex: 1, maxWidth: 400 }}>
+          <span style={{
+            position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
+            fontSize: 14, pointerEvents: 'none',
+          }}>🔍</span>
+          <input
+            type="text"
+            placeholder="seichi-map内を検索"
+            value={searchQuery}
+            onChange={e => { setSearchQuery(e.target.value); setSearchAnime(null); setShowSuggestions(true) }}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              border: 'none', borderRadius: 20, padding: '7px 32px 7px 34px',
+              fontSize: 13, fontWeight: 500,
+              background: 'rgba(255,255,255,0.12)', color: '#fff',
+              outline: 'none',
+            }}
+          />
+          {searchQuery && (
+            <button
+              onClick={() => { setSearchQuery(''); setSearchAnime(null); setShowSuggestions(false) }}
+              style={{
+                position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)',
+                fontSize: 14, cursor: 'pointer', padding: 0, lineHeight: 1,
+              }}
+            >✕</button>
+          )}
+          {showSuggestions && suggestions.length > 0 && (
+            <div style={{
+              position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4,
+              background: 'white', borderRadius: 12,
+              boxShadow: '0 4px 16px rgba(0,0,0,0.18)', overflow: 'hidden', zIndex: 30,
+            }}>
+              {suggestions.slice(0, 6).map(title => (
+                <div
+                  key={title}
+                  onMouseDown={() => { setSearchQuery(title); setSearchAnime(title); setShowSuggestions(false) }}
+                  style={{
+                    padding: '9px 14px', cursor: 'pointer', fontSize: 13,
+                    color: '#333', borderBottom: '1px solid #f3f4f6',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'white'}
+                >
+                  {title}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* コントロールバー */}
       <div style={{
