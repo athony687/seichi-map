@@ -28,9 +28,9 @@ const MAP_STYLES = [
   { featureType: 'transit.station', elementType: 'geometry', stylers: [{ color: '#fefce8' }] },
 ]
 
-const BLUE_SPOT_ICON = {
+const RED_PIN_ICON = {
   path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z',
-  fillColor: '#16a34a',
+  fillColor: '#EA4335',
   fillOpacity: 1,
   strokeColor: '#fff',
   strokeWeight: 1.5,
@@ -107,11 +107,9 @@ function ClusteredSpotMarkers({ spots, selectedId, onSelect, highlightAnime }) {
     if (!clustererRef.current) return
     clustererRef.current.clearMarkers()
     const markers = spots
-      .filter(s => s.id !== selectedId)
+      .filter(s => s.id !== selectedId && !(highlightAnime && s.anime_title_en === highlightAnime))
       .map(spot => {
-        const icon = highlightAnime
-          ? (spot.anime_title_en === highlightAnime ? BLUE_SPOT_ICON : DIM_SPOT_ICON)
-          : SPOT_ICON
+        const icon = highlightAnime ? DIM_SPOT_ICON : SPOT_ICON
         const m = new google.maps.Marker({
           position: { lat: spot.lat, lng: spot.lng },
           title: spot.spot_name_en,
@@ -605,13 +603,28 @@ function App() {
             />
           ))}
 
-          {/* 聖地ピン（クラスタリング） */}
+          {/* 聖地ピン（クラスタリング、検索ヒットは除外） */}
           <ClusteredSpotMarkers
             spots={spots}
             selectedId={selected?.id}
             onSelect={demoMode ? null : handleSpotSelect}
             highlightAnime={searchAnime}
           />
+
+          {/* 検索ヒットピン（クラスタリングなし・赤ピン） */}
+          {searchAnime && spots
+            .filter(s => s.anime_title_en === searchAnime && s.id !== selected?.id)
+            .map(s => (
+              <Marker
+                key={s.id}
+                position={{ lat: s.lat, lng: s.lng }}
+                title={s.spot_name_en}
+                icon={RED_PIN_ICON}
+                zIndex={50}
+                onClick={() => handleSpotSelect(s)}
+              />
+            ))
+          }
           {selected && (
             <SelectedSpotMarker spot={selected} onClick={() => {}} />
           )}
