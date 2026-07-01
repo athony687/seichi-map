@@ -457,9 +457,17 @@ function App() {
   const [locateTick, setLocateTick] = useState(0)
   const { pos: livePos, status: gpsStatus } = useLiveGPS(!demoMode)
 
-  const [searchQuery, setSearchQuery]       = useState('')
-  const [searchAnime, setSearchAnime]       = useState(null)
+  const [searchQuery, setSearchQuery]         = useState('')
+  const [searchAnime, setSearchAnime]         = useState(null)
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [animateSearch, setAnimateSearch]     = useState(false)
+
+  useEffect(() => {
+    if (!searchAnime) { setAnimateSearch(false); return }
+    setAnimateSearch(true)
+    const t = setTimeout(() => setAnimateSearch(false), 2500)
+    return () => clearTimeout(t)
+  }, [searchAnime])
 
   const animeTitles = useMemo(() =>
     [...new Set(spots.map(s => s.anime_title_en))].sort(), [spots])
@@ -621,6 +629,7 @@ function App() {
                 title={s.spot_name_en}
                 icon={RED_PIN_ICON}
                 zIndex={50}
+                animation={animateSearch ? google.maps.Animation.BOUNCE : null}
                 onClick={() => handleSpotSelect(s)}
               />
             ))
@@ -647,7 +656,7 @@ function App() {
 
       {/* 検索バー（既存ヘッダー右側に重ねる） */}
       <div style={{
-        position: 'fixed', top: 0, left: 105, right: 8, height: 50,
+        position: 'fixed', top: 0, left: 145, right: 8, height: 50,
         display: 'flex', alignItems: 'center',
         zIndex: 2000,
       }}>
@@ -658,7 +667,7 @@ function App() {
           }}>🔍</span>
           <input
             type="text"
-            placeholder="seichi-map内を検索"
+            placeholder="Search here"
             value={searchQuery}
             onChange={e => { setSearchQuery(e.target.value); setSearchAnime(null); setShowSuggestions(true) }}
             onFocus={() => setShowSuggestions(true)}
