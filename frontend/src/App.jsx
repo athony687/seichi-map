@@ -277,7 +277,7 @@ function Card({ spot, currentPos, onClose }) {
     if (introCache[spot.id]) {
       setIntro(introCache[spot.id]); setLoading(false); setAiOk(true); return
     }
-    setIntro(staticIntro); setLoading(true); setAiOk(false)
+    setIntro(null); setLoading(true); setAiOk(false)
     fetch(`${BACKEND_URL}/generate-intro`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
