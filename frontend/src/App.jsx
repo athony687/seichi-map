@@ -800,6 +800,7 @@ function App() {
   const [searchQuery, setSearchQuery]         = useState('')
   const [searchAnime, setSearchAnime]         = useState(null)
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [showSpotList, setShowSpotList]       = useState(false)
   const [animateSearch, setAnimateSearch]     = useState(false)
 
   useEffect(() => {
@@ -817,6 +818,14 @@ function App() {
       ? animeTitles.filter(t => t.toLowerCase().includes(searchQuery.toLowerCase()))
       : [],
     [searchQuery, animeTitles])
+
+  const searchAnimeSpots = useMemo(() =>
+    searchAnime
+      ? spots
+        .filter(s => s.anime_title_en === searchAnime)
+        .sort((a, b) => a.spot_name_en.localeCompare(b.spot_name_en))
+      : [],
+    [spots, searchAnime])
 
 
   // データ読み込み
@@ -889,6 +898,20 @@ function App() {
   const handleSpotSelect = useCallback((spot) => {
     setSelected(spot)
   }, [])
+
+  const handleAnimeSelect = title => {
+    setSearchQuery(title)
+    setSearchAnime(title)
+    setShowSuggestions(false)
+    setShowSpotList(true)
+  }
+
+  const handleSearchSpotSelect = spot => {
+    setSelectedTourist(null)
+    setSelected(spot)
+    setShowSpotList(false)
+    setShowSuggestions(false)
+  }
 
   const handleMapClick = (e) => {
     const ll = e.detail?.latLng
@@ -980,13 +1003,13 @@ function App() {
           )}
 
           {/* 現在地マーカー */}
-          {activePos && (
+          {activePos && window.google?.maps?.SymbolPath?.CIRCLE && (
             <Marker
               position={activePos}
               title="You are here"
               zIndex={999}
               icon={{
-                path: google.maps.SymbolPath.CIRCLE,
+                path: window.google.maps.SymbolPath.CIRCLE,
                 fillColor: demoMode ? THEME : '#1d6ef5',
                 fillOpacity: 1, strokeColor: '#fff', strokeWeight: 3, scale: 10,
               }}
@@ -1010,10 +1033,10 @@ function App() {
             type="text"
             placeholder="Search by anime title"
             value={searchQuery}
-            onChange={e => { setSearchQuery(e.target.value); setSearchAnime(null); setShowSuggestions(true) }}
-            onFocus={() => setShowSuggestions(true)}
-            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-            onKeyDown={e => { if (e.key === 'Escape') { setShowSuggestions(false); e.target.blur() } }}
+            onChange={e => { setSearchQuery(e.target.value); setSearchAnime(null); setShowSpotList(false); setShowSuggestions(true) }}
+            onFocus={() => { if (searchAnime) setShowSpotList(true); else setShowSuggestions(true) }}
+            onBlur={() => setTimeout(() => { setShowSuggestions(false); setShowSpotList(false) }, 200)}
+            onKeyDown={e => { if (e.key === 'Escape') { setShowSuggestions(false); setShowSpotList(false); e.target.blur() } }}
             style={{
               width: '100%', boxSizing: 'border-box',
               border: 'none', borderRadius: 14, padding: '6px 26px 6px 26px',
@@ -1026,7 +1049,7 @@ function App() {
             <button
               onMouseDown={e => {
                 e.preventDefault()
-                setSearchQuery(''); setSearchAnime(null); setShowSuggestions(false)
+                setSearchQuery(''); setSearchAnime(null); setShowSuggestions(false); setShowSpotList(false)
               }}
               style={{
                 position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)',
@@ -1047,10 +1070,10 @@ function App() {
                 key={title}
                 onMouseDown={e => {
                   e.preventDefault()
-                  setSearchQuery(title); setSearchAnime(title); setShowSuggestions(false)
+                  handleAnimeSelect(title)
                 }}
                 onTouchEnd={() => {
-                  setSearchQuery(title); setSearchAnime(title); setShowSuggestions(false)
+                  handleAnimeSelect(title)
                 }}
                 style={{
                   padding: '10px 12px', cursor: 'pointer', fontSize: 14,
@@ -1059,6 +1082,46 @@ function App() {
               >
                 {title}
               </div>
+            ))}
+          </div>
+        )}
+        {showSpotList && searchAnime && searchAnimeSpots.length > 0 && (
+          <div style={{
+            position: 'absolute', top: '100%', right: 0, width: 280, maxWidth: 'calc(100vw - 16px)',
+            maxHeight: 280, marginTop: 4,
+            background: 'white', borderRadius: 10,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.2)', overflowY: 'auto', zIndex: 2001,
+          }}>
+            <div style={{
+              padding: '9px 12px', fontSize: 11, fontWeight: 700,
+              color: '#777', borderBottom: '1px solid #f3f4f6',
+              textTransform: 'uppercase',
+            }}>
+              {searchAnimeSpots.length} seichi spots
+            </div>
+            {searchAnimeSpots.map(spot => (
+              <button
+                key={spot.id}
+                onMouseDown={e => {
+                  e.preventDefault()
+                  handleSearchSpotSelect(spot)
+                }}
+                onTouchEnd={() => handleSearchSpotSelect(spot)}
+                style={{
+                  width: '100%', padding: '10px 12px',
+                  background: 'white', border: 'none', borderBottom: '1px solid #f3f4f6',
+                  cursor: 'pointer', textAlign: 'left',
+                }}
+              >
+                <div style={{ fontSize: 14, color: '#222', fontWeight: 700, lineHeight: 1.35 }}>
+                  {spot.spot_name_en}
+                </div>
+                {spot.area && (
+                  <div style={{ fontSize: 12, color: '#777', marginTop: 2, lineHeight: 1.35 }}>
+                    {spot.area}
+                  </div>
+                )}
+              </button>
             ))}
           </div>
         )}
