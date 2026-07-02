@@ -263,7 +263,7 @@ const introCache = {}
 const isPlaceholder = t => !t || t.startsWith('PLACEHOLDER')
 
 function Card({ spot, currentPos, onClose }) {
-  const staticIntro = isPlaceholder(spot.intro_short_en) ? GENERIC_INTRO : spot.intro_short_en
+  const staticIntro = spot.generic_intro_en || (!isPlaceholder(spot.intro_short_en) ? spot.intro_short_en : GENERIC_INTRO)
   const [intro, setIntro]   = useState(introCache[spot.id] || staticIntro)
   const [loading, setLoading] = useState(!introCache[spot.id])
   const [aiOk, setAiOk]     = useState(!!introCache[spot.id])
