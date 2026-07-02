@@ -256,6 +256,25 @@ function LiveCamera({ livePos, selected, locateTick }) {
   return null
 }
 
+// ── 検索カメラ（検索ヒット時に該当ピンへズーム）────────────────────────
+function SearchCamera({ spots, searchAnime }) {
+  const map = useMap()
+  useEffect(() => {
+    if (!map || !searchAnime) return
+    const matches = spots.filter(s => s.anime_title_en === searchAnime)
+    if (!matches.length) return
+    if (matches.length === 1) {
+      map.panTo({ lat: matches[0].lat, lng: matches[0].lng })
+      map.setZoom(15)
+    } else {
+      const bounds = new google.maps.LatLngBounds()
+      matches.forEach(s => bounds.extend({ lat: s.lat, lng: s.lng }))
+      map.fitBounds(bounds, 80)
+    }
+  }, [searchAnime, map])
+  return null
+}
+
 // ── AIキャッシュ ─────────────────────────────────────────────────────────
 const introCache = {}
 
@@ -919,6 +938,7 @@ function App() {
           {!demoMode && (
             <LiveCamera livePos={livePos} selected={selected} locateTick={locateTick} />
           )}
+          <SearchCamera spots={spots} searchAnime={searchAnime} />
 
           {/* 観光スポットピン */}
           {touristSpots.map(t => (
@@ -988,7 +1008,7 @@ function App() {
           }}>🔍</span>
           <input
             type="text"
-            placeholder="Search here"
+            placeholder="Search by anime title"
             value={searchQuery}
             onChange={e => { setSearchQuery(e.target.value); setSearchAnime(null); setShowSuggestions(true) }}
             onFocus={() => setShowSuggestions(true)}
