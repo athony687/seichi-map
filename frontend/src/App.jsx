@@ -356,6 +356,11 @@ function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavori
             🚶 {distText}
           </div>
         )}
+        {spot.hours && (
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>
+            🕐 {spot.hours}
+          </div>
+        )}
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: 4,
           marginTop: 8, padding: '4px 10px', borderRadius: 20,

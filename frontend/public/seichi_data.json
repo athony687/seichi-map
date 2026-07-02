@@ -21,7 +21,8 @@
     "verified": false,
     "source": "",
     "generic_intro_en": "",
-    "official_url": "https://anime-eupho.com/"
+    "official_url": "https://anime-eupho.com/",
+    "hours": "Always open"
   },
   {
     "id": "nishinomiya-haruhi-01",
@@ -43,7 +44,8 @@
     "verified": false,
     "source": "",
     "generic_intro_en": "",
-    "official_url": ""
+    "official_url": "",
+    "hours": "Always open"
   },
   {
     "id": "kyoto-tamako-01",
@@ -67,7 +69,8 @@
     "verified": false,
     "source": "",
     "generic_intro_en": "",
-    "official_url": ""
+    "official_url": "",
+    "hours": "Arcade always open · Shops approx. 10:00–19:00"
   },
   {
     "id": "osaka-ryuoh-01",
@@ -91,7 +94,8 @@
     "verified": false,
     "source": "https://libert.co.jp/pilgrimage-guild/osaka-pilgrimage/",
     "generic_intro_en": "",
-    "official_url": ""
+    "official_url": "",
+    "hours": "10:00–20:00 (last entry 19:30) · Daily"
   },
   {
     "id": "osaka-bakemono-01",
@@ -115,7 +119,8 @@
     "verified": false,
     "source": "https://libert.co.jp/pilgrimage-guild/osaka-pilgrimage/",
     "generic_intro_en": "",
-    "official_url": "https://www.monogatari-series.com/"
+    "official_url": "https://www.monogatari-series.com/",
+    "hours": "Arcade always open · Shops approx. 10:00–20:00"
   },
   {
     "id": "osaka-hypmic-01",
@@ -140,7 +145,8 @@
     "verified": false,
     "source": "https://www.osaka-pref-rivercam.info/archives/105",
     "generic_intro_en": "",
-    "official_url": "https://hypnosismic.com/"
+    "official_url": "https://hypnosismic.com/",
+    "hours": "Always open"
   },
   {
     "id": "osaka-conan-01",
@@ -165,7 +171,8 @@
     "verified": false,
     "source": "https://www.osaka-pref-rivercam.info/archives/105",
     "generic_intro_en": "",
-    "official_url": "https://www.ntv.co.jp/conan/"
+    "official_url": "https://www.ntv.co.jp/conan/",
+    "hours": "Castle tower 9:00–17:00 (last entry 16:30) · Daily · Park always open"
   },
   {
     "id": "osaka-conan-02",
@@ -188,7 +195,8 @@
     "verified": false,
     "source": "https://libert.co.jp/pilgrimage-guild/osaka-pilgrimage/",
     "generic_intro_en": "",
-    "official_url": "https://www.ntv.co.jp/conan/"
+    "official_url": "https://www.ntv.co.jp/conan/",
+    "hours": ""
   },
   {
     "id": "tokyo-kiminona-01",
@@ -212,7 +220,8 @@
     "verified": false,
     "source": "https://www.enjoytokyo.jp/article/202229/",
     "generic_intro_en": "",
-    "official_url": "https://www.kiminona.com/"
+    "official_url": "https://www.kiminona.com/",
+    "hours": "Always open"
   },
   {
     "id": "tokyo-lovelive-01",
@@ -236,7 +245,8 @@
     "verified": false,
     "source": "https://www.gotokyo.org/jp/spot/1771/index.html",
     "generic_intro_en": "",
-    "official_url": "https://www.lovelive-anime.jp/"
+    "official_url": "https://www.lovelive-anime.jp/",
+    "hours": "Always open"
   },
   {
     "id": "tokyo-bocchi-01",
@@ -260,7 +270,8 @@
     "verified": false,
     "source": "https://magazine.tabist.co.jp/other/15766/",
     "generic_intro_en": "",
-    "official_url": "https://bocchi.rocks/"
+    "official_url": "https://bocchi.rocks/",
+    "hours": "Always open"
   },
   {
     "id": "tokyo-steinsgate-01",
@@ -283,7 +294,8 @@
     "verified": false,
     "source": "https://www.timeout.jp/tokyo/ja/things-to-do/tokyo-shrines-manga-and-anime",
     "generic_intro_en": "",
-    "official_url": "https://steinsgate.jp/"
+    "official_url": "https://steinsgate.jp/",
+    "hours": "Always open"
   },
   {
     "id": "tokyo-sailormoon-01",
@@ -306,7 +318,8 @@
     "verified": false,
     "source": "https://www.enjoytokyo.jp/article/202229/",
     "generic_intro_en": "",
-    "official_url": "https://www.sailormoon-official.com/"
+    "official_url": "https://www.sailormoon-official.com/",
+    "hours": "Always open"
   },
   {
     "id": "saitama-luckystar-01",
@@ -330,7 +343,8 @@
     "verified": false,
     "source": "https://saitamabiyori.com/10070/",
     "generic_intro_en": "",
-    "official_url": ""
+    "official_url": "",
+    "hours": "Always open"
   },
   {
     "id": "saitama-anohana-01",
@@ -353,7 +367,8 @@
     "verified": false,
     "source": "https://hayagumo.xyz/anohana-siori/",
     "generic_intro_en": "",
-    "official_url": "https://anohana.jp/"
+    "official_url": "https://anohana.jp/",
+    "hours": "Always open"
   },
   {
     "id": "saitama-anohana-02",
@@ -377,7 +392,8 @@
     "verified": false,
     "source": "https://hayagumo.xyz/anohana-siori/",
     "generic_intro_en": "",
-    "official_url": "https://anohana.jp/"
+    "official_url": "https://anohana.jp/",
+    "hours": "Always open"
   },
   {
     "id": "saitama-tsukigakirei-01",
@@ -401,7 +417,8 @@
     "verified": false,
     "source": "https://www.content-everyday.com/ja/news/4709/",
     "generic_intro_en": "",
-    "official_url": "https://tsukigakirei.jp/"
+    "official_url": "https://tsukigakirei.jp/",
+    "hours": "Always open"
   },
   {
     "id": "saitama-yamanosusume-01",
@@ -424,7 +441,8 @@
     "verified": false,
     "source": "https://www.nippon.com/ja/japan-topics/b00134/",
     "generic_intro_en": "",
-    "official_url": ""
+    "official_url": "",
+    "hours": "Open daily · Recommended sunrise to sunset"
   },
   {
     "id": "chiba-oregairu-01",
@@ -449,7 +467,8 @@
     "verified": false,
     "source": "https://pro-botti.com/chiba-oregairu2/",
     "generic_intro_en": "",
-    "official_url": ""
+    "official_url": "",
+    "hours": "Always open"
   },
   {
     "id": "chiba-oregairu-02",
@@ -472,7 +491,8 @@
     "verified": false,
     "source": "https://anitora5050.com/oregairu-travel/",
     "generic_intro_en": "",
-    "official_url": ""
+    "official_url": "",
+    "hours": "Always open"
   },
   {
     "id": "chiba-oregairu-03",
@@ -495,7 +515,8 @@
     "verified": false,
     "source": "https://harurunblog.com/",
     "generic_intro_en": "",
-    "official_url": ""
+    "official_url": "",
+    "hours": "Always open"
   },
   {
     "id": "chiba-oreimo-01",
@@ -519,7 +540,8 @@
     "verified": false,
     "source": "https://libert.co.jp/pilgrimage-guild/chiba-pilgrimage/",
     "generic_intro_en": "",
-    "official_url": ""
+    "official_url": "",
+    "hours": ""
   },
   {
     "id": "chiba-oreimo-02",
@@ -543,7 +565,8 @@
     "verified": false,
     "source": "https://pro-botti.com/chiba-oreimo/",
     "generic_intro_en": "",
-    "official_url": ""
+    "official_url": "",
+    "hours": "Always open"
   },
   {
     "id": "kugenuma-bunnygirl-01",
@@ -569,7 +592,8 @@
     "verified": true,
     "source": "",
     "generic_intro_en": "",
-    "official_url": "https://aobuta.jp/"
+    "official_url": "https://aobuta.jp/",
+    "hours": "Always open"
   },
   {
     "id": "yokohama-bsd-01",
@@ -594,7 +618,8 @@
     "verified": true,
     "source": "",
     "generic_intro_en": "",
-    "official_url": ""
+    "official_url": "",
+    "hours": "Sky Garden 10:00–21:00 (Fri & Sat until 22:00) · Daily"
   },
   {
     "id": "hakone-initiald-01",
@@ -619,7 +644,8 @@
     "verified": true,
     "source": "",
     "generic_intro_en": "",
-    "official_url": ""
+    "official_url": "",
+    "hours": "Always open"
   },
   {
     "id": "route134-yowapeda-01",
@@ -644,7 +670,8 @@
     "verified": true,
     "source": "",
     "generic_intro_en": "",
-    "official_url": "https://www.yowapeda.com/"
+    "official_url": "https://www.yowapeda.com/",
+    "hours": "Always open"
   },
   {
     "id": "hakone-eva-01",
@@ -669,7 +696,8 @@
     "verified": true,
     "source": "",
     "generic_intro_en": "",
-    "official_url": "https://www.evangelion.co.jp/"
+    "official_url": "https://www.evangelion.co.jp/",
+    "hours": "Always open"
   },
   {
     "id": "kawasaki-girlsbandcry-01",
@@ -694,7 +722,8 @@
     "verified": true,
     "source": "",
     "generic_intro_en": "",
-    "official_url": "https://girlsbandcry.com/"
+    "official_url": "https://girlsbandcry.com/",
+    "hours": "Always open"
   },
   {
     "id": "ida-afterrain-01",
@@ -719,7 +748,8 @@
     "verified": true,
     "source": "",
     "generic_intro_en": "",
-    "official_url": ""
+    "official_url": "",
+    "hours": "Always open"
   },
   {
     "id": "yuigahama-ikamusume-01",
@@ -744,7 +774,8 @@
     "verified": true,
     "source": "",
     "generic_intro_en": "",
-    "official_url": ""
+    "official_url": "",
+    "hours": "Always open"
   },
   {
     "id": "shinyokohama-vampire-01",
@@ -769,7 +800,8 @@
     "verified": true,
     "source": "",
     "generic_intro_en": "",
-    "official_url": "https://kyuuketsuki-sugu.com/"
+    "official_url": "https://kyuuketsuki-sugu.com/",
+    "hours": ""
   },
   {
     "id": "yokohama-hamatora-01",
@@ -795,7 +827,8 @@
     "verified": true,
     "source": "",
     "generic_intro_en": "",
-    "official_url": ""
+    "official_url": "",
+    "hours": "Sky Garden 10:00–21:00 (Fri & Sat until 22:00) · Daily"
   },
   {
     "id": "kamakura-hanayamata-01",
@@ -820,7 +853,8 @@
     "verified": true,
     "source": "",
     "generic_intro_en": "",
-    "official_url": ""
+    "official_url": "",
+    "hours": ""
   },
   {
     "id": "okurayama-natsuarashi-01",
@@ -845,6 +879,7 @@
     "verified": true,
     "source": "",
     "generic_intro_en": "",
-    "official_url": ""
+    "official_url": "",
+    "hours": "Always open"
   }
 ]
