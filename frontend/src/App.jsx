@@ -450,6 +450,140 @@ function GpsLocateButton({ status, onLocate }) {
   )
 }
 
+// ── 設定画面 ──────────────────────────────────────────────────────────────
+function SettingsScreen({ userPrefs, onSave, onReset, onClose }) {
+  const p = userPrefs || {}
+  const [nickname,    setNickname]    = useState(p.nickname    || '')
+  const [familiarity, setFamiliarity] = useState(p.familiarity || '')
+  const [mood,        setMood]        = useState(p.mood        || '')
+  const [travelStyle, setTravelStyle] = useState(p.travelStyle || '')
+  const [confirmReset, setConfirmReset] = useState(false)
+
+  const selBtn = (current, value, emoji, label, setter) => {
+    const active = current === value
+    return (
+      <button key={value} onClick={() => setter(active ? '' : value)} style={{
+        padding: '9px 12px', borderRadius: 10, cursor: 'pointer', marginRight: 8, marginBottom: 8,
+        border: `2px solid ${active ? THEME : '#e5e7eb'}`,
+        background: active ? '#ede9ff' : '#fff',
+        color: active ? THEME : '#444',
+        fontSize: 13, fontWeight: active ? 700 : 500,
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+      }}>
+        <span>{emoji}</span>{label}
+      </button>
+    )
+  }
+
+  const section = (title, children) => (
+    <div style={{ marginBottom: 28 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: '#aaa', letterSpacing: '0.08em',
+        textTransform: 'uppercase', marginBottom: 12 }}>{title}</div>
+      {children}
+    </div>
+  )
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 4000, background: '#fff', overflowY: 'auto' }}>
+      {/* ヘッダー */}
+      <div style={{
+        position: 'sticky', top: 0, background: '#fff',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '14px 20px', borderBottom: '1px solid #f0f0f0', zIndex: 1,
+      }}>
+        <div style={{ fontSize: 17, fontWeight: 800, color: '#1a1a1a' }}>Settings</div>
+        <button onClick={onClose} style={{
+          background: '#f3f4f6', border: 'none', borderRadius: '50%',
+          width: 32, height: 32, cursor: 'pointer', fontSize: 16,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>✕</button>
+      </div>
+
+      <div style={{ padding: '24px 20px' }}>
+
+        {/* ニックネーム */}
+        {section('Nickname', <>
+          <input
+            type="text" placeholder="Your nickname…" value={nickname}
+            onChange={e => setNickname(e.target.value)}
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              border: '2px solid #e5e7eb', borderRadius: 10,
+              padding: '10px 12px', fontSize: 16, outline: 'none',
+            }}
+            onFocus={e => e.target.style.borderColor = THEME}
+            onBlur={e => e.target.style.borderColor = '#e5e7eb'}
+          />
+          <div style={{ fontSize: 11, color: '#bbb', marginTop: 6 }}>
+            Leave blank to remove your nickname.
+          </div>
+        </>)}
+
+        {/* アニメ詳しさ */}
+        {section('Anime familiarity', <div>
+          {selBtn(familiarity, 'Newcomer',   '🌱', 'Newcomer',   setFamiliarity)}
+          {selBtn(familiarity, 'Casual fan', '😊', 'Casual fan', setFamiliarity)}
+          {selBtn(familiarity, 'Big fan',    '⭐', 'Big fan',    setFamiliarity)}
+        </div>)}
+
+        {/* 好きな雰囲気 */}
+        {section('Favorite mood', <div>
+          {selBtn(mood, 'Emotional',    '😢', 'Emotional',    setMood)}
+          {selBtn(mood, 'Exciting',     '⚡', 'Exciting',     setMood)}
+          {selBtn(mood, 'Heartwarming', '🌸', 'Heartwarming', setMood)}
+          {selBtn(mood, 'Romance',      '💕', 'Romance',      setMood)}
+        </div>)}
+
+        {/* 旅スタイル */}
+        {section('Travel style', <div>
+          {selBtn(travelStyle, 'Taking photos',       '📸', 'Taking photos',       setTravelStyle)}
+          {selBtn(travelStyle, 'Relaxed walking',     '🚶', 'Relaxed walking',     setTravelStyle)}
+          {selBtn(travelStyle, 'Visiting many spots', '🗺️', 'Visiting many spots', setTravelStyle)}
+        </div>)}
+
+        {/* 保存ボタン */}
+        <button
+          onClick={() => onSave({ nickname: nickname.trim(), familiarity, mood, travelStyle })}
+          style={{
+            width: '100%', padding: '13px', borderRadius: 12,
+            background: THEME, color: '#fff', border: 'none',
+            fontSize: 15, fontWeight: 700, cursor: 'pointer', marginBottom: 16,
+          }}
+        >Save changes</button>
+
+        {/* リセット */}
+        <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: 20 }}>
+          {!confirmReset ? (
+            <button onClick={() => setConfirmReset(true)} style={{
+              width: '100%', padding: '11px', borderRadius: 12,
+              background: 'none', border: '2px solid #fca5a5',
+              color: '#ef4444', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+            }}>🗑 Reset all preferences</button>
+          ) : (
+            <div style={{ background: '#fef2f2', borderRadius: 12, padding: '16px' }}>
+              <div style={{ fontSize: 13, color: '#991b1b', fontWeight: 600, marginBottom: 12 }}>
+                Are you sure? This will clear all saved preferences and show the welcome survey again.
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={onReset} style={{
+                  flex: 1, padding: '10px', borderRadius: 10,
+                  background: '#ef4444', color: '#fff', border: 'none',
+                  fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                }}>Yes, reset</button>
+                <button onClick={() => setConfirmReset(false)} style={{
+                  flex: 1, padding: '10px', borderRadius: 10,
+                  background: '#fff', border: '2px solid #e5e7eb',
+                  color: '#555', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                }}>Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── アンケート（localStorage） ────────────────────────────────────────────
 const SURVEY_KEY = 'seichi_prefs'
 const loadPrefs  = () => { try { const r = localStorage.getItem(SURVEY_KEY); return r ? JSON.parse(r) : null } catch { return null } }
@@ -614,8 +748,24 @@ function App() {
   const [locateTick, setLocateTick] = useState(0)
   const { pos: livePos, status: gpsStatus } = useLiveGPS(!demoMode)
 
-  const [userPrefs, setUserPrefs] = useState(() => loadPrefs())
+  const [userPrefs, setUserPrefs]   = useState(() => loadPrefs())
   const [showSurvey, setShowSurvey] = useState(() => !loadPrefs())
+  const [showSettings, setShowSettings] = useState(false)
+
+  const handleSaveSettings = newPrefs => {
+    savePrefs(newPrefs)
+    setUserPrefs(newPrefs)
+    Object.keys(introCache).forEach(k => delete introCache[k])
+    setShowSettings(false)
+  }
+
+  const handleResetSettings = () => {
+    localStorage.removeItem(SURVEY_KEY)
+    setUserPrefs(null)
+    Object.keys(introCache).forEach(k => delete introCache[k])
+    setShowSettings(false)
+    setShowSurvey(true)
+  }
 
   const [searchQuery, setSearchQuery]         = useState('')
   const [searchAnime, setSearchAnime]         = useState(null)
@@ -892,6 +1042,15 @@ function App() {
         zIndex: 10, userSelect: 'none',
         maxWidth: 'calc(100vw - 24px)', flexWrap: 'wrap',
       }}>
+        {/* 設定ボタン */}
+        <button
+          onClick={() => setShowSettings(true)}
+          style={{
+            fontSize: 15, background: 'none', border: 'none',
+            cursor: 'pointer', lineHeight: 1, padding: '0 2px',
+          }}
+        >⚙️</button>
+
         {/* DEMO / LIVE 切替 */}
         <button
           onClick={() => { setDemoMode(m => !m); handleReset() }}
@@ -977,6 +1136,14 @@ function App() {
       )}
       {showSurvey && (
         <OnboardingSurvey onComplete={prefs => { setUserPrefs(prefs); setShowSurvey(false) }} />
+      )}
+      {showSettings && (
+        <SettingsScreen
+          userPrefs={userPrefs}
+          onSave={handleSaveSettings}
+          onReset={handleResetSettings}
+          onClose={() => setShowSettings(false)}
+        />
       )}
       {!selected && selectedTourist && (
         <TouristPopup spot={selectedTourist} onClose={() => setSelectedTourist(null)} />
