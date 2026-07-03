@@ -90,6 +90,22 @@ function formatDistance(meters) {
   return `About ${(meters / 1000).toFixed(1)}km`
 }
 
+function getWeatherMessage(tags = [], weather) {
+  const t = new Set(tags)
+  if (t.has('sunset') && weather === 'evening') return "🌇 A beautiful time for the sunset view."
+  if (t.has('indoor')) {
+    if (weather === 'rainy')   return "☔ Sheltered spot — comfortable even in the rain."
+    if (weather === 'sunny')   return "☀️ Great day — pop in and enjoy."
+    if (weather === 'cloudy')  return "☁️ Cosy indoors — a solid pick for today."
+    if (weather === 'evening') return "🌆 Open in the evening — good timing to visit."
+  }
+  if (weather === 'rainy')   return "☔ Watch your step — this spot is outdoors."
+  if (weather === 'sunny')   return "☀️ Perfect weather for a stroll here."
+  if (weather === 'cloudy')  return "☁️ Mild weather — good for a relaxed visit."
+  if (weather === 'evening') return "🌇 Lovely time for an evening walk here."
+  return null
+}
+
 // ── 選択中スポット専用マーカー（パルスをここだけで持つ）─────────────────
 function SelectedSpotMarker({ spot, onClick }) {
   const [pulse, setPulse] = useState(false)
@@ -291,7 +307,7 @@ const introCache = {}
 // ── スポットカード（距離表示付き）────────────────────────────────────────
 const isPlaceholder = t => !t || t.startsWith('PLACEHOLDER')
 
-function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavorite }) {
+function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavorite, weather }) {
   const staticIntro = spot.generic_intro_en || (!isPlaceholder(spot.intro_short_en) ? spot.intro_short_en : GENERIC_INTRO)
   const [intro, setIntro]   = useState(introCache[spot.id] || staticIntro)
   const [loading, setLoading] = useState(!introCache[spot.id])
@@ -390,6 +406,13 @@ function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavori
             🕐 {spot.hours}
           </div>
         )}
+        {(() => { const msg = getWeatherMessage(spot.tags, weather); return msg ? (
+          <div style={{
+            marginTop: 6, padding: '4px 10px', borderRadius: 10,
+            background: 'rgba(255,255,255,0.18)',
+            fontSize: 12, color: '#fff', display: 'inline-block',
+          }}>{msg}</div>
+        ) : null })()}
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: 4,
           marginTop: 8, padding: '4px 10px', borderRadius: 20,
@@ -887,6 +910,7 @@ function App() {
   const [userPrefs, setUserPrefs]   = useState(() => loadPrefs())
   const [showSurvey, setShowSurvey] = useState(() => !loadPrefs())
   const [showSettings, setShowSettings] = useState(false)
+  const [weather, setWeather] = useState('sunny')
 
   const [favorites, setFavorites] = useState(() => loadFavorites())
   const toggleFavorite = useCallback(id => {
@@ -1290,6 +1314,21 @@ function App() {
           {demoMode ? 'LIVE' : 'DEMO'}
         </button>
 
+        {/* 天気切替ボタン */}
+        <span style={{ width: 1, height: 16, background: '#e0e0e0', margin: '0 1px' }} />
+        {[['sunny','☀️'],['cloudy','☁️'],['rainy','🌧️'],['evening','🌇']].map(([key, emoji]) => (
+          <button
+            key={key}
+            onClick={() => setWeather(key)}
+            style={{
+              fontSize: 14, lineHeight: 1, padding: '2px 3px',
+              background: weather === key ? '#ede9ff' : 'none',
+              border: `1.5px solid ${weather === key ? THEME : 'transparent'}`,
+              borderRadius: 6, cursor: 'pointer',
+            }}
+          >{emoji}</button>
+        ))}
+
         {demoMode && (<>
           {/* 開始位置指定 */}
           <button
@@ -1358,7 +1397,7 @@ function App() {
         />
       )}
       {selected && (
-        <Card spot={selected} currentPos={activePos} onClose={() => setSelected(null)} userPrefs={userPrefs} isFavorite={favorites.has(selected.id)} onToggleFavorite={toggleFavorite} />
+        <Card spot={selected} currentPos={activePos} onClose={() => setSelected(null)} userPrefs={userPrefs} isFavorite={favorites.has(selected.id)} onToggleFavorite={toggleFavorite} weather={weather} />
       )}
       {/* GPSローディングオーバーレイ */}
       {!gpsReady && (
