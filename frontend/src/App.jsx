@@ -547,6 +547,43 @@ function TouristPopup({ spot, onClose }) {
   )
 }
 
+// ── 天気自動取得 ──────────────────────────────────────────────────────────
+const _wxCache = {}
+const WX_GRID  = 0.5           // 0.5° グリッド単位でキャッシュ
+const WX_TTL   = 20 * 60 * 1000  // 20分
+
+function _wmoMap(code, isDay) {
+  if (!isDay)             return 'evening'
+  if (code <= 1)          return 'sunny'
+  if (code <= 3 || code === 45 || code === 48) return 'cloudy'
+  return 'rainy'
+}
+
+function useAutoWeather(pos, skip) {
+  const [auto, setAuto] = useState(null)
+  const fetching = useRef(null)
+  const gridLat = pos ? Math.round(pos.lat / WX_GRID) * WX_GRID : null
+  const gridLng = pos ? Math.round(pos.lng / WX_GRID) * WX_GRID : null
+  useEffect(() => {
+    if (skip || gridLat === null) return
+    const key = `${gridLat},${gridLng}`
+    const hit = _wxCache[key]
+    if (hit && Date.now() - hit.ts < WX_TTL) { setAuto(hit.w); return }
+    if (fetching.current === key) return
+    fetching.current = key
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${gridLat}&longitude=${gridLng}&current=weathercode,is_day&timezone=auto`)
+      .then(r => r.json())
+      .then(d => {
+        const w = _wmoMap(d.current.weathercode, d.current.is_day === 1)
+        _wxCache[key] = { w, ts: Date.now() }
+        setAuto(w)
+        fetching.current = null
+      })
+      .catch(() => { fetching.current = null })
+  }, [gridLat, gridLng, skip])
+  return auto
+}
+
 // ── GPS フック ────────────────────────────────────────────────────────────
 function useLiveGPS(enabled) {
   const [pos, setPos]       = useState(null)
@@ -596,7 +633,7 @@ function GpsLocateButton({ status, onLocate }) {
 }
 
 // ── 設定画面 ──────────────────────────────────────────────────────────────
-function SettingsScreen({ userPrefs, weather, onWeatherChange, onSave, onReset, onClose }) {
+function SettingsScreen({ userPrefs, weather, weatherIsAuto, onWeatherChange, onSave, onReset, onClose }) {
   const p = userPrefs || {}
   const [nickname,    setNickname]    = useState(p.nickname    || '')
   const [familiarity, setFamiliarity] = useState(p.familiarity || '')
@@ -687,23 +724,42 @@ function SettingsScreen({ userPrefs, weather, onWeatherChange, onSave, onReset, 
         </div>)}
 
         {/* 天気 */}
-        {section('Current weather', <div>
-          {[['sunny','☀️','Sunny'],['cloudy','☁️','Cloudy'],['rainy','🌧️','Rainy'],['evening','🌇','Evening']].map(([key, emoji, label]) => {
-            const active = weather === key
-            return (
-              <button key={key} onClick={() => onWeatherChange(key)} style={{
-                padding: '9px 12px', borderRadius: 10, cursor: 'pointer', marginRight: 8, marginBottom: 8,
-                border: `2px solid ${active ? THEME : '#e5e7eb'}`,
-                background: active ? '#ede9ff' : '#fff',
-                color: active ? THEME : '#444',
-                fontSize: 13, fontWeight: active ? 700 : 500,
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-              }}>
-                <span>{emoji}</span>{label}
-              </button>
-            )
-          })}
-        </div>)}
+        {section(
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>Current weather</span>
+            {weatherIsAuto
+              ? <span style={{ fontSize: 9, fontWeight: 700, color: '#22c55e', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 4, padding: '1px 5px', letterSpacing: '0.06em', textTransform: 'none' }}>AUTO</span>
+              : <span style={{ fontSize: 9, fontWeight: 700, color: '#9ca3af', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: 4, padding: '1px 5px', letterSpacing: '0.06em', textTransform: 'none' }}>MANUAL</span>
+            }
+          </span>,
+          <div>
+            {[['sunny','☀️','Sunny'],['cloudy','☁️','Cloudy'],['rainy','🌧️','Rainy'],['evening','🌇','Evening']].map(([key, emoji, label]) => {
+              const active = weather === key
+              return (
+                <button key={key} onClick={() => onWeatherChange(!weatherIsAuto && active ? null : key)} style={{
+                  padding: '9px 12px', borderRadius: 10, cursor: 'pointer', marginRight: 8, marginBottom: 8,
+                  border: `2px solid ${active ? (weatherIsAuto ? '#22c55e' : THEME) : '#e5e7eb'}`,
+                  background: active ? (weatherIsAuto ? '#f0fdf4' : '#ede9ff') : '#fff',
+                  color: active ? (weatherIsAuto ? '#16a34a' : THEME) : '#444',
+                  fontSize: 13, fontWeight: active ? 700 : 500,
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                }}>
+                  <span>{emoji}</span>{label}
+                </button>
+              )
+            })}
+            {!weatherIsAuto && (
+              <div style={{ marginTop: 4 }}>
+                <button onClick={() => onWeatherChange(null)} style={{
+                  padding: '7px 12px', borderRadius: 10, cursor: 'pointer',
+                  border: '2px solid #d1fae5', background: '#f0fdf4',
+                  color: '#16a34a', fontSize: 12, fontWeight: 600,
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                }}>🌐 Use real weather</button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 保存ボタン */}
         <button
@@ -929,7 +985,10 @@ function App() {
   const [userPrefs, setUserPrefs]   = useState(() => loadPrefs())
   const [showSurvey, setShowSurvey] = useState(() => !loadPrefs())
   const [showSettings, setShowSettings] = useState(false)
-  const [weather, setWeather] = useState('sunny')
+  const [weatherOverride, setWeatherOverride] = useState(null)
+  const wxPos = demoMode ? startPos : livePos
+  const autoWeather = useAutoWeather(wxPos, weatherOverride !== null)
+  const weather = weatherOverride ?? autoWeather ?? 'sunny'
 
   const [favorites, setFavorites] = useState(() => loadFavorites())
   const toggleFavorite = useCallback(id => {
@@ -1436,7 +1495,8 @@ function App() {
         <SettingsScreen
           userPrefs={userPrefs}
           weather={weather}
-          onWeatherChange={setWeather}
+          weatherIsAuto={weatherOverride === null}
+          onWeatherChange={setWeatherOverride}
           onSave={handleSaveSettings}
           onReset={handleResetSettings}
           onClose={() => setShowSettings(false)}
