@@ -19,19 +19,36 @@ const DEMO_TICK_MS = 600  // marker position update interval
 const ARRIVE_DEG = 0.001  // ≈110m, spot "arrived"
 
 const MAP_STYLES = [
-  { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#fefdf5' }] },
-  { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: '#fdfbec' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#ade8f4' }] },
-  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#2a7ab5' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#fde68a' }] },
-  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#fbbf24' }] },
-  { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#fef9e7' }] },
-  { featureType: 'road.local', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
-  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#d4f5a0' }] },
-  { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#3a7d1e' }] },
-  { featureType: 'poi', elementType: 'labels.icon', stylers: [{ saturation: 20 }] },
-  { featureType: 'transit.line', elementType: 'geometry', stylers: [{ color: '#fde68a' }] },
-  { featureType: 'transit.station', elementType: 'geometry', stylers: [{ color: '#fefce8' }] },
+  // ベース
+  { elementType: 'geometry',           stylers: [{ color: '#1e2140' }] },
+  { elementType: 'labels.text.fill',   stylers: [{ color: '#8896b3' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#1e2140' }] },
+  // 陸地
+  { featureType: 'landscape',          elementType: 'geometry', stylers: [{ color: '#23284a' }] },
+  { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: '#1e2242' }] },
+  // 水
+  { featureType: 'water', elementType: 'geometry',         stylers: [{ color: '#0d1333' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#3d5a8a' }] },
+  // 道路
+  { featureType: 'road',          elementType: 'geometry',        stylers: [{ color: '#2c3260' }] },
+  { featureType: 'road',          elementType: 'geometry.stroke',  stylers: [{ color: '#1a1e3c' }] },
+  { featureType: 'road',          elementType: 'labels.text.fill', stylers: [{ color: '#6b7aa1' }] },
+  { featureType: 'road.highway',  elementType: 'geometry',        stylers: [{ color: '#4a3580' }] },
+  { featureType: 'road.highway',  elementType: 'geometry.stroke',  stylers: [{ color: '#2e1f5e' }] },
+  { featureType: 'road.highway',  elementType: 'labels.text.fill', stylers: [{ color: '#a78bfa' }] },
+  // 公園
+  { featureType: 'poi.park', elementType: 'geometry',         stylers: [{ color: '#1a2e28' }] },
+  { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#3d6b56' }] },
+  // POI（アイコン非表示でスッキリ）
+  { featureType: 'poi',  elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi',  elementType: 'labels.text.fill', stylers: [{ color: '#4a5580' }] },
+  // 鉄道
+  { featureType: 'transit.line',    elementType: 'geometry',         stylers: [{ color: '#3a2d6e' }] },
+  { featureType: 'transit.station', elementType: 'geometry',         stylers: [{ color: '#2a2550' }] },
+  { featureType: 'transit.station', elementType: 'labels.text.fill', stylers: [{ color: '#7c6ab8' }] },
+  // 行政境界
+  { featureType: 'administrative',  elementType: 'geometry.stroke',  stylers: [{ color: '#334070' }] },
+  { featureType: 'administrative.land_parcel', elementType: 'labels.text.fill', stylers: [{ color: '#5a6a99' }] },
 ]
 
 const RED_PIN_ICON = {
@@ -1209,6 +1226,7 @@ function App() {
           gestureHandling="greedy"
           disableDefaultUI={true}
           zoomControl={true}
+          keyboardShortcuts={false}
           restriction={{
             latLngBounds: { north: 46.5, south: 23.0, west: 121.0, east: 155.0 },
             strictBounds: false,
