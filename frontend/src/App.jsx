@@ -1437,12 +1437,8 @@ function App() {
               position={livePos}
               zIndex={998}
               icon={{
-                // 約60°の扇形（上向き、中心から半径60px）
-                // M 0 0 → 扇の頂点（アンカー）
-                // L -30 -52 → 左端  (60*sin30°=30, 60*cos30°≈52)
-                // A 60 60 0 0 1 30 -52 → 円弧（右回り）
-                // Z → 閉じる
-                path: 'M 0 0 L -30 -52 A 60 60 0 0 1 30 -52 Z',
+                // 約60°の扇形（上向き、中心から半径38px）
+                path: 'M 0 0 L -19 -33 A 38 38 0 0 1 19 -33 Z',
                 fillColor: '#1d6ef5',
                 fillOpacity: 0.22,
                 strokeColor: '#1d6ef5',
