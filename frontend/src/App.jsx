@@ -1178,7 +1178,7 @@ function App() {
           )}
 
           {/* 現在地マーカー */}
-          {activePos && window.google?.maps?.SymbolPath?.CIRCLE && (
+          {activePos && window.google?.maps && (
             <Marker
               position={activePos}
               title="You are here"
