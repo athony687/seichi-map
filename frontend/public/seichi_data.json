@@ -16,7 +16,8 @@
     "tags": [
       "walkable",
       "photo-spot",
-      "free"
+      "free",
+      "outdoor"
     ],
     "verified": false,
     "source": "",
@@ -39,7 +40,8 @@
     "access_note": "阪急甲陽園駅周辺",
     "photo_url": "",
     "tags": [
-      "walkable"
+      "walkable",
+      "outdoor"
     ],
     "verified": false,
     "source": "",
@@ -64,7 +66,8 @@
     "tags": [
       "walkable",
       "covered-arcade",
-      "food"
+      "food",
+      "indoor"
     ],
     "verified": false,
     "source": "",
@@ -89,7 +92,8 @@
     "tags": [
       "walkable",
       "photo-spot",
-      "landmark"
+      "landmark",
+      "outdoor"
     ],
     "verified": false,
     "source": "https://libert.co.jp/pilgrimage-guild/osaka-pilgrimage/",
@@ -114,7 +118,8 @@
     "tags": [
       "walkable",
       "covered-arcade",
-      "food"
+      "food",
+      "indoor"
     ],
     "verified": false,
     "source": "https://libert.co.jp/pilgrimage-guild/osaka-pilgrimage/",
@@ -140,7 +145,8 @@
       "walkable",
       "photo-spot",
       "food",
-      "nightlife"
+      "nightlife",
+      "outdoor"
     ],
     "verified": false,
     "source": "https://www.osaka-pref-rivercam.info/archives/105",
@@ -166,7 +172,8 @@
       "walkable",
       "photo-spot",
       "landmark",
-      "park"
+      "park",
+      "outdoor"
     ],
     "verified": false,
     "source": "https://www.osaka-pref-rivercam.info/archives/105",
@@ -190,7 +197,8 @@
     "photo_url": "",
     "tags": [
       "photo-spot",
-      "architecture"
+      "architecture",
+      "indoor"
     ],
     "verified": false,
     "source": "https://libert.co.jp/pilgrimage-guild/osaka-pilgrimage/",
@@ -215,7 +223,8 @@
     "tags": [
       "walkable",
       "photo-spot",
-      "shrine"
+      "shrine",
+      "outdoor"
     ],
     "verified": false,
     "source": "https://www.enjoytokyo.jp/article/202229/",
@@ -240,7 +249,8 @@
     "tags": [
       "walkable",
       "photo-spot",
-      "shrine"
+      "shrine",
+      "outdoor"
     ],
     "verified": false,
     "source": "https://www.gotokyo.org/jp/spot/1771/index.html",
@@ -265,7 +275,8 @@
     "tags": [
       "walkable",
       "music",
-      "shopping"
+      "shopping",
+      "outdoor"
     ],
     "verified": false,
     "source": "https://magazine.tabist.co.jp/other/15766/",
@@ -289,7 +300,8 @@
     "photo_url": "",
     "tags": [
       "walkable",
-      "shrine"
+      "shrine",
+      "outdoor"
     ],
     "verified": false,
     "source": "https://www.timeout.jp/tokyo/ja/things-to-do/tokyo-shrines-manga-and-anime",
@@ -313,7 +325,8 @@
     "photo_url": "",
     "tags": [
       "walkable",
-      "shrine"
+      "shrine",
+      "outdoor"
     ],
     "verified": false,
     "source": "https://www.enjoytokyo.jp/article/202229/",
@@ -338,7 +351,8 @@
     "tags": [
       "walkable",
       "shrine",
-      "historic"
+      "historic",
+      "outdoor"
     ],
     "verified": false,
     "source": "https://saitamabiyori.com/10070/",
@@ -362,7 +376,9 @@
     "photo_url": "",
     "tags": [
       "photo-spot",
-      "nature"
+      "nature",
+      "outdoor",
+      "sunset"
     ],
     "verified": false,
     "source": "https://hayagumo.xyz/anohana-siori/",
@@ -387,7 +403,9 @@
     "tags": [
       "photo-spot",
       "nature",
-      "park"
+      "park",
+      "outdoor",
+      "sunset"
     ],
     "verified": false,
     "source": "https://hayagumo.xyz/anohana-siori/",
@@ -412,7 +430,8 @@
     "tags": [
       "walkable",
       "shrine",
-      "historic"
+      "historic",
+      "outdoor"
     ],
     "verified": false,
     "source": "https://www.content-everyday.com/ja/news/4709/",
@@ -436,7 +455,8 @@
     "photo_url": "",
     "tags": [
       "nature",
-      "hiking"
+      "hiking",
+      "outdoor"
     ],
     "verified": false,
     "source": "https://www.nippon.com/ja/japan-topics/b00134/",
@@ -462,7 +482,9 @@
       "walkable",
       "photo-spot",
       "nature",
-      "beach"
+      "beach",
+      "outdoor",
+      "sunset"
     ],
     "verified": false,
     "source": "https://pro-botti.com/chiba-oregairu2/",
@@ -486,7 +508,8 @@
     "photo_url": "",
     "tags": [
       "photo-spot",
-      "sunset"
+      "sunset",
+      "outdoor"
     ],
     "verified": false,
     "source": "https://anitora5050.com/oregairu-travel/",
@@ -510,7 +533,8 @@
     "photo_url": "",
     "tags": [
       "walkable",
-      "shrine"
+      "shrine",
+      "outdoor"
     ],
     "verified": false,
     "source": "https://harurunblog.com/",
@@ -535,7 +559,9 @@
     "tags": [
       "photo-spot",
       "landmark",
-      "view"
+      "view",
+      "indoor",
+      "sunset"
     ],
     "verified": false,
     "source": "https://libert.co.jp/pilgrimage-guild/chiba-pilgrimage/",
@@ -560,7 +586,8 @@
     "tags": [
       "walkable",
       "park",
-      "nature"
+      "nature",
+      "outdoor"
     ],
     "verified": false,
     "source": "https://pro-botti.com/chiba-oreimo/",
@@ -587,7 +614,8 @@
       "photo-spot",
       "free",
       "beach",
-      "sunset"
+      "sunset",
+      "outdoor"
     ],
     "verified": true,
     "source": "",
@@ -613,7 +641,8 @@
       "walkable",
       "photo-spot",
       "observation-deck",
-      "paid"
+      "paid",
+      "indoor"
     ],
     "verified": true,
     "source": "",
@@ -639,7 +668,8 @@
       "driving-route",
       "scenic",
       "free",
-      "caution-active-road"
+      "caution-active-road",
+      "outdoor"
     ],
     "verified": true,
     "source": "",
@@ -665,7 +695,9 @@
       "cycling-route",
       "scenic",
       "free",
-      "coastal"
+      "coastal",
+      "outdoor",
+      "sunset"
     ],
     "verified": true,
     "source": "",
@@ -691,7 +723,8 @@
       "walkable",
       "photo-spot",
       "free",
-      "onsen-area"
+      "onsen-area",
+      "outdoor"
     ],
     "verified": true,
     "source": "",
@@ -717,7 +750,8 @@
       "walkable",
       "photo-spot",
       "free",
-      "plaza"
+      "plaza",
+      "outdoor"
     ],
     "verified": true,
     "source": "",
@@ -743,7 +777,8 @@
       "walkable",
       "park",
       "free",
-      "hilltop"
+      "hilltop",
+      "outdoor"
     ],
     "verified": true,
     "source": "",
@@ -769,7 +804,9 @@
       "walkable",
       "beach",
       "free",
-      "photo-spot"
+      "photo-spot",
+      "outdoor",
+      "sunset"
     ],
     "verified": true,
     "source": "",
@@ -795,7 +832,8 @@
       "walkable",
       "hotel",
       "paid",
-      "collab-events"
+      "collab-events",
+      "indoor"
     ],
     "verified": true,
     "source": "",
@@ -822,7 +860,9 @@
       "photo-spot",
       "observation-deck",
       "paid",
-      "night-view"
+      "night-view",
+      "indoor",
+      "sunset"
     ],
     "verified": true,
     "source": "",
@@ -848,7 +888,8 @@
       "walkable",
       "shrine",
       "free",
-      "photo-spot"
+      "photo-spot",
+      "outdoor"
     ],
     "verified": true,
     "source": "",
@@ -874,7 +915,8 @@
       "walkable",
       "retro",
       "free",
-      "nostalgic"
+      "nostalgic",
+      "outdoor"
     ],
     "verified": true,
     "source": "",
