@@ -2,6 +2,7 @@ import os
 import json
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
 from pydantic import BaseModel
 import anthropic
@@ -43,7 +44,7 @@ def _build_prompt(spot: SpotRequest) -> str:
     p = spot.prefs
     prompt = (
         f"You are a friendly travel guide for anime fans visiting Japan. "
-        f"Write exactly 2-3 short sentences in English introducing this anime pilgrimage spot to foreign tourists. "
+        f"Write exactly 2 short sentences in English introducing this anime pilgrimage spot to foreign tourists. "
         f"Be enthusiastic but concise. No headings, no bullet points, plain text only.\n\n"
         f"Spot: {spot.spot_name_en}\n"
         f"Anime: {spot.anime_title_en}\n"
@@ -86,7 +87,7 @@ def _has_prefs(p: UserPrefs) -> bool:
 def _generate(spot: SpotRequest) -> str:
     message = client.messages.create(
         model="claude-haiku-4-5-20251001",
-        max_tokens=200,
+        max_tokens=150,
         messages=[{"role": "user", "content": _build_prompt(spot)}],
     )
     return message.content[0].text
@@ -95,6 +96,40 @@ def _generate(spot: SpotRequest) -> str:
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.post("/generate-intro-stream")
+def generate_intro_stream(spot: SpotRequest):
+    personalized = _has_prefs(spot.prefs)
+
+    # キャッシュヒット時は単一チャンクで即返す
+    if not personalized and spot.id in _intro_cache:
+        cached = _intro_cache[spot.id]
+        def _cached():
+            yield f"data: {json.dumps({'text': cached})}\n\n"
+            yield "data: [DONE]\n\n"
+        return StreamingResponse(_cached(), media_type="text/event-stream",
+                                 headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"})
+
+    def _stream():
+        full_text = ""
+        try:
+            with client.messages.stream(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=150,
+                messages=[{"role": "user", "content": _build_prompt(spot)}],
+            ) as stream:
+                for text in stream.text_stream:
+                    full_text += text
+                    yield f"data: {json.dumps({'text': text})}\n\n"
+            if not personalized and full_text:
+                _intro_cache[spot.id] = full_text
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(_stream(), media_type="text/event-stream",
+                             headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"})
 
 
 @app.post("/generate-intro")

@@ -307,21 +307,50 @@ function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavori
     if (!hasPersonalization && introCache[spot.id]) {
       setIntro(introCache[spot.id]); setLoading(false); setAiOk(true); return
     }
-    setIntro(null); setLoading(true); setAiOk(false)
-    fetch(`${BACKEND_URL}/generate-intro`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: spot.id, spot_name_en: spot.spot_name_en,
-        anime_title_en: spot.anime_title_en,
-        scene_description: spot.scene_description, area: spot.area,
-        prefs: userPrefs || {},
-      }),
-    })
-      .then(r => { if (!r.ok) throw new Error(); return r.json() })
-      .then(data => { if (data.intro) { if (!hasPersonalization) introCache[spot.id] = data.intro; setIntro(data.intro); setAiOk(true) } })
-      .catch(() => { setIntro(staticIntro); setAiOk(false) })
-      .finally(() => setLoading(false))
+    setIntro(''); setLoading(true); setAiOk(false)
+
+    const controller = new AbortController()
+    let fullText = ''
+
+    ;(async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/generate-intro-stream`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: spot.id, spot_name_en: spot.spot_name_en,
+            anime_title_en: spot.anime_title_en,
+            scene_description: spot.scene_description, area: spot.area,
+            prefs: userPrefs || {},
+          }),
+          signal: controller.signal,
+        })
+        if (!res.ok) throw new Error()
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          for (const line of decoder.decode(value, { stream: true }).split('\n')) {
+            if (!line.startsWith('data: ')) continue
+            const data = line.slice(6).trim()
+            if (data === '[DONE]') { setAiOk(true); if (!hasPersonalization) introCache[spot.id] = fullText; return }
+            try {
+              const { text, error } = JSON.parse(data)
+              if (error) throw new Error(error)
+              if (text) { fullText += text; setIntro(fullText); setLoading(false) }
+            } catch { /* malformed chunk, skip */ }
+          }
+        }
+      } catch (err) {
+        if (err?.name === 'AbortError') return
+        setIntro(staticIntro); setAiOk(false)
+      } finally {
+        setLoading(false)
+      }
+    })()
+
+    return () => controller.abort()
   }, [spot.id])
 
   return (
