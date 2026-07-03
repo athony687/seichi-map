@@ -18,35 +18,43 @@ const DEMO_STEP = 0.001   // degrees per tick (≈110m)
 const DEMO_TICK_MS = 600  // marker position update interval
 const ARRIVE_DEG = 0.001  // ≈110m, spot "arrived"
 
-const MAP_STYLES = [
-  // ベース
+const MAP_STYLES_LIGHT = [
+  { featureType: 'landscape',          elementType: 'geometry', stylers: [{ color: '#fefdf5' }] },
+  { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: '#fdfbec' }] },
+  { featureType: 'water', elementType: 'geometry',         stylers: [{ color: '#ade8f4' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#2a7ab5' }] },
+  { featureType: 'road.highway',  elementType: 'geometry',       stylers: [{ color: '#fde68a' }] },
+  { featureType: 'road.highway',  elementType: 'geometry.stroke', stylers: [{ color: '#fbbf24' }] },
+  { featureType: 'road.arterial', elementType: 'geometry',       stylers: [{ color: '#fef9e7' }] },
+  { featureType: 'road.local',    elementType: 'geometry',       stylers: [{ color: '#ffffff' }] },
+  { featureType: 'poi.park', elementType: 'geometry',         stylers: [{ color: '#d4f5a0' }] },
+  { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#3a7d1e' }] },
+  { featureType: 'poi',      elementType: 'labels.icon',      stylers: [{ saturation: 20 }] },
+  { featureType: 'transit.line',    elementType: 'geometry', stylers: [{ color: '#fde68a' }] },
+  { featureType: 'transit.station', elementType: 'geometry', stylers: [{ color: '#fefce8' }] },
+]
+
+const MAP_STYLES_DARK = [
   { elementType: 'geometry',           stylers: [{ color: '#1e2140' }] },
   { elementType: 'labels.text.fill',   stylers: [{ color: '#8896b3' }] },
   { elementType: 'labels.text.stroke', stylers: [{ color: '#1e2140' }] },
-  // 陸地
   { featureType: 'landscape',          elementType: 'geometry', stylers: [{ color: '#23284a' }] },
   { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: '#1e2242' }] },
-  // 水
   { featureType: 'water', elementType: 'geometry',         stylers: [{ color: '#0d1333' }] },
   { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#3d5a8a' }] },
-  // 道路
-  { featureType: 'road',          elementType: 'geometry',        stylers: [{ color: '#2c3260' }] },
-  { featureType: 'road',          elementType: 'geometry.stroke',  stylers: [{ color: '#1a1e3c' }] },
-  { featureType: 'road',          elementType: 'labels.text.fill', stylers: [{ color: '#6b7aa1' }] },
-  { featureType: 'road.highway',  elementType: 'geometry',        stylers: [{ color: '#4a3580' }] },
-  { featureType: 'road.highway',  elementType: 'geometry.stroke',  stylers: [{ color: '#2e1f5e' }] },
-  { featureType: 'road.highway',  elementType: 'labels.text.fill', stylers: [{ color: '#a78bfa' }] },
-  // 公園
+  { featureType: 'road',         elementType: 'geometry',        stylers: [{ color: '#2c3260' }] },
+  { featureType: 'road',         elementType: 'geometry.stroke',  stylers: [{ color: '#1a1e3c' }] },
+  { featureType: 'road',         elementType: 'labels.text.fill', stylers: [{ color: '#6b7aa1' }] },
+  { featureType: 'road.highway', elementType: 'geometry',        stylers: [{ color: '#4a3580' }] },
+  { featureType: 'road.highway', elementType: 'geometry.stroke',  stylers: [{ color: '#2e1f5e' }] },
+  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#a78bfa' }] },
   { featureType: 'poi.park', elementType: 'geometry',         stylers: [{ color: '#1a2e28' }] },
   { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#3d6b56' }] },
-  // POI（アイコン非表示でスッキリ）
-  { featureType: 'poi',  elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
-  { featureType: 'poi',  elementType: 'labels.text.fill', stylers: [{ color: '#4a5580' }] },
-  // 鉄道
+  { featureType: 'poi', elementType: 'labels.icon',      stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#4a5580' }] },
   { featureType: 'transit.line',    elementType: 'geometry',         stylers: [{ color: '#3a2d6e' }] },
   { featureType: 'transit.station', elementType: 'geometry',         stylers: [{ color: '#2a2550' }] },
   { featureType: 'transit.station', elementType: 'labels.text.fill', stylers: [{ color: '#7c6ab8' }] },
-  // 行政境界
   { featureType: 'administrative',  elementType: 'geometry.stroke',  stylers: [{ color: '#334070' }] },
   { featureType: 'administrative.land_parcel', elementType: 'labels.text.fill', stylers: [{ color: '#5a6a99' }] },
 ]
@@ -716,7 +724,7 @@ function GpsLocateButton({ status, onLocate }) {
 }
 
 // ── 設定画面 ──────────────────────────────────────────────────────────────
-function SettingsScreen({ userPrefs, weather, weatherIsAuto, onWeatherChange, onSave, onReset, onClose }) {
+function SettingsScreen({ userPrefs, weather, weatherIsAuto, onWeatherChange, mapTheme, onMapThemeChange, onSave, onReset, onClose }) {
   const p = userPrefs || {}
   const [nickname,     setNickname]    = useState(p.nickname    || '')
   const [familiarity,  setFamiliarity] = useState(p.familiarity || '')
@@ -836,6 +844,28 @@ function SettingsScreen({ userPrefs, weather, weatherIsAuto, onWeatherChange, on
           , true)}
         </div>
 
+        {/* 表示グループ */}
+        <div style={{ fontSize: 10, fontWeight: 700, color: '#aaa', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, paddingLeft: 4 }}>Display</div>
+        <div style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+          {row('mapTheme', 'Map theme', mapTheme === 'dark' ? '🌙 Dark' : '☀️ Light',
+            <div style={{ paddingTop: 8 }}>
+              {[['light', '☀️', 'Light'], ['dark', '🌙', 'Dark']].map(([key, emoji, label]) => {
+                const active = mapTheme === key
+                return (
+                  <button key={key} onClick={() => onMapThemeChange(key)} style={{
+                    padding: '5px 10px', borderRadius: 20, cursor: 'pointer', marginRight: 6, marginBottom: 6,
+                    border: `1.5px solid ${active ? THEME : '#e5e7eb'}`,
+                    background: active ? '#ede9ff' : '#f3f4f6',
+                    color: active ? THEME : '#555',
+                    fontSize: 12, fontWeight: active ? 700 : 500,
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                  }}>{emoji} {label}</button>
+                )
+              })}
+            </div>
+          , true)}
+        </div>
+
         {/* 天気グループ */}
         <div style={{ fontSize: 10, fontWeight: 700, color: '#aaa', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, paddingLeft: 4 }}>Weather</div>
         <div style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
@@ -940,6 +970,9 @@ function SettingsScreen({ userPrefs, weather, weatherIsAuto, onWeatherChange, on
 const SURVEY_KEY = 'seichi_prefs'
 const loadPrefs  = () => { try { const r = localStorage.getItem(SURVEY_KEY); return r ? JSON.parse(r) : null } catch { return null } }
 const savePrefs  = p  => localStorage.setItem(SURVEY_KEY, JSON.stringify(p))
+
+const MAP_THEME_KEY = 'seichi_map_theme'
+const loadMapTheme = () => { try { return localStorage.getItem(MAP_THEME_KEY) || 'light' } catch { return 'light' } }
 
 const FAVORITES_KEY = 'seichi_favorites'
 const loadFavorites = () => { try { const r = localStorage.getItem(FAVORITES_KEY); return r ? new Set(JSON.parse(r)) : new Set() } catch { return new Set() } }
@@ -1118,6 +1151,7 @@ function App() {
   const [userPrefs, setUserPrefs]   = useState(() => loadPrefs())
   const [showSurvey, setShowSurvey] = useState(() => !loadPrefs())
   const [showSettings, setShowSettings] = useState(false)
+  const [mapTheme, setMapTheme] = useState(loadMapTheme)
   const [weatherOverride, setWeatherOverride] = useState(null)
   const wxPos = demoMode ? startPos : livePos
   const autoWeather = useAutoWeather(wxPos, weatherOverride !== null)
@@ -1310,7 +1344,7 @@ function App() {
             latLngBounds: { north: 46.5, south: 23.0, west: 121.0, east: 155.0 },
             strictBounds: false,
           }}
-          styles={MAP_STYLES}
+          styles={mapTheme === 'dark' ? MAP_STYLES_DARK : MAP_STYLES_LIGHT}
           onClick={handleMapClick}
         >
           {demoMode && startPos && (
@@ -1685,6 +1719,8 @@ function App() {
           weather={weather}
           weatherIsAuto={weatherOverride === null}
           onWeatherChange={setWeatherOverride}
+          mapTheme={mapTheme}
+          onMapThemeChange={t => { setMapTheme(t); localStorage.setItem(MAP_THEME_KEY, t) }}
           onSave={handleSaveSettings}
           onReset={handleResetSettings}
           onClose={() => setShowSettings(false)}
