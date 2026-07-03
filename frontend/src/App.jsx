@@ -1146,18 +1146,30 @@ function App() {
   // activePos: デモ中は擬似マーカー、ライブ中はGPS
   const activePos = demoMode ? demoPos : livePos
 
-  // 近接判定（デモモードのみ自動開閉。LIVEモードはユーザー操作のみ）
+  // 近接判定（両モードで自動表示。DEMOは離れたら自動クローズ、LIVEは手動クローズのみ）
   useEffect(() => {
-    if (!activePos || !spots.length || !demoMode) return
+    if (!activePos || !spots.length) return
 
-    setSelected(prev => {
-      if (prev && haversine(activePos, { lat: prev.lat, lng: prev.lng }) > PROXIMITY_METERS) {
-        triggeredRef.current.delete(prev.id)
-        return null
-      }
-      return prev
-    })
+    if (demoMode) {
+      // DEMO: 離れたらカードを自動クローズ＋再トリガー許可
+      setSelected(prev => {
+        if (prev && haversine(activePos, { lat: prev.lat, lng: prev.lng }) > PROXIMITY_METERS) {
+          triggeredRef.current.delete(prev.id)
+          return null
+        }
+        return prev
+      })
+    } else {
+      // LIVE: カードは閉じないが、離れたら再トリガー可能にする
+      spots.forEach(spot => {
+        if (triggeredRef.current.has(spot.id) &&
+            haversine(activePos, { lat: spot.lat, lng: spot.lng }) > PROXIMITY_METERS) {
+          triggeredRef.current.delete(spot.id)
+        }
+      })
+    }
 
+    // 両モード共通: 100m以内に入ったら自動表示
     for (const spot of spots) {
       if (
         haversine(activePos, { lat: spot.lat, lng: spot.lng }) < PROXIMITY_METERS &&
