@@ -17,6 +17,8 @@ const THEME_DARK = '#4c1d95'
 const DEMO_STEP = 0.001   // degrees per tick (≈110m)
 const DEMO_TICK_MS = 600  // marker position update interval
 const ARRIVE_DEG = 0.001  // ≈110m, spot "arrived"
+const LOCATION_ASKED_KEY = 'seichi_location_asked'
+const LOCATION_CONSENTED_KEY = 'seichi_location_consented'
 
 const MAP_STYLES_LIGHT = [
   { featureType: 'landscape',          elementType: 'geometry', stylers: [{ color: '#fefdf5' }] },
@@ -1120,6 +1122,50 @@ function OnboardingSurvey({ onComplete }) {
   )
 }
 
+// ── 位置情報・コンパス許可カード ─────────────────────────────────────────
+function LocationPermissionCard({ onAllow, onSkip }) {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0,
+      background: 'rgba(0,0,0,0.45)',
+      display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+      zIndex: 9999,
+    }}>
+      <div style={{
+        background: '#fff', borderRadius: '28px 28px 0 0',
+        padding: '36px 28px 56px', width: '100%', maxWidth: 480,
+        boxShadow: '0 -8px 40px rgba(0,0,0,0.18)',
+      }}>
+        <div style={{ textAlign: 'center', fontSize: 48, marginBottom: 18 }}>📍🧭</div>
+        <div style={{ fontWeight: 800, fontSize: 21, textAlign: 'center', marginBottom: 12, color: '#1a1a2e' }}>
+          Location & Compass
+        </div>
+        <div style={{ fontSize: 14, color: '#555', lineHeight: 1.75, textAlign: 'center', marginBottom: 32 }}>
+          This app uses your <strong>location</strong> to detect nearby anime spots,
+          and your <strong>compass</strong> to show the direction you're facing.
+        </div>
+        <button
+          onClick={onAllow}
+          style={{
+            display: 'block', width: '100%', padding: '16px', borderRadius: 16, border: 'none',
+            background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
+            color: '#fff', fontWeight: 700, fontSize: 16, cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(124,58,237,0.4)', marginBottom: 12,
+          }}
+        >Allow</button>
+        <button
+          onClick={onSkip}
+          style={{
+            display: 'block', width: '100%', padding: '14px', borderRadius: 16,
+            border: '1.5px solid #e5e7eb', background: '#fff',
+            color: '#888', fontWeight: 600, fontSize: 14, cursor: 'pointer',
+          }}
+        >Use without location</button>
+      </div>
+    </div>
+  )
+}
+
 // ── App ───────────────────────────────────────────────────────────────────
 function App() {
   const [spots, setSpots]               = useState([])
@@ -1135,18 +1181,40 @@ function App() {
 
   const triggeredRef = useRef(new Set())
   const [locateTick, setLocateTick] = useState(0)
-  const { pos: livePos, status: gpsStatus } = useLiveGPS(!demoMode)
+
+  const [locationPermissionAsked, setLocationPermissionAsked] = useState(
+    () => { try { return !!localStorage.getItem(LOCATION_ASKED_KEY) } catch { return false } }
+  )
+  const [gpsConsented, setGpsConsented] = useState(
+    () => { try { return !!localStorage.getItem(LOCATION_CONSENTED_KEY) } catch { return false } }
+  )
+
+  const { pos: livePos, status: gpsStatus } = useLiveGPS(!demoMode && gpsConsented)
   const { heading, permissionNeeded, requestPermission } = useDeviceHeading()
+
+  const handleLocationAllow = useCallback(async () => {
+    try {
+      localStorage.setItem(LOCATION_ASKED_KEY, 'true')
+      localStorage.setItem(LOCATION_CONSENTED_KEY, 'true')
+    } catch {}
+    setGpsConsented(true)
+    setLocationPermissionAsked(true)
+    if (permissionNeeded) await requestPermission()
+  }, [permissionNeeded, requestPermission])
+
+  const handleLocationSkip = useCallback(() => {
+    try { localStorage.setItem(LOCATION_ASKED_KEY, 'true') } catch {}
+    setLocationPermissionAsked(true)
+  }, [])
 
   const [gpsReady, setGpsReady] = useState(false)
   useEffect(() => {
-    if (gpsReady) return
-    if (demoMode || gpsStatus === 'ok' || gpsStatus === 'error') {
-      setGpsReady(true); return
-    }
+    if (demoMode || !gpsConsented) { setGpsReady(true); return }
+    if (gpsStatus === 'ok' || gpsStatus === 'error') { setGpsReady(true); return }
+    setGpsReady(false)
     const t = setTimeout(() => setGpsReady(true), 8000)
     return () => clearTimeout(t)
-  }, [gpsStatus, demoMode])
+  }, [gpsStatus, demoMode, gpsConsented])
 
   const [userPrefs, setUserPrefs]   = useState(() => loadPrefs())
   const [showSurvey, setShowSurvey] = useState(() => !loadPrefs())
@@ -1668,29 +1736,11 @@ function App() {
           onLocate={() => setLocateTick(t => t + 1)}
         />
       )}
-      {/* iOS コンパス許可ボタン（必要なときのみ表示） */}
-      {!demoMode && permissionNeeded && (
-        <button
-          onClick={requestPermission}
-          title="Enable compass"
-          style={{
-            position: 'absolute', top: 62, left: 12,
-            width: 40, height: 40, borderRadius: 12,
-            background: 'rgba(255,255,255,0.92)',
-            backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
-            border: '1px solid rgba(0,0,0,0.1)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-            cursor: 'pointer', fontSize: 20,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 10,
-          }}
-        >🧭</button>
-      )}
       {selected && (
         <Card spot={selected} currentPos={activePos} onClose={() => setSelected(null)} userPrefs={userPrefs} isFavorite={favorites.has(selected.id)} onToggleFavorite={toggleFavorite} weather={weather} />
       )}
-      {/* GPSローディングオーバーレイ */}
-      {!gpsReady && (
+      {/* GPSローディングオーバーレイ（同意後のみ表示） */}
+      {!gpsReady && !demoMode && gpsConsented && (
         <div style={{
           position: 'fixed', inset: 0, background: '#fff',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -1703,6 +1753,11 @@ function App() {
           }} />
           <div style={{ fontSize: 14, color: '#888', fontWeight: 500 }}>Getting your location…</div>
         </div>
+      )}
+
+      {/* 位置情報・コンパス許可カード（初回LIVEモードのみ） */}
+      {!demoMode && !locationPermissionAsked && (
+        <LocationPermissionCard onAllow={handleLocationAllow} onSkip={handleLocationSkip} />
       )}
 
       {showSurvey && (
