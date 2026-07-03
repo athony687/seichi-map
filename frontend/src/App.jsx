@@ -1328,16 +1328,18 @@ function App() {
         <div style={{ position: 'relative' }}>
           <button
             onClick={() => setShowWeatherMenu(m => !m)}
-            title="Weather"
             style={{
-              width: 30, height: 30, borderRadius: 10,
+              height: 30, padding: '0 10px', borderRadius: 10,
               background: showWeatherMenu ? '#ede9ff' : 'rgba(0,0,0,0.06)',
               border: `1.5px solid ${showWeatherMenu ? THEME : 'transparent'}`,
-              cursor: 'pointer', fontSize: 16,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 4,
               transition: 'all 0.15s',
             }}
-          >{{ sunny:'☀️', cloudy:'☁️', rainy:'🌧️', evening:'🌇' }[weather]}</button>
+          >
+            <span style={{ fontSize: 15 }}>{{ sunny:'☀️', cloudy:'☁️', rainy:'🌧️', evening:'🌇' }[weather]}</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: showWeatherMenu ? THEME : '#555', letterSpacing: '0.05em' }}>WEATHER</span>
+          </button>
 
           {showWeatherMenu && (
             <div style={{
