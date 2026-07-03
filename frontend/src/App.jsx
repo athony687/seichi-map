@@ -1562,7 +1562,7 @@ function App() {
 
       {/* コントロールバー */}
       <div style={{
-        position: 'absolute', bottom: 10, left: 12,
+        position: 'absolute', bottom: 32, left: 12,
         background: 'rgba(255,255,255,0.82)',
         backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
         borderRadius: 24, padding: '6px 10px',
@@ -1674,7 +1674,7 @@ function App() {
           onClick={requestPermission}
           title="Enable compass"
           style={{
-            position: 'absolute', bottom: 100, right: 12,
+            position: 'absolute', top: 62, left: 12,
             width: 40, height: 40, borderRadius: 12,
             background: 'rgba(255,255,255,0.92)',
             backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
