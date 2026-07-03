@@ -910,6 +910,7 @@ function App() {
   const [userPrefs, setUserPrefs]   = useState(() => loadPrefs())
   const [showSurvey, setShowSurvey] = useState(() => !loadPrefs())
   const [showSettings, setShowSettings] = useState(false)
+  const [showWeatherMenu, setShowWeatherMenu] = useState(false)
   const [weather, setWeather] = useState('sunny')
 
   const [favorites, setFavorites] = useState(() => loadFavorites())
@@ -1065,9 +1066,10 @@ function App() {
       triggeredRef.current.clear()
       setSelected(null)
     } else {
-      // 地図タップで観光スポットポップアップだけ閉じる
+      // 地図タップで観光スポットポップアップ・天気メニューを閉じる
       // 聖地カードは ✕ ボタンでのみ閉じる（パン後の遅延クリックでの誤閉じ防止）
       setSelectedTourist(null)
+      setShowWeatherMenu(false)
     }
   }
 
@@ -1285,76 +1287,119 @@ function App() {
 
       {/* コントロールバー */}
       <div style={{
-        position: 'absolute', bottom: 8, left: 12,
-        background: 'rgba(255,255,255,0.95)', borderRadius: 20, padding: '5px 8px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.18)',
-        display: 'flex', gap: 4, alignItems: 'center',
+        position: 'absolute', bottom: 10, left: 12,
+        background: 'rgba(255,255,255,0.82)',
+        backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+        borderRadius: 24, padding: '6px 10px',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.13), 0 1px 4px rgba(0,0,0,0.07)',
+        border: '1px solid rgba(255,255,255,0.65)',
+        display: 'flex', gap: 6, alignItems: 'center',
         zIndex: 10, userSelect: 'none',
-        maxWidth: 'calc(100vw - 24px)', flexWrap: 'wrap',
+        maxWidth: 'calc(100vw - 24px)',
       }}>
         {/* 設定ボタン */}
         <button
           onClick={() => setShowSettings(true)}
+          title="Settings"
           style={{
-            fontSize: 15, background: 'none', border: 'none',
-            cursor: 'pointer', lineHeight: 1, padding: '0 2px',
+            width: 30, height: 30, borderRadius: 10,
+            background: 'rgba(0,0,0,0.06)', border: 'none',
+            cursor: 'pointer', fontSize: 15,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
         >⚙️</button>
+
+        <span style={{ width: 1, height: 18, background: 'rgba(0,0,0,0.1)' }} />
 
         {/* DEMO / LIVE 切替 */}
         <button
           onClick={() => { setDemoMode(m => !m); handleReset() }}
           style={{
-            fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 10,
-            border: 'none', cursor: 'pointer',
-            background: demoMode ? THEME : '#e0e0e0',
+            fontSize: 10, fontWeight: 800, padding: '5px 11px', borderRadius: 10,
+            border: 'none', cursor: 'pointer', letterSpacing: '0.07em',
+            background: demoMode ? THEME : 'rgba(0,0,0,0.07)',
             color: demoMode ? '#fff' : '#555',
+            boxShadow: demoMode ? `0 2px 8px rgba(124,58,237,0.35)` : 'none',
+            transition: 'all 0.18s',
           }}
-        >
-          {demoMode ? 'LIVE' : 'DEMO'}
-        </button>
+        >{demoMode ? 'LIVE' : 'DEMO'}</button>
 
-        {/* 天気切替ボタン */}
-        <span style={{ width: 1, height: 16, background: '#e0e0e0', margin: '0 1px' }} />
-        {[['sunny','☀️'],['cloudy','☁️'],['rainy','🌧️'],['evening','🌇']].map(([key, emoji]) => (
+        {/* 天気ボタン（ドロップアップ式） */}
+        <div style={{ position: 'relative' }}>
           <button
-            key={key}
-            onClick={() => setWeather(key)}
+            onClick={() => setShowWeatherMenu(m => !m)}
+            title="Weather"
             style={{
-              fontSize: 14, lineHeight: 1, padding: '2px 3px',
-              background: weather === key ? '#ede9ff' : 'none',
-              border: `1.5px solid ${weather === key ? THEME : 'transparent'}`,
-              borderRadius: 6, cursor: 'pointer',
+              width: 30, height: 30, borderRadius: 10,
+              background: showWeatherMenu ? '#ede9ff' : 'rgba(0,0,0,0.06)',
+              border: `1.5px solid ${showWeatherMenu ? THEME : 'transparent'}`,
+              cursor: 'pointer', fontSize: 16,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.15s',
             }}
-          >{emoji}</button>
-        ))}
+          >{{ sunny:'☀️', cloudy:'☁️', rainy:'🌧️', evening:'🌇' }[weather]}</button>
+
+          {showWeatherMenu && (
+            <div style={{
+              position: 'absolute', bottom: 'calc(100% + 8px)', left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'rgba(255,255,255,0.92)',
+              backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+              borderRadius: 16, padding: '8px 8px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.08)',
+              border: '1px solid rgba(255,255,255,0.7)',
+              display: 'flex', gap: 6,
+            }}>
+              {[['sunny','☀️','Sunny'],['cloudy','☁️','Cloudy'],['rainy','🌧️','Rainy'],['evening','🌇','Evening']].map(([key, emoji, label]) => (
+                <button
+                  key={key}
+                  onClick={() => { setWeather(key); setShowWeatherMenu(false) }}
+                  style={{
+                    width: 40, height: 44, borderRadius: 12,
+                    background: weather === key ? THEME : 'rgba(0,0,0,0.05)',
+                    border: 'none', cursor: 'pointer',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    gap: 2,
+                    boxShadow: weather === key ? `0 2px 8px rgba(124,58,237,0.35)` : 'none',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <span style={{ fontSize: 18 }}>{emoji}</span>
+                  <span style={{ fontSize: 8, fontWeight: 700, color: weather === key ? '#fff' : '#888', letterSpacing: '0.03em' }}>{label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {demoMode && (<>
+          <span style={{ width: 1, height: 18, background: 'rgba(0,0,0,0.1)' }} />
           {/* 開始位置指定 */}
           <button
             onClick={() => setStartPosMode(m => !m)}
             style={{
-              fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 10,
-              border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+              fontSize: 10, fontWeight: 800, padding: '5px 10px', borderRadius: 10,
+              border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', letterSpacing: '0.04em',
               background: startPosMode ? '#f59e0b' : startPos ? '#ede9ff' : THEME,
               color: startPosMode ? '#fff' : startPos ? THEME : '#fff',
+              boxShadow: startPos && !startPosMode ? 'none' : `0 2px 8px rgba(124,58,237,0.3)`,
+              transition: 'all 0.18s',
             }}
-          >
-            {startPosMode ? '📍 Tap…' : startPos ? '📍 Change' : '📍 Set Start'}
-          </button>
+          >{startPosMode ? '📍 Tap map…' : startPos ? '📍 Change' : '📍 Set Start'}</button>
 
           {/* 再生 / 一時停止 */}
           <button
             onClick={() => setPlaying(p => !p)}
             disabled={!startPos}
             style={{
-              fontSize: 17, background: 'none', border: 'none', lineHeight: 1,
-              cursor: startPos ? 'pointer' : 'default', opacity: startPos ? 1 : 0.35,
+              width: 30, height: 30, borderRadius: 10,
+              background: startPos ? (playing ? '#fef3c7' : 'rgba(0,0,0,0.06)') : 'rgba(0,0,0,0.04)',
+              border: 'none', cursor: startPos ? 'pointer' : 'default',
+              fontSize: 16, opacity: startPos ? 1 : 0.35,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.15s',
             }}
-          >
-            {playing ? '⏸' : '▶️'}
-          </button>
-
+          >{playing ? '⏸' : '▶️'}</button>
         </>)}
       </div>
 
