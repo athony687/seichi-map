@@ -1338,7 +1338,6 @@ function App() {
           minZoom={5}
           gestureHandling="greedy"
           disableDefaultUI={true}
-          zoomControl={true}
           keyboardShortcuts={false}
           restriction={{
             latLngBounds: { north: 46.5, south: 23.0, west: 121.0, east: 155.0 },
