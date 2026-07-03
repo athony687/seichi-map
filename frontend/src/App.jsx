@@ -1216,6 +1216,13 @@ function App() {
     return () => clearTimeout(t)
   }, [gpsStatus, demoMode, gpsConsented])
 
+  // iOS: LIVE モードに入るたびコンパスリスナーを自動アタッチ
+  // 既に許可済みなら requestPermission() はダイアログなしで即 'granted' を返す
+  useEffect(() => {
+    if (demoMode || !gpsConsented || !permissionNeeded) return
+    requestPermission()
+  }, [demoMode, gpsConsented, permissionNeeded, requestPermission])
+
   const [userPrefs, setUserPrefs]   = useState(() => loadPrefs())
   const [showSurvey, setShowSurvey] = useState(() => !loadPrefs())
   const [showSettings, setShowSettings] = useState(false)
