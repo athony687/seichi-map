@@ -17,7 +17,6 @@ const THEME_DARK = '#4c1d95'
 const DEMO_STEP = 0.001   // degrees per tick (≈110m)
 const DEMO_TICK_MS = 600  // marker position update interval
 const ARRIVE_DEG = 0.001  // ≈110m, spot "arrived"
-const LOCATION_ASKED_KEY = 'seichi_location_asked'
 const LOCATION_CONSENTED_KEY = 'seichi_location_consented'
 
 const MAP_STYLES_LIGHT = [
@@ -1182,28 +1181,24 @@ function App() {
   const triggeredRef = useRef(new Set())
   const [locateTick, setLocateTick] = useState(0)
 
-  const [locationPermissionAsked, setLocationPermissionAsked] = useState(
-    () => { try { return !!localStorage.getItem(LOCATION_ASKED_KEY) } catch { return false } }
-  )
+  // locationPermissionAsked はセッションごとにリセット（毎起動カードを出す）
+  // → requestPermission() が必ずボタン押下（ユーザージェスチャー）から呼ばれる
+  const [locationPermissionAsked, setLocationPermissionAsked] = useState(false)
   const [gpsConsented, setGpsConsented] = useState(
     () => { try { return !!localStorage.getItem(LOCATION_CONSENTED_KEY) } catch { return false } }
   )
 
   const { pos: livePos, status: gpsStatus } = useLiveGPS(!demoMode && gpsConsented)
-  const { heading, permissionNeeded, requestPermission } = useDeviceHeading()
+  const { heading, requestPermission } = useDeviceHeading()
 
   const handleLocationAllow = useCallback(async () => {
-    try {
-      localStorage.setItem(LOCATION_ASKED_KEY, 'true')
-      localStorage.setItem(LOCATION_CONSENTED_KEY, 'true')
-    } catch {}
+    try { localStorage.setItem(LOCATION_CONSENTED_KEY, 'true') } catch {}
     setGpsConsented(true)
     setLocationPermissionAsked(true)
-    if (permissionNeeded) await requestPermission()
-  }, [permissionNeeded, requestPermission])
+    await requestPermission()  // ボタン押下からなので iOS もジェスチャー扱い
+  }, [requestPermission])
 
   const handleLocationSkip = useCallback(() => {
-    try { localStorage.setItem(LOCATION_ASKED_KEY, 'true') } catch {}
     setLocationPermissionAsked(true)
   }, [])
 
@@ -1215,13 +1210,6 @@ function App() {
     const t = setTimeout(() => setGpsReady(true), 8000)
     return () => clearTimeout(t)
   }, [gpsStatus, demoMode, gpsConsented])
-
-  // iOS: LIVE モードに入るたびコンパスリスナーを自動アタッチ
-  // 既に許可済みなら requestPermission() はダイアログなしで即 'granted' を返す
-  useEffect(() => {
-    if (demoMode || !gpsConsented || !permissionNeeded) return
-    requestPermission()
-  }, [demoMode, gpsConsented, permissionNeeded, requestPermission])
 
   const [userPrefs, setUserPrefs]   = useState(() => loadPrefs())
   const [showSurvey, setShowSurvey] = useState(() => !loadPrefs())
