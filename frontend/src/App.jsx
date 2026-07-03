@@ -1035,7 +1035,7 @@ function App() {
   const [showSurvey, setShowSurvey] = useState(() => !loadPrefs())
   const [showSettings, setShowSettings] = useState(false)
   const [weatherOverride, setWeatherOverride] = useState(null)
-  const wxPos = demoMode ? (startPos ?? TOKYO_STATION) : livePos
+  const wxPos = demoMode ? startPos : livePos
   const autoWeather = useAutoWeather(wxPos, weatherOverride !== null)
   const weather = weatherOverride ?? autoWeather ?? 'sunny'
 
