@@ -601,6 +601,72 @@ function useAutoWeather(pos, skip) {
   return auto
 }
 
+// ── デバイス方向（コンパス）フック ───────────────────────────────────────
+function useDeviceHeading() {
+  const [heading, setHeading]               = useState(null)
+  const [permissionNeeded, setPermissionNeeded] = useState(false)
+  const handlerRef   = useRef(null)
+  const rawRef       = useRef(null)   // センサー生値
+  const smoothRef    = useRef(null)   // 補間済み値
+  const displayedRef = useRef(null)   // 最後に setState した値
+  const rafRef       = useRef(null)
+
+  // RAF ループで平滑補間（震え防止）
+  useEffect(() => {
+    const tick = () => {
+      if (rawRef.current != null) {
+        if (smoothRef.current == null) {
+          smoothRef.current = rawRef.current
+        } else {
+          // 角度の折り返し（350°→10° を正しく補間）
+          const diff = ((rawRef.current - smoothRef.current + 540) % 360) - 180
+          smoothRef.current = (smoothRef.current + diff * 0.12 + 360) % 360
+        }
+        const rounded = Math.round(smoothRef.current)
+        if (rounded !== displayedRef.current) {
+          displayedRef.current = rounded
+          setHeading(rounded)
+        }
+      }
+      rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [])
+
+  // センサーリスナー登録
+  useEffect(() => {
+    if (typeof DeviceOrientationEvent === 'undefined') return
+    const handler = (e) => {
+      if (e.webkitCompassHeading != null) {
+        rawRef.current = e.webkitCompassHeading        // iOS: 真北からの時計回り度数
+      } else if (e.alpha != null) {
+        rawRef.current = (360 - e.alpha) % 360         // Android
+      }
+    }
+    handlerRef.current = handler
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+      setPermissionNeeded(true)                        // iOS 13+: ユーザー操作が必要
+    } else {
+      window.addEventListener('deviceorientation', handler, true)
+    }
+    return () => window.removeEventListener('deviceorientation', handler, true)
+  }, [])
+
+  const requestPermission = useCallback(async () => {
+    if (!handlerRef.current) return
+    try {
+      const result = await DeviceOrientationEvent.requestPermission()
+      if (result === 'granted') {
+        window.addEventListener('deviceorientation', handlerRef.current, true)
+        setPermissionNeeded(false)
+      }
+    } catch {}
+  }, [])
+
+  return { heading, permissionNeeded, requestPermission }
+}
+
 // ── GPS フック ────────────────────────────────────────────────────────────
 function useLiveGPS(enabled) {
   const [pos, setPos]       = useState(null)
@@ -1037,6 +1103,7 @@ function App() {
   const triggeredRef = useRef(new Set())
   const [locateTick, setLocateTick] = useState(0)
   const { pos: livePos, status: gpsStatus } = useLiveGPS(!demoMode)
+  const { heading, permissionNeeded, requestPermission } = useDeviceHeading()
 
   const [gpsReady, setGpsReady] = useState(false)
   useEffect(() => {
@@ -1328,6 +1395,30 @@ function App() {
               }}
             />
           )}
+
+          {/* 方向コーン（LIVEモードかつ方位取得済みのとき） */}
+          {/* 方向扇形（LIVEモードかつ方位取得済みのとき） */}
+          {!demoMode && livePos && heading != null && window.google?.maps && (
+            <Marker
+              position={livePos}
+              zIndex={998}
+              icon={{
+                // 約60°の扇形（上向き、中心から半径60px）
+                // M 0 0 → 扇の頂点（アンカー）
+                // L -30 -52 → 左端  (60*sin30°=30, 60*cos30°≈52)
+                // A 60 60 0 0 1 30 -52 → 円弧（右回り）
+                // Z → 閉じる
+                path: 'M 0 0 L -30 -52 A 60 60 0 0 1 30 -52 Z',
+                fillColor: '#1d6ef5',
+                fillOpacity: 0.22,
+                strokeColor: '#1d6ef5',
+                strokeWeight: 0,
+                scale: 1,
+                anchor: { x: 0, y: 0 },
+                rotation: heading,
+              }}
+            />
+          )}
         </Map>
       </APIProvider>
 
@@ -1547,6 +1638,24 @@ function App() {
           status={gpsStatus}
           onLocate={() => setLocateTick(t => t + 1)}
         />
+      )}
+      {/* iOS コンパス許可ボタン（必要なときのみ表示） */}
+      {!demoMode && permissionNeeded && (
+        <button
+          onClick={requestPermission}
+          title="Enable compass"
+          style={{
+            position: 'absolute', bottom: 100, right: 12,
+            width: 40, height: 40, borderRadius: 12,
+            background: 'rgba(255,255,255,0.92)',
+            backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+            border: '1px solid rgba(0,0,0,0.1)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            cursor: 'pointer', fontSize: 20,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 10,
+          }}
+        >🧭</button>
       )}
       {selected && (
         <Card spot={selected} currentPos={activePos} onClose={() => setSelected(null)} userPrefs={userPrefs} isFavorite={favorites.has(selected.id)} onToggleFavorite={toggleFavorite} weather={weather} />
