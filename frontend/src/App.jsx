@@ -396,7 +396,7 @@ function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavori
 
   return (
     <div style={{
-      position: 'absolute', bottom: 60, left: 12, right: 12,
+      position: 'absolute', bottom: 84, left: 12, right: 12,
       maxWidth: 380, margin: '0 auto',
       background: 'white', borderRadius: 20,
       boxShadow: '0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)',
@@ -541,7 +541,7 @@ function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavori
 function TouristPopup({ spot, onClose }) {
   return (
     <div style={{
-      position: 'absolute', bottom: 60, left: 12, right: 12,
+      position: 'absolute', bottom: 84, left: 12, right: 12,
       maxWidth: 380, margin: '0 auto',
       background: 'white', borderRadius: 16,
       boxShadow: '0 8px 32px rgba(0,0,0,0.15)', zIndex: 10, overflow: 'hidden',
@@ -1633,7 +1633,7 @@ function App() {
       {/* 初回ガイド：Set Start を促す吹き出し */}
       {demoMode && !startPos && !startPosMode && (
         <div style={{
-          position: 'absolute', bottom: 44, left: 12,
+          position: 'absolute', bottom: 82, left: 12,
           background: THEME, borderRadius: 12, padding: '7px 12px',
           color: '#fff', fontWeight: 700, fontSize: 13, zIndex: 10, whiteSpace: 'nowrap',
           boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
@@ -1653,7 +1653,7 @@ function App() {
       {/* 位置指定中のオーバーレイヒント */}
       {startPosMode && (
         <div style={{
-          position: 'absolute', bottom: 56, left: 12,
+          position: 'absolute', bottom: 82, left: 12,
           background: 'rgba(245,158,11,0.95)', borderRadius: 16, padding: '8px 18px',
           color: '#fff', fontWeight: 700, fontSize: 13, zIndex: 10, whiteSpace: 'nowrap',
           boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
