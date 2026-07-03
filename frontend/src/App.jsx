@@ -640,6 +640,11 @@ function SettingsScreen({ userPrefs, weather, weatherIsAuto, onWeatherChange, on
   const [mood,         setMood]        = useState(p.mood        || '')
   const [travelStyle,  setTravelStyle] = useState(p.travelStyle || '')
   const [confirmReset, setConfirmReset] = useState(false)
+  const [openSection,  setOpenSection] = useState(null)
+
+  const toggle = key => setOpenSection(o => o === key ? null : key)
+
+  const wxEmoji = { sunny:'☀️', cloudy:'☁️', rainy:'🌧️', evening:'🌇' }
 
   const chip = (current, value, emoji, label, setter) => {
     const active = current === value
@@ -647,7 +652,7 @@ function SettingsScreen({ userPrefs, weather, weatherIsAuto, onWeatherChange, on
       <button key={value} onClick={() => setter(active ? '' : value)} style={{
         padding: '5px 10px', borderRadius: 20, cursor: 'pointer', marginRight: 6, marginBottom: 6,
         border: `1.5px solid ${active ? THEME : '#e5e7eb'}`,
-        background: active ? '#ede9ff' : '#fafafa',
+        background: active ? '#ede9ff' : '#f3f4f6',
         color: active ? THEME : '#555',
         fontSize: 12, fontWeight: active ? 700 : 500,
         display: 'inline-flex', alignItems: 'center', gap: 4,
@@ -657,15 +662,34 @@ function SettingsScreen({ userPrefs, weather, weatherIsAuto, onWeatherChange, on
     )
   }
 
-  const card = (label, badge, children) => (
-    <div style={{ background: '#f8f8f8', borderRadius: 14, padding: '14px 14px 8px', marginBottom: 10 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-        <span style={{ fontSize: 10, fontWeight: 700, color: '#aaa', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{label}</span>
-        {badge}
+  // アコーディオン行
+  const row = (key, label, summary, children, isLast = false) => {
+    const open = openSection === key
+    return (
+      <div key={key}>
+        <button
+          onClick={() => toggle(key)}
+          style={{
+            width: '100%', background: 'none', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '13px 16px', textAlign: 'left',
+          }}
+        >
+          <span style={{ fontSize: 14, fontWeight: 500, color: '#1a1a1a' }}>{label}</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {summary && <span style={{ fontSize: 12, color: '#aaa' }}>{summary}</span>}
+            <span style={{ fontSize: 11, color: '#c0c0c0', transition: 'transform 0.2s', display: 'inline-block', transform: open ? 'rotate(180deg)' : 'none' }}>▾</span>
+          </span>
+        </button>
+        {open && (
+          <div style={{ padding: '4px 16px 14px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+            {children}
+          </div>
+        )}
+        {!isLast && <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginLeft: 16 }} />}
       </div>
-      {children}
-    </div>
-  )
+    )
+  }
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 4000, background: '#f2f2f7', overflowY: 'auto' }}>
@@ -684,75 +708,87 @@ function SettingsScreen({ userPrefs, weather, weatherIsAuto, onWeatherChange, on
         }}>✕</button>
       </div>
 
-      <div style={{ padding: '14px 14px 32px' }}>
+      <div style={{ padding: '20px 14px 32px' }}>
 
-        {/* ニックネーム */}
-        {card('Nickname', null, <>
-          <input
-            type="text" placeholder="Your nickname…" value={nickname}
-            onChange={e => setNickname(e.target.value)}
-            style={{
-              width: '100%', boxSizing: 'border-box',
-              border: '1.5px solid #e5e7eb', borderRadius: 10, background: '#fff',
-              padding: '9px 11px', fontSize: 14, outline: 'none',
-            }}
-            onFocus={e => e.target.style.borderColor = THEME}
-            onBlur={e => e.target.style.borderColor = '#e5e7eb'}
-          />
-          <div style={{ fontSize: 10, color: '#bbb', marginTop: 5, marginBottom: 6 }}>Used to personalise your spot introductions.</div>
-        </>)}
+        {/* パーソナライズ設定グループ */}
+        <div style={{ fontSize: 10, fontWeight: 700, color: '#aaa', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, paddingLeft: 4 }}>Personalisation</div>
+        <div style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+          {row('nickname', 'Nickname', nickname || 'Not set',
+            <>
+              <input
+                type="text" placeholder="Your nickname…" value={nickname}
+                onChange={e => setNickname(e.target.value)}
+                style={{
+                  width: '100%', boxSizing: 'border-box', marginTop: 8,
+                  border: '1.5px solid #e5e7eb', borderRadius: 10, background: '#fafafa',
+                  padding: '9px 11px', fontSize: 14, outline: 'none',
+                }}
+                onFocus={e => e.target.style.borderColor = THEME}
+                onBlur={e => e.target.style.borderColor = '#e5e7eb'}
+              />
+              <div style={{ fontSize: 10, color: '#bbb', marginTop: 5 }}>Used to personalise your spot introductions.</div>
+            </>
+          )}
+          {row('familiarity', 'Anime familiarity', familiarity || 'Not set',
+            <div style={{ paddingTop: 8 }}>
+              {chip(familiarity, 'Newcomer',   '🌱', 'Newcomer',   setFamiliarity)}
+              {chip(familiarity, 'Casual fan', '😊', 'Casual fan', setFamiliarity)}
+              {chip(familiarity, 'Big fan',    '⭐', 'Big fan',    setFamiliarity)}
+            </div>
+          )}
+          {row('mood', 'Favorite mood', mood || 'Not set',
+            <div style={{ paddingTop: 8 }}>
+              {chip(mood, 'Emotional',    '😢', 'Emotional',    setMood)}
+              {chip(mood, 'Exciting',     '⚡', 'Exciting',     setMood)}
+              {chip(mood, 'Heartwarming', '🌸', 'Heartwarming', setMood)}
+              {chip(mood, 'Romance',      '💕', 'Romance',      setMood)}
+            </div>
+          )}
+          {row('travelStyle', 'Travel style', travelStyle || 'Not set',
+            <div style={{ paddingTop: 8 }}>
+              {chip(travelStyle, 'Taking photos',       '📸', 'Taking photos',       setTravelStyle)}
+              {chip(travelStyle, 'Relaxed walking',     '🚶', 'Relaxed walking',     setTravelStyle)}
+              {chip(travelStyle, 'Visiting many spots', '🗺️', 'Visiting many spots', setTravelStyle)}
+            </div>
+          , true)}
+        </div>
 
-        {/* アニメ詳しさ */}
-        {card('Anime familiarity', null, <div style={{ paddingBottom: 2 }}>
-          {chip(familiarity, 'Newcomer',   '🌱', 'Newcomer',   setFamiliarity)}
-          {chip(familiarity, 'Casual fan', '😊', 'Casual fan', setFamiliarity)}
-          {chip(familiarity, 'Big fan',    '⭐', 'Big fan',    setFamiliarity)}
-        </div>)}
-
-        {/* 好きな雰囲気 */}
-        {card('Favorite mood', null, <div style={{ paddingBottom: 2 }}>
-          {chip(mood, 'Emotional',    '😢', 'Emotional',    setMood)}
-          {chip(mood, 'Exciting',     '⚡', 'Exciting',     setMood)}
-          {chip(mood, 'Heartwarming', '🌸', 'Heartwarming', setMood)}
-          {chip(mood, 'Romance',      '💕', 'Romance',      setMood)}
-        </div>)}
-
-        {/* 旅スタイル */}
-        {card('Travel style', null, <div style={{ paddingBottom: 2 }}>
-          {chip(travelStyle, 'Taking photos',       '📸', 'Taking photos',       setTravelStyle)}
-          {chip(travelStyle, 'Relaxed walking',     '🚶', 'Relaxed walking',     setTravelStyle)}
-          {chip(travelStyle, 'Visiting many spots', '🗺️', 'Visiting many spots', setTravelStyle)}
-        </div>)}
-
-        {/* 天気 */}
-        {card('Current weather',
-          weatherIsAuto
-            ? <span style={{ fontSize: 9, fontWeight: 700, color: '#22c55e', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 4, padding: '1px 5px', letterSpacing: '0.06em' }}>AUTO</span>
-            : <span style={{ fontSize: 9, fontWeight: 700, color: '#9ca3af', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: 4, padding: '1px 5px', letterSpacing: '0.06em' }}>MANUAL</span>,
-          <div style={{ paddingBottom: 2 }}>
-            {[['sunny','☀️','Sunny'],['cloudy','☁️','Cloudy'],['rainy','🌧️','Rainy'],['evening','🌇','Evening']].map(([key, emoji, label]) => {
-              const active = weather === key
-              return (
-                <button key={key} onClick={() => onWeatherChange(!weatherIsAuto && active ? null : key)} style={{
+        {/* 天気グループ */}
+        <div style={{ fontSize: 10, fontWeight: 700, color: '#aaa', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, paddingLeft: 4 }}>Weather</div>
+        <div style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+          {row('weather', 'Current weather',
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              {wxEmoji[weather]}
+              {weatherIsAuto
+                ? <span style={{ fontSize: 9, fontWeight: 700, color: '#22c55e', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 4, padding: '1px 5px' }}>AUTO</span>
+                : <span style={{ fontSize: 9, fontWeight: 700, color: '#9ca3af', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: 4, padding: '1px 5px' }}>MANUAL</span>
+              }
+            </span>,
+            <div style={{ paddingTop: 8 }}>
+              {[['sunny','☀️','Sunny'],['cloudy','☁️','Cloudy'],['rainy','🌧️','Rainy'],['evening','🌇','Evening']].map(([key, emoji, label]) => {
+                const active = weather === key
+                return (
+                  <button key={key} onClick={() => onWeatherChange(!weatherIsAuto && active ? null : key)} style={{
+                    padding: '5px 10px', borderRadius: 20, cursor: 'pointer', marginRight: 6, marginBottom: 6,
+                    border: `1.5px solid ${active ? (weatherIsAuto ? '#22c55e' : THEME) : '#e5e7eb'}`,
+                    background: active ? (weatherIsAuto ? '#f0fdf4' : '#ede9ff') : '#f3f4f6',
+                    color: active ? (weatherIsAuto ? '#16a34a' : THEME) : '#555',
+                    fontSize: 12, fontWeight: active ? 700 : 500,
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                  }}>{emoji} {label}</button>
+                )
+              })}
+              {!weatherIsAuto && (
+                <button onClick={() => onWeatherChange(null)} style={{
                   padding: '5px 10px', borderRadius: 20, cursor: 'pointer', marginRight: 6, marginBottom: 6,
-                  border: `1.5px solid ${active ? (weatherIsAuto ? '#22c55e' : THEME) : '#e5e7eb'}`,
-                  background: active ? (weatherIsAuto ? '#f0fdf4' : '#ede9ff') : '#fafafa',
-                  color: active ? (weatherIsAuto ? '#16a34a' : THEME) : '#555',
-                  fontSize: 12, fontWeight: active ? 700 : 500,
+                  border: '1.5px solid #bbf7d0', background: '#f0fdf4',
+                  color: '#16a34a', fontSize: 12, fontWeight: 600,
                   display: 'inline-flex', alignItems: 'center', gap: 4,
-                }}>{emoji} {label}</button>
-              )
-            })}
-            {!weatherIsAuto && (
-              <button onClick={() => onWeatherChange(null)} style={{
-                padding: '5px 10px', borderRadius: 20, cursor: 'pointer', marginRight: 6, marginBottom: 6,
-                border: '1.5px solid #bbf7d0', background: '#f0fdf4',
-                color: '#16a34a', fontSize: 12, fontWeight: 600,
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-              }}>🌐 Auto</button>
-            )}
-          </div>
-        )}
+                }}>🌐 Auto</button>
+              )}
+            </div>
+          , true)}
+        </div>
 
         {/* 保存ボタン */}
         <button
@@ -760,56 +796,57 @@ function SettingsScreen({ userPrefs, weather, weatherIsAuto, onWeatherChange, on
           style={{
             width: '100%', padding: '12px', borderRadius: 12,
             background: THEME, color: '#fff', border: 'none',
-            fontSize: 14, fontWeight: 700, cursor: 'pointer', marginBottom: 10,
+            fontSize: 14, fontWeight: 700, cursor: 'pointer', marginBottom: 20,
           }}
         >Save changes</button>
 
-        {/* About */}
-        {card('About this app', null,
-          <div style={{ fontSize: 12, color: '#555', lineHeight: 1.7, paddingBottom: 4 }}>
-            <p style={{ margin: '0 0 8px' }}>
-              <strong>Seichi Map</strong> is an anime pilgrimage guide for visitors to Japan.
-              Tap any pin to discover which anime scene was filmed there, and get a personalised introduction powered by AI.
-            </p>
-            <p style={{ margin: '0 0 8px' }}>
-              Spot introductions are generated by <strong>Claude</strong> (Anthropic) and are for informational purposes only.
-            </p>
-            <p style={{ margin: 0, color: '#aaa' }}>
-              Anime titles and related trademarks belong to their respective rights holders.
-              All location information is used solely to help fans enjoy their visit to Japan.
-              We do not reproduce any copyrighted images or video content.
-            </p>
-          </div>
-        )}
+        {/* About グループ */}
+        <div style={{ fontSize: 10, fontWeight: 700, color: '#aaa', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, paddingLeft: 4 }}>About</div>
+        <div style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+          {row('about', 'About this app', null,
+            <div style={{ fontSize: 12, color: '#555', lineHeight: 1.7, paddingTop: 8 }}>
+              <p style={{ margin: '0 0 8px' }}>
+                <strong>Seichi Map</strong> is an anime pilgrimage guide for visitors to Japan.
+                Tap any pin to discover which anime scene was filmed there, and get a personalised introduction powered by AI.
+              </p>
+              <p style={{ margin: '0 0 8px' }}>
+                Spot introductions are generated by <strong>Claude</strong> (Anthropic) and are for informational purposes only.
+              </p>
+              <p style={{ margin: 0, color: '#aaa' }}>
+                Anime titles and related trademarks belong to their respective rights holders.
+                All location information is used solely to help fans enjoy their visit to Japan.
+                We do not reproduce any copyrighted images or video content.
+              </p>
+            </div>
+          , true)}
+        </div>
 
         {/* リセット */}
-        <div style={{ marginTop: 4 }}>
-          {!confirmReset ? (
-            <button onClick={() => setConfirmReset(true)} style={{
-              width: '100%', padding: '11px', borderRadius: 12,
-              background: 'none', border: '1.5px solid #fca5a5',
-              color: '#ef4444', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-            }}>🗑 Reset all preferences</button>
-          ) : (
-            <div style={{ background: '#fef2f2', borderRadius: 12, padding: '14px' }}>
-              <div style={{ fontSize: 12, color: '#991b1b', fontWeight: 600, marginBottom: 10 }}>
-                This will clear all saved preferences and show the welcome survey again.
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={onReset} style={{
-                  flex: 1, padding: '10px', borderRadius: 10,
-                  background: '#ef4444', color: '#fff', border: 'none',
-                  fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                }}>Yes, reset</button>
-                <button onClick={() => setConfirmReset(false)} style={{
-                  flex: 1, padding: '10px', borderRadius: 10,
-                  background: '#fff', border: '1.5px solid #e5e7eb',
-                  color: '#555', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                }}>Cancel</button>
-              </div>
+        {!confirmReset ? (
+          <button onClick={() => setConfirmReset(true)} style={{
+            width: '100%', padding: '11px', borderRadius: 12,
+            background: 'none', border: '1.5px solid #fca5a5',
+            color: '#ef4444', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+          }}>🗑 Reset all preferences</button>
+        ) : (
+          <div style={{ background: '#fef2f2', borderRadius: 12, padding: '14px' }}>
+            <div style={{ fontSize: 12, color: '#991b1b', fontWeight: 600, marginBottom: 10 }}>
+              This will clear all saved preferences and show the welcome survey again.
             </div>
-          )}
-        </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={onReset} style={{
+                flex: 1, padding: '10px', borderRadius: 10,
+                background: '#ef4444', color: '#fff', border: 'none',
+                fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              }}>Yes, reset</button>
+              <button onClick={() => setConfirmReset(false)} style={{
+                flex: 1, padding: '10px', borderRadius: 10,
+                background: '#fff', border: '1.5px solid #e5e7eb',
+                color: '#555', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              }}>Cancel</button>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
