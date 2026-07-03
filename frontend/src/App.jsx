@@ -596,7 +596,7 @@ function GpsLocateButton({ status, onLocate }) {
 }
 
 // ── 設定画面 ──────────────────────────────────────────────────────────────
-function SettingsScreen({ userPrefs, onSave, onReset, onClose }) {
+function SettingsScreen({ userPrefs, weather, onWeatherChange, onSave, onReset, onClose }) {
   const p = userPrefs || {}
   const [nickname,    setNickname]    = useState(p.nickname    || '')
   const [familiarity, setFamiliarity] = useState(p.familiarity || '')
@@ -684,6 +684,25 @@ function SettingsScreen({ userPrefs, onSave, onReset, onClose }) {
           {selBtn(travelStyle, 'Taking photos',       '📸', 'Taking photos',       setTravelStyle)}
           {selBtn(travelStyle, 'Relaxed walking',     '🚶', 'Relaxed walking',     setTravelStyle)}
           {selBtn(travelStyle, 'Visiting many spots', '🗺️', 'Visiting many spots', setTravelStyle)}
+        </div>)}
+
+        {/* 天気 */}
+        {section('Current weather', <div>
+          {[['sunny','☀️','Sunny'],['cloudy','☁️','Cloudy'],['rainy','🌧️','Rainy'],['evening','🌇','Evening']].map(([key, emoji, label]) => {
+            const active = weather === key
+            return (
+              <button key={key} onClick={() => onWeatherChange(key)} style={{
+                padding: '9px 12px', borderRadius: 10, cursor: 'pointer', marginRight: 8, marginBottom: 8,
+                border: `2px solid ${active ? THEME : '#e5e7eb'}`,
+                background: active ? '#ede9ff' : '#fff',
+                color: active ? THEME : '#444',
+                fontSize: 13, fontWeight: active ? 700 : 500,
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+              }}>
+                <span>{emoji}</span>{label}
+              </button>
+            )
+          })}
         </div>)}
 
         {/* 保存ボタン */}
@@ -910,7 +929,6 @@ function App() {
   const [userPrefs, setUserPrefs]   = useState(() => loadPrefs())
   const [showSurvey, setShowSurvey] = useState(() => !loadPrefs())
   const [showSettings, setShowSettings] = useState(false)
-  const [showWeatherMenu, setShowWeatherMenu] = useState(false)
   const [weather, setWeather] = useState('sunny')
 
   const [favorites, setFavorites] = useState(() => loadFavorites())
@@ -1066,10 +1084,9 @@ function App() {
       triggeredRef.current.clear()
       setSelected(null)
     } else {
-      // 地図タップで観光スポットポップアップ・天気メニューを閉じる
+      // 地図タップで観光スポットポップアップを閉じる
       // 聖地カードは ✕ ボタンでのみ閉じる（パン後の遅延クリックでの誤閉じ防止）
       setSelectedTourist(null)
-      setShowWeatherMenu(false)
     }
   }
 
@@ -1324,57 +1341,6 @@ function App() {
           }}
         >{demoMode ? 'LIVE' : 'DEMO'}</button>
 
-        {/* 天気ボタン（ドロップアップ式） */}
-        <div style={{ position: 'relative' }}>
-          <button
-            onClick={() => setShowWeatherMenu(m => !m)}
-            title="Weather"
-            style={{
-              width: 36, height: 30, borderRadius: 10,
-              background: showWeatherMenu ? '#ede9ff' : 'rgba(0,0,0,0.06)',
-              border: `1.5px solid ${showWeatherMenu ? THEME : 'transparent'}`,
-              cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1,
-              transition: 'all 0.15s',
-            }}
-          >
-            <span style={{ fontSize: 15 }}>{{ sunny:'☀️', cloudy:'☁️', rainy:'🌧️', evening:'🌇' }[weather]}</span>
-            <span style={{ fontSize: 8, color: showWeatherMenu ? THEME : '#888', lineHeight: 1 }}>{showWeatherMenu ? '▴' : '▾'}</span>
-          </button>
-
-          {showWeatherMenu && (
-            <div style={{
-              position: 'absolute', bottom: 'calc(100% + 8px)', left: '50%',
-              transform: 'translateX(-50%)',
-              background: 'rgba(255,255,255,0.92)',
-              backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-              borderRadius: 16, padding: '8px 8px',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.08)',
-              border: '1px solid rgba(255,255,255,0.7)',
-              display: 'flex', gap: 6,
-            }}>
-              {[['sunny','☀️','Sunny'],['cloudy','☁️','Cloudy'],['rainy','🌧️','Rainy'],['evening','🌇','Evening']].map(([key, emoji, label]) => (
-                <button
-                  key={key}
-                  onClick={() => { setWeather(key); setShowWeatherMenu(false) }}
-                  style={{
-                    width: 40, height: 44, borderRadius: 12,
-                    background: weather === key ? THEME : 'rgba(0,0,0,0.05)',
-                    border: 'none', cursor: 'pointer',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    gap: 2,
-                    boxShadow: weather === key ? `0 2px 8px rgba(124,58,237,0.35)` : 'none',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  <span style={{ fontSize: 18 }}>{emoji}</span>
-                  <span style={{ fontSize: 8, fontWeight: 700, color: weather === key ? '#fff' : '#888', letterSpacing: '0.03em' }}>{label}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
         {demoMode && (<>
           <span style={{ width: 1, height: 18, background: 'rgba(0,0,0,0.1)' }} />
           {/* 開始位置指定 */}
@@ -1469,6 +1435,8 @@ function App() {
       {showSettings && (
         <SettingsScreen
           userPrefs={userPrefs}
+          weather={weather}
+          onWeatherChange={setWeather}
           onSave={handleSaveSettings}
           onReset={handleResetSettings}
           onClose={() => setShowSettings(false)}
