@@ -586,6 +586,7 @@ function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavori
                 {!loading && (aiOk ? '✨ AI generated' : '📄 description')}
               </div>
             </div>
+            <QuestPanel spot={spot} />
           </div>
         </div>
       )}
@@ -1033,6 +1034,163 @@ const loadMapTheme = () => { try { return localStorage.getItem(MAP_THEME_KEY) ||
 const FAVORITES_KEY = 'seichi_favorites'
 const loadFavorites = () => { try { const r = localStorage.getItem(FAVORITES_KEY); return r ? new Set(JSON.parse(r)) : new Set() } catch { return new Set() } }
 const saveFavorites = f => localStorage.setItem(FAVORITES_KEY, JSON.stringify([...f]))
+
+const QUEST_COMPLETIONS_KEY = 'seichi_quest_completions'
+const loadQuestCompletions = () => {
+  try {
+    const r = localStorage.getItem(QUEST_COMPLETIONS_KEY)
+    return r ? new Set(JSON.parse(r)) : new Set()
+  } catch {
+    return new Set()
+  }
+}
+const saveQuestCompletions = completions => {
+  try {
+    localStorage.setItem(QUEST_COMPLETIONS_KEY, JSON.stringify([...completions]))
+  } catch {}
+}
+const getQuestKey = (spotId, index) => `${spotId}:${index}`
+
+function QuestPanel({ spot }) {
+  const quests = spot.quests || []
+  const [completed, setCompleted] = useState(() => loadQuestCompletions())
+
+  if (!quests.length) return null
+
+  const completedCount = quests.filter((_, index) => completed.has(getQuestKey(spot.id, index))).length
+  const allComplete = completedCount === quests.length
+
+  const toggleQuest = index => {
+    const key = getQuestKey(spot.id, index)
+    setCompleted(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      saveQuestCompletions(next)
+      return next
+    })
+  }
+
+  return (
+    <section style={{
+      marginTop: 14,
+      padding: '12px',
+      borderRadius: 16,
+      background: '#f8fafc',
+      border: '1px solid #e5e7eb',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between', marginBottom: 8 }}>
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 850, color: THEME, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+            Quest
+          </div>
+          {spot.quest_title && (
+            <div style={{ fontSize: 14, fontWeight: 850, color: '#1f2937', lineHeight: 1.25, marginTop: 2 }}>
+              {spot.quest_title}
+            </div>
+          )}
+        </div>
+        {spot.quest_type && (
+          <span style={{
+            flexShrink: 0,
+            maxWidth: 150,
+            padding: '4px 8px',
+            borderRadius: 999,
+            background: '#ede9fe',
+            color: THEME_DARK,
+            fontSize: 10,
+            fontWeight: 850,
+            lineHeight: 1.25,
+            textAlign: 'center',
+          }}>
+            {spot.quest_type}
+          </span>
+        )}
+      </div>
+
+      <div style={{ display: 'grid', gap: 8 }}>
+        {quests.map((quest, index) => {
+          const isDone = completed.has(getQuestKey(spot.id, index))
+          return (
+            <div
+              key={`${quest.category}-${quest.title}`}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr auto',
+                gap: 10,
+                alignItems: 'start',
+                padding: '10px',
+                borderRadius: 12,
+                background: isDone ? '#ecfdf5' : '#fff',
+                border: `1px solid ${isDone ? '#bbf7d0' : '#edf2f7'}`,
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 3 }}>
+                  <span style={{
+                    padding: '2px 7px',
+                    borderRadius: 999,
+                    background: isDone ? '#16a34a' : '#f3f4f6',
+                    color: isDone ? '#fff' : '#4b5563',
+                    fontSize: 10,
+                    fontWeight: 850,
+                    textTransform: 'uppercase',
+                  }}>
+                    {quest.category}
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 850, color: '#111827', lineHeight: 1.35 }}>
+                    {quest.title}
+                  </span>
+                </div>
+                <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.55 }}>
+                  {quest.description}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={e => { e.stopPropagation(); toggleQuest(index) }}
+                style={{
+                  minWidth: 78,
+                  padding: '7px 9px',
+                  borderRadius: 10,
+                  border: 'none',
+                  background: isDone ? '#16a34a' : THEME,
+                  color: '#fff',
+                  fontSize: 11,
+                  fontWeight: 850,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {isDone ? 'Done' : 'Complete'}
+              </button>
+            </div>
+          )
+        })}
+      </div>
+
+      {allComplete && (
+        <div style={{
+          marginTop: 10,
+          padding: '9px 10px',
+          borderRadius: 12,
+          background: '#dcfce7',
+          color: '#166534',
+          fontSize: 13,
+          fontWeight: 850,
+          textAlign: 'center',
+        }}>
+          Quest Complete!
+        </div>
+      )}
+
+      <div style={{ marginTop: 10, color: '#8a94a6', fontSize: 10.5, lineHeight: 1.45 }}>
+        Good to know: Some food and souvenir quests are based on local experiences, not official scenes.
+        Please check current store information before visiting.
+      </div>
+    </section>
+  )
+}
 
 function OnboardingSurvey({ onComplete }) {
   const [step, setStep]           = useState(0)

@@ -621,7 +621,27 @@
     "source": "",
     "generic_intro_en": "",
     "official_url": "https://aobuta.jp/",
-    "hours": "Always open"
+    "hours": "Always open",
+    "quest_title": "Shonan Food Quest",
+    "quest_place": "藤沢駅 / 江ノ島周辺",
+    "quest_type": "Local Quest",
+    "quests": [
+      {
+        "category": "Visit",
+        "title": "藤沢駅周辺の作中スポットを巡る",
+        "description": "藤沢・江ノ島周辺の聖地を巡る。"
+      },
+      {
+        "category": "Eat",
+        "title": "江ノ島でしらす丼など湘南グルメを食べる",
+        "description": "作中そのものではなく、聖地周辺で楽しめるLocal Questとして扱う。"
+      },
+      {
+        "category": "Buy",
+        "title": "湘南・江ノ島らしいお土産を探す",
+        "description": "巡礼後に旅の記憶として持ち帰れるお土産を探す。"
+      }
+    ]
   },
   {
     "id": "yokohama-bsd-01",
@@ -1331,5 +1351,303 @@
     "generic_intro_en": "",
     "official_url": "https://mono-weekend.photo/",
     "hours": "Park always open · Facilities vary"
+  },
+  {
+    "id": "miura-megami-poem-01",
+    "spot_name_ja": "コーヒーハウスぽえむ 三浦海岸駅前店",
+    "spot_name_en": "Coffee House Poem Miura Kaigan",
+    "anime_title_ja": "女神のカフェテラス",
+    "anime_title_en": "The Cafe Terrace and Its Goddesses",
+    "scene_description": "作中の喫茶店Familiaのモデルとして知られる、三浦海岸駅近くの喫茶店。三浦海岸巡礼の食体験スポットとして訪れやすい。",
+    "intro_short_en": "Coffee House Poem near Miura Kaigan Station is known among fans as the model for Familia in The Cafe Terrace and Its Goddesses. It turns the pilgrimage into a relaxed cafe stop with coffee, light meals, and a real sense of the local setting.",
+    "lat": 35.1886,
+    "lng": 139.6535,
+    "area": "Miura Coast, Kanagawa",
+    "nearest_station": "Miura Kaigan Station",
+    "access_note": "京急 三浦海岸駅から徒歩すぐ。営業状況を確認して訪問",
+    "photo_url": "",
+    "tags": [
+      "cafe",
+      "story-food",
+      "walkable",
+      "food",
+      "souvenir",
+      "indoor"
+    ],
+    "verified": true,
+    "source": "https://plus.rurubu.jp/article/318636317",
+    "generic_intro_en": "",
+    "official_url": "https://goddess-cafe.com/",
+    "hours": "Cafe hours vary · Check before visiting",
+    "quest_title": "Familia Model Cafe Quest",
+    "quest_place": "コーヒーハウスぽえむ 三浦海岸駅前店",
+    "quest_type": "Story Food",
+    "quests": [
+      {
+        "category": "Visit",
+        "title": "Familiaのモデル店を訪れる",
+        "description": "作中の喫茶店Familiaの雰囲気を感じられるカフェを訪れる。"
+      },
+      {
+        "category": "Eat",
+        "title": "コーヒーやトーストサンドを楽しむ",
+        "description": "カフェ巡礼として、コーヒーや軽食を楽しむ。"
+      },
+      {
+        "category": "Buy",
+        "title": "ドリップバッグなどのお土産を探す",
+        "description": "旅の記憶として持ち帰れるカフェ系のお土産を探す。"
+      }
+    ]
+  },
+  {
+    "id": "fujisawa-justbecause-station-01",
+    "spot_name_ja": "藤沢駅周辺",
+    "spot_name_en": "Fujisawa Station Area",
+    "anime_title_ja": "Just Because!",
+    "anime_title_en": "Just Because!",
+    "scene_description": "藤沢駅周辺の生活圏が作中に登場する。駅前カフェやローカル飲食店に立ち寄りながら巡礼しやすいエリア。",
+    "intro_short_en": "The Fujisawa Station area captures the everyday school-life atmosphere of Just Because!. It works well as a low-key pilgrimage route where fans can pair station scenes with a cafe break or a local meal.",
+    "lat": 35.3389,
+    "lng": 139.4871,
+    "area": "Fujisawa, Kanagawa",
+    "nearest_station": "Fujisawa Station",
+    "access_note": "JR・小田急・江ノ電 藤沢駅周辺",
+    "photo_url": "",
+    "tags": [
+      "station",
+      "walkable",
+      "cafe",
+      "food",
+      "local-life",
+      "outdoor"
+    ],
+    "verified": true,
+    "source": "https://ameblo.jp/sho-anime-life/entry-12327757929.html",
+    "generic_intro_en": "",
+    "official_url": "https://justbecause.jp/",
+    "hours": "Area always open · Shops vary",
+    "quest_title": "Fujisawa School Life Cafe Quest",
+    "quest_place": "藤沢駅周辺",
+    "quest_type": "Story Spot / Local Food",
+    "quests": [
+      {
+        "category": "Visit",
+        "title": "藤沢駅周辺の作中スポットを巡る",
+        "description": "高校生活アニメの生活圏として藤沢駅周辺を巡る。"
+      },
+      {
+        "category": "Eat",
+        "title": "駅前カフェやローカル飲食店で休憩する",
+        "description": "タリーズ藤沢OPA店や古久家藤沢店など、巡礼中に立ち寄りやすい店をイメージする。"
+      },
+      {
+        "category": "Buy",
+        "title": "藤沢駅周辺で小さなお土産を探す",
+        "description": "観光地ではない日常の街としての藤沢を体験する。"
+      }
+    ]
+  },
+  {
+    "id": "enoshima-tsuritama-nakamise-01",
+    "spot_name_ja": "弁財天仲見世通り",
+    "spot_name_en": "Benzaiten Nakamise-dori",
+    "anime_title_ja": "つり球",
+    "anime_title_en": "Tsuritama",
+    "scene_description": "江の島島内へ向かう参道の商店街。『つり球』の江の島巡礼と食べ歩き・お土産探しを組み合わせやすいスポット。",
+    "intro_short_en": "Benzaiten Nakamise-dori is the lively shopping street leading into Enoshima and a natural Tsuritama pilgrimage stop. It gives fans an easy way to combine anime scenery with local snacks and souvenirs.",
+    "lat": 35.3007,
+    "lng": 139.4808,
+    "area": "Enoshima, Kanagawa",
+    "nearest_station": "Katase-Enoshima / Enoshima Station",
+    "access_note": "小田急 片瀬江ノ島駅から徒歩約15分、江ノ電 江ノ島駅から徒歩約20分",
+    "photo_url": "",
+    "tags": [
+      "shopping-street",
+      "walkable",
+      "food",
+      "souvenir",
+      "coastal",
+      "outdoor"
+    ],
+    "verified": true,
+    "source": "https://imatre.exblog.jp/19161364",
+    "generic_intro_en": "",
+    "official_url": "https://www.tsuritama.com/",
+    "hours": "Street always open · Shops usually daytime",
+    "quest_title": "Enoshima Shopping Street Quest",
+    "quest_place": "弁財天仲見世通り",
+    "quest_type": "Local Quest",
+    "quests": [
+      {
+        "category": "Visit",
+        "title": "青銅の鳥居から仲見世通りを歩く",
+        "description": "江ノ島らしい商店街の雰囲気を味わう。"
+      },
+      {
+        "category": "Eat",
+        "title": "江ノ島の食べ歩きグルメを楽しむ",
+        "description": "海鮮系や軽食など、江ノ島観光と相性のよい食体験を入れる。"
+      },
+      {
+        "category": "Buy",
+        "title": "江ノ島のお土産を買う",
+        "description": "巡礼の記念として、江ノ島らしいお土産を探す。"
+      }
+    ]
+  },
+  {
+    "id": "kamakura-sacredseven-station-01",
+    "spot_name_ja": "鎌倉駅西口",
+    "spot_name_en": "Kamakura Station West Exit",
+    "anime_title_ja": "セイクリッドセブン",
+    "anime_title_en": "Sacred Seven",
+    "scene_description": "第8話の鎌倉デート回で登場する、江ノ電鎌倉駅側のロータリー周辺。鎌倉巡礼の出発点として使いやすい場所。",
+    "intro_short_en": "Kamakura Station's west exit is an easy starting point for a Sacred Seven walk. Episode 8 brings Alma and Ruri into central Kamakura, and the station area sets up a route toward Onari-dori and Yuigahama-dori.",
+    "lat": 35.3193,
+    "lng": 139.5502,
+    "area": "Kamakura, Kanagawa",
+    "nearest_station": "Kamakura Station",
+    "access_note": "JR・江ノ電 鎌倉駅西口すぐ",
+    "photo_url": "",
+    "tags": [
+      "station",
+      "walkable",
+      "free",
+      "outdoor"
+    ],
+    "verified": true,
+    "source": "https://www.townnews.co.jp/0602/2011/09/02/116528.html",
+    "generic_intro_en": "",
+    "official_url": "https://www.sacred7.jp/",
+    "hours": "Always open"
+  },
+  {
+    "id": "kamakura-sacredseven-onari-01",
+    "spot_name_ja": "御成通り",
+    "spot_name_en": "Onari-dori Shopping Street",
+    "anime_title_ja": "セイクリッドセブン",
+    "anime_title_en": "Sacred Seven",
+    "scene_description": "鎌倉駅西口から続く商店街。第8話の鎌倉デートシーンで、商店街入口や店舗が描かれている。",
+    "intro_short_en": "Onari-dori is a local shopping street just west of Kamakura Station and one of the recognizable Sacred Seven episode 8 locations. It is quieter than Komachi-dori, making it pleasant for a relaxed fan walk.",
+    "lat": 35.3188,
+    "lng": 139.5486,
+    "area": "Kamakura, Kanagawa",
+    "nearest_station": "Kamakura Station",
+    "access_note": "JR・江ノ電 鎌倉駅西口から徒歩約1分",
+    "photo_url": "",
+    "tags": [
+      "shopping-street",
+      "walkable",
+      "food",
+      "free",
+      "outdoor"
+    ],
+    "verified": true,
+    "source": "https://www.townnews.co.jp/0602/2011/09/02/116528.html",
+    "generic_intro_en": "",
+    "official_url": "https://www.sacred7.jp/",
+    "hours": "Street always open · Shops vary",
+    "quest_title": "Oni-gawara Souvenir Quest",
+    "quest_place": "中丸商店 / 花見煎餅吾妻屋 周辺",
+    "quest_type": "Collaboration Souvenir",
+    "quests": [
+      {
+        "category": "Visit",
+        "title": "鎌倉商店街の関連スポットを巡る",
+        "description": "作品と地域コラボの雰囲気を感じながら鎌倉を歩く。"
+      },
+      {
+        "category": "Eat",
+        "title": "鎌倉の和菓子や軽食を楽しむ",
+        "description": "過去のコラボ商品や鎌倉らしい食体験を意識して巡る。"
+      },
+      {
+        "category": "Buy",
+        "title": "鬼瓦饅頭・サイダー系のお土産文化を知る",
+        "description": "アニメと地域のお土産が結びついた例として紹介する。現在販売中とは限らないため、デモでは要確認扱いにする。"
+      }
+    ]
+  },
+  {
+    "id": "kamakura-sacredseven-yuigahama-01",
+    "spot_name_ja": "由比ガ浜通り",
+    "spot_name_en": "Yuigahama-dori",
+    "anime_title_ja": "セイクリッドセブン",
+    "anime_title_en": "Sacred Seven",
+    "scene_description": "作中登場店舗を含む由比ガ浜中央商店街周辺。放送当時は鎌倉限定グッズやスタンプラリーの拠点にもなった。",
+    "intro_short_en": "Yuigahama-dori connects central Kamakura with the Hase and beach areas, and it was part of Sacred Seven's local tie-in activity. The street still works well as a slow walking route between station scenes and old Kamakura shops.",
+    "lat": 35.3159,
+    "lng": 139.5424,
+    "area": "Kamakura, Kanagawa",
+    "nearest_station": "Wadazuka / Kamakura Station",
+    "access_note": "江ノ電 和田塚駅から徒歩圏。鎌倉駅からも徒歩で巡回可能",
+    "photo_url": "",
+    "tags": [
+      "shopping-street",
+      "walkable",
+      "food",
+      "free",
+      "outdoor"
+    ],
+    "verified": true,
+    "source": "https://www.townnews.co.jp/0602/2011/09/02/116528.html",
+    "generic_intro_en": "",
+    "official_url": "https://www.sacred7.jp/",
+    "hours": "Street always open · Shops vary"
+  },
+  {
+    "id": "kamakura-sacredseven-sunshodo-01",
+    "spot_name_ja": "鎌倉彫寸松堂",
+    "spot_name_en": "Kamakurabori Sunshodo",
+    "anime_title_ja": "セイクリッドセブン",
+    "anime_title_en": "Sacred Seven",
+    "scene_description": "放送当時のスタンプラリー設置店の一つ。作中キャラクター「鬼瓦」にちなんだ鎌倉彫展示でも紹介された老舗。",
+    "intro_short_en": "Sunshodo is a traditional Kamakurabori shop tied to Sacred Seven's 2011 Kamakura stamp rally. It connects the anime pilgrimage with a real local craft, so it is a nice cultural stop as well as a fan location.",
+    "lat": 35.3153,
+    "lng": 139.5427,
+    "area": "Kamakura, Kanagawa",
+    "nearest_station": "Wadazuka Station",
+    "access_note": "江ノ電 和田塚駅から徒歩約5分。営業中の店舗なので見学・撮影は配慮して訪問",
+    "photo_url": "",
+    "tags": [
+      "craft",
+      "shopping",
+      "indoor",
+      "walkable",
+      "respect-private-business"
+    ],
+    "verified": true,
+    "source": "https://www.townnews.co.jp/0602/2011/09/02/116528.html",
+    "generic_intro_en": "",
+    "official_url": "https://www.sacred7.jp/",
+    "hours": "Shop hours vary"
+  },
+  {
+    "id": "kamakura-sacredseven-goryo-01",
+    "spot_name_ja": "御霊神社",
+    "spot_name_en": "Goryo Shrine",
+    "anime_title_ja": "セイクリッドセブン",
+    "anime_title_en": "Sacred Seven",
+    "scene_description": "坂ノ下地区の巡礼スポットとして知られる神社。江ノ電沿線の鎌倉らしい風景とあわせて訪れやすい。",
+    "intro_short_en": "Goryo Shrine in Sakanoshita is a quiet Sacred Seven pilgrimage stop along the Enoden corridor. Its small shrine grounds and nearby railway scenery give the visit a very Kamakura feel.",
+    "lat": 35.3111,
+    "lng": 139.5351,
+    "area": "Kamakura, Kanagawa",
+    "nearest_station": "Hase Station",
+    "access_note": "江ノ電 長谷駅から徒歩約5分。神社境内や踏切付近では撮影マナーに注意",
+    "photo_url": "",
+    "tags": [
+      "shrine",
+      "walkable",
+      "photo-spot",
+      "free",
+      "outdoor"
+    ],
+    "verified": true,
+    "source": "https://rica0867.livedoor.blog/archives/24580792.html",
+    "generic_intro_en": "",
+    "official_url": "https://www.sacred7.jp/",
+    "hours": "Shrine grounds always open"
   }
 ]
