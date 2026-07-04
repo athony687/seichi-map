@@ -645,5 +645,33 @@
     "generic_intro_en": "",
     "official_url": "https://www.sacred7.jp/",
     "hours": "Shrine grounds always open"
+  },
+  {
+    "id": "yokohama-conan-01",
+    "spot_name_ja": "横浜赤レンガ倉庫",
+    "spot_name_en": "Yokohama Red Brick Warehouse",
+    "anime_title_ja": "名探偵コナン",
+    "anime_title_en": "Detective Conan (Case Closed)",
+    "scene_description": "夜景が広がるシーンの舞台として登場。歴史的な赤レンガ倉庫と横浜港の美しい景観が作品の雰囲気を引き立てている。",
+    "intro_short_en": "The historic Red Brick Warehouse along Yokohama's waterfront appears in 'Detective Conan' as the backdrop for a nighttime scene, its illuminated facade and harbour views lending the series a suitably atmospheric mood. The real building is a beautifully preserved Meiji-era landmark that today houses shops, restaurants, and event spaces. It's an easy and rewarding stop on any Yokohama itinerary, day or night.",
+    "lat": 35.45285056385281,
+    "lng": 139.64291585428563,
+    "area": "Yokohama, Kanagawa",
+    "nearest_station": "JR Kannai Station / Minatomirai Line Bashamichi Station",
+    "access_note": "JR関内駅から徒歩約15分、またはみなとみらい線馬車道駅から徒歩約6分",
+    "photo_url": "",
+    "tags": [
+      "walkable",
+      "photo-spot",
+      "free",
+      "night-view",
+      "historic",
+      "waterfront"
+    ],
+    "verified": true,
+    "source": "",
+    "generic_intro_en": "",
+    "official_url": "",
+    "hours": "Outdoor area always open"
   }
 ]
