@@ -2575,6 +2575,7 @@ function App() {
 
   const [journalTarget, setJournalTarget] = useState(null)
   const [showJournal, setShowJournal]     = useState(false)
+  const [journalKey, setJournalKey]       = useState(0)
   const [journaledIds, setJournaledIds]   = useState(new Set())
 
   useEffect(() => {
@@ -3182,7 +3183,7 @@ function App() {
 
         {/* ジャーナルボタン */}
         <button
-          onClick={() => setShowJournal(true)}
+          onClick={() => { setShowJournal(true); setJournalKey(k => k + 1) }}
           title="Journal"
           style={{
             width: 30, height: 30, borderRadius: 10,
@@ -3426,6 +3427,7 @@ function App() {
       {/* ジャーナル一覧 */}
       {showJournal && (
         <JournalViewer
+          key={journalKey}
           spots={spots}
           onOpenEditor={spot => { setShowJournal(false); setJournalTarget(spot) }}
           onClose={() => setShowJournal(false)}
@@ -3437,7 +3439,7 @@ function App() {
         <JournalEditor
           spot={journalTarget}
           onSave={() => { setJournalTarget(null); refreshJournaledIds() }}
-          onSkip={() => setJournalTarget(null)}
+          onSkip={() => { setJournalTarget(null); refreshJournaledIds() }}
         />
       )}
 
