@@ -1460,6 +1460,30 @@ function NearestStampBar({ spot, onTap }) {
   )
 }
 
+// ── スプラッシュ画面 ─────────────────────────────────────────────────────
+function SplashScreen({ onDone }) {
+  const [fading, setFading] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setFading(true), 1500)
+    return () => clearTimeout(t)
+  }, [])
+  return (
+    <div
+      onTransitionEnd={() => fading && onDone()}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 10000,
+        background: '#fff',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        opacity: fading ? 0 : 1,
+        transition: 'opacity 0.5s ease',
+        pointerEvents: fading ? 'none' : 'auto',
+      }}
+    >
+      <img src="/icon-192.png" alt="Animap" style={{ width: 96, height: 96, borderRadius: 20 }} />
+    </div>
+  )
+}
+
 // ── 位置情報・コンパス許可カード ─────────────────────────────────────────
 function LocationPermissionCard({ onAllow, onSkip }) {
   return (
@@ -1727,6 +1751,8 @@ function App() {
     setDemoPos(YOKOHAMA_STATION)
     setPlaying(false)
   }, [])
+
+  const [showSplash, setShowSplash] = useState(true)
 
   const [gpsReady, setGpsReady] = useState(false)
   useEffect(() => {
@@ -2409,6 +2435,7 @@ function App() {
       {!selected && selectedTourist && (
         <TouristPopup spot={selectedTourist} onClose={() => setSelectedTourist(null)} />
       )}
+      {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
     </div>
   )
 }
