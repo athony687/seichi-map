@@ -1,38 +1,6 @@
-h1 {
-    margin: 0;
-}
-
-.wrapper {
-    max-width: 1240px;
-    margin: 0 auto;
-    padding: 0 5%;
-}
-
-header {
-    background-color: black; 
-    height: 50px; 
-    position: fixed; 
-    top: 0; width: 100%; 
-    z-index: 1000;
-}
-
-.header-logo {
-    color: #fff;
-    font-size: 2rem;
-    line-height: 50px;
-}
-
-@media (max-width: 600px) {
-  header .header-logo {
-    font-size: 16px;
-  }
-}
-
-
-
 #root {
-    margin-top: 50px; /* ヘッダーの高さ分だけ下にずらす */
-    padding: 20px;    /* 見やすくするための余白 */
+    margin: 0;
+    padding: 0;
 }
 
 .progress-container-gradient {
