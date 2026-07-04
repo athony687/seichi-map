@@ -1185,395 +1185,6 @@ function OnboardingSurvey({ onComplete }) {
   )
 }
 
-// ── 目的別ダッシュボード ────────────────────────────────────────────────
-function AppOverviewDashboard({ spots, currentPos, onNearMe, onPreviewRoute, onSearchAnime, onSelectSpot, stampCardIds, acquiredStamps, onOpenStampCard }) {
-  const pos = currentPos || TOKYO_STATION
-  const usingFallback = !currentPos
-
-  const spotsWithDist = useMemo(() => {
-    if (!spots.length) return []
-    return spots
-      .map(s => ({ ...s, dist: haversine(pos, { lat: s.lat, lng: s.lng }) }))
-      .sort((a, b) => a.dist - b.dist)
-  }, [spots, pos.lat, pos.lng])
-
-  const nearby = spotsWithDist.filter(s => s.dist <= 3000)
-  const displaySpots = nearby.length > 0 ? nearby.slice(0, 5) : spotsWithDist.slice(0, 3)
-  const hasNearby = nearby.length > 0
-  const originLabel = usingFallback ? 'Tokyo Station starting point' : 'Your current area'
-
-  const actionCard = ({ icon, label, title, body, meta, onClick, primary }) => (
-    <button
-      key={label}
-      type="button"
-      onClick={onClick}
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '44px 1fr',
-        gap: 13,
-        width: '100%',
-        padding: '16px',
-        borderRadius: 22,
-        border: primary ? `2px solid ${THEME}` : '1px solid rgba(124,58,237,0.14)',
-        background: primary
-          ? `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`
-          : '#fff',
-        color: primary ? '#fff' : '#1f2937',
-        boxShadow: primary
-          ? '0 10px 30px rgba(124,58,237,0.32)'
-          : '0 6px 22px rgba(31,41,55,0.08)',
-        cursor: 'pointer',
-        textAlign: 'left',
-      }}
-    >
-      <span style={{
-        width: 44, height: 44, borderRadius: 16,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: primary ? 'rgba(255,255,255,0.18)' : '#faf5ff',
-        fontSize: 24,
-      }}>{icon}</span>
-      <span>
-        <span style={{
-          display: 'block',
-          marginBottom: 3,
-          fontSize: 10,
-          fontWeight: 800,
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          color: primary ? 'rgba(255,255,255,0.72)' : '#a78bfa',
-        }}>{label}</span>
-        <span style={{ display: 'block', fontSize: 17, fontWeight: 850, lineHeight: 1.25 }}>
-          {title}
-        </span>
-        <span style={{
-          display: 'block',
-          marginTop: 6,
-          color: primary ? 'rgba(255,255,255,0.82)' : '#6b7280',
-          fontSize: 13,
-          lineHeight: 1.55,
-        }}>{body}</span>
-        <span style={{
-          display: 'inline-flex',
-          marginTop: 10,
-          padding: '4px 9px',
-          borderRadius: 999,
-          background: primary ? 'rgba(255,255,255,0.18)' : '#f5f3ff',
-          color: primary ? '#fff' : THEME,
-          fontSize: 11,
-          fontWeight: 800,
-        }}>{meta}</span>
-      </span>
-    </button>
-  )
-
-  return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 200,
-      background: '#fff',
-      overflowY: 'auto', WebkitOverflowScrolling: 'touch',
-    }}>
-
-      <div style={{
-        padding: '46px 24px 28px',
-        background: 'linear-gradient(150deg, #faf5ff 0%, #ede9fe 100%)',
-        borderBottom: '1px solid rgba(124,58,237,0.1)',
-        position: 'relative', overflow: 'hidden',
-      }}>
-        <div style={{
-          position: 'absolute', top: -80, right: -80, width: 260, height: 260,
-          borderRadius: '50%', background: 'rgba(124,58,237,0.08)', pointerEvents: 'none',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: -40, left: -40, width: 160, height: 160,
-          borderRadius: '50%', background: 'rgba(124,58,237,0.05)', pointerEvents: 'none',
-        }} />
-
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 6,
-          background: 'rgba(124,58,237,0.1)', borderRadius: 20,
-          padding: '4px 12px', marginBottom: 16,
-        }}>
-          <span style={{ fontSize: 13 }}>🗾</span>
-          <span style={{ fontSize: 11, fontWeight: 700, color: THEME,
-            letterSpacing: '0.08em', textTransform: 'uppercase' }}>Anime Pilgrimage · Japan</span>
-        </div>
-
-        <div style={{ fontSize: 38, fontWeight: 900, letterSpacing: '-0.03em',
-          lineHeight: 1.05, color: '#1a1033', marginBottom: 12 }}>
-          Animap<span style={{ color: THEME }}>.jp</span>
-        </div>
-
-        <p style={{ fontSize: 15, color: '#4b5563', lineHeight: 1.7, margin: '0 0 24px',
-          maxWidth: 340 }}>
-          Open this in Japan to choose your next anime pilgrimage move:
-          nearby discovery, a route preview, or anime-title search.
-        </p>
-      </div>
-
-      <div style={{ padding: '0 16px 120px' }}>
-
-        {/* ── Purpose choices ── */}
-        <div style={{ padding: '24px 0 8px' }}>
-          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em',
-            color: '#9ca3af', textTransform: 'uppercase', marginBottom: 14 }}>
-            What do you want to do?
-          </div>
-          <div style={{ display: 'grid', gap: 12 }}>
-            {actionCard({
-              icon: '📍',
-              label: 'Near me',
-              title: 'Find spots around me',
-              body: 'Use location only after this choice, then compare nearby anime spots by distance.',
-              meta: 'Best when you are already walking',
-              onClick: onNearMe,
-              primary: true,
-            })}
-            {actionCard({
-              icon: '🗾',
-              label: 'Preview route',
-              title: 'Browse from Tokyo Station',
-              body: 'No location permission needed. Use Tokyo Station as a clear starting point to understand the map.',
-              meta: 'Good before the trip',
-              onClick: onPreviewRoute,
-            })}
-            {actionCard({
-              icon: '🔍',
-              label: 'Search anime',
-              title: 'Start from a title',
-              body: 'Already know the anime? Jump to title search and see matching sacred spots.',
-              meta: 'Supporting path',
-              onClick: onSearchAnime,
-            })}
-          </div>
-        </div>
-
-        {/* ── Quest: Stamp Rally ── */}
-        {stampCardIds?.length > 0 && (() => {
-          const total     = stampCardIds.length
-          const collected = [...(acquiredStamps ?? [])].filter(id => stampCardIds.includes(id)).length
-          const remaining = total - collected
-          const isComplete = collected === total
-          const cardSpots = spots.filter(s => stampCardIds.includes(s.id))
-          const nextTargets = cardSpots
-            .filter(s => !(acquiredStamps ?? new Set()).has(s.id))
-            .map(s => ({ ...s, dist: haversine(pos, { lat: s.lat, lng: s.lng }) }))
-            .sort((a, b) => a.dist - b.dist)
-            .slice(0, 3)
-
-          return (
-            <div style={{ paddingTop: 28 }}>
-              {/* セクションラベル */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', color: '#9ca3af', textTransform: 'uppercase' }}>
-                  Active Quest
-                </div>
-                <button
-                  onClick={onOpenStampCard}
-                  style={{ background: 'none', border: 'none', fontSize: 11, fontWeight: 800, color: THEME, cursor: 'pointer', padding: 0 }}
-                >
-                  View full card →
-                </button>
-              </div>
-
-              {/* クエストカード本体 */}
-              <div style={{
-                borderRadius: 22, overflow: 'hidden',
-                background: isComplete
-                  ? 'linear-gradient(135deg, #78350f 0%, #92400e 100%)'
-                  : 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
-                boxShadow: '0 10px 32px rgba(30,27,75,0.22)',
-              }}>
-                {/* ヘッダー */}
-                <div style={{ padding: '16px 18px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 26 }}>🎫</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', color: isComplete ? '#fcd34d' : '#c4b5fd', textTransform: 'uppercase', marginBottom: 2 }}>
-                      Stamp Rally Mission
-                    </div>
-                    <div style={{ fontSize: 16, fontWeight: 900, color: '#fff', lineHeight: 1.25 }}>
-                      {isComplete ? 'All stamps collected! 🎉' : `Collect every stamp nearby`}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 進捗バー */}
-                <div style={{ padding: '0 18px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ flex: 1, height: 7, background: 'rgba(255,255,255,0.15)', borderRadius: 99, overflow: 'hidden' }}>
-                    <div style={{
-                      height: '100%',
-                      width: `${(collected / total) * 100}%`,
-                      background: isComplete ? 'linear-gradient(90deg,#fde68a,#fb923c)' : 'linear-gradient(90deg,#a78bfa,#f472b6)',
-                      borderRadius: 99, transition: 'width 0.6s cubic-bezier(0.34,1.56,0.64,1)',
-                    }} />
-                  </div>
-                  <span style={{ color: isComplete ? '#fde68a' : '#e0d7ff', fontSize: 13, fontWeight: 900, flexShrink: 0 }}>
-                    {collected}/{total}
-                  </span>
-                </div>
-
-                {/* 次のターゲット一覧 */}
-                {!isComplete && nextTargets.length > 0 && (
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                    <div style={{ padding: '10px 18px 6px', fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase' }}>
-                      Next targets
-                    </div>
-                    {nextTargets.map((s, i) => (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => onSelectSpot(s)}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 12,
-                          width: '100%', padding: '10px 18px',
-                          background: 'transparent', border: 'none',
-                          borderTop: i > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none',
-                          cursor: 'pointer', textAlign: 'left',
-                        }}
-                      >
-                        <span style={{
-                          width: 30, height: 30, borderRadius: 10, flexShrink: 0,
-                          background: 'rgba(255,255,255,0.1)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 15, color: '#a78bfa',
-                        }}>☆</span>
-                        <span style={{ flex: 1, minWidth: 0 }}>
-                          <span style={{ display: 'block', fontSize: 13, fontWeight: 800, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {s.spot_name_en}
-                          </span>
-                          <span style={{ display: 'block', fontSize: 11, color: '#a78bfa', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {s.anime_title_en}
-                          </span>
-                        </span>
-                        <span style={{ fontSize: 11, fontWeight: 800, color: '#c4b5fd', flexShrink: 0 }}>
-                          {formatDistance(s.dist)}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* ステータスフッター */}
-                <div style={{
-                  padding: '12px 18px', borderTop: '1px solid rgba(255,255,255,0.1)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                }}>
-                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
-                    {isComplete ? 'You\'re a true pilgrimage champion!' : `${remaining} stamp${remaining !== 1 ? 's' : ''} remaining`}
-                  </span>
-                  <button
-                    onClick={onOpenStampCard}
-                    style={{
-                      background: 'rgba(255,255,255,0.14)', border: 'none',
-                      borderRadius: 14, color: '#fff', fontSize: 11,
-                      fontWeight: 800, padding: '6px 12px', cursor: 'pointer',
-                    }}
-                  >Open card</button>
-                </div>
-              </div>
-            </div>
-          )
-        })()}
-
-        {/* ── Nearby Spots ── */}
-        <div style={{ paddingTop: 28 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline',
-            justifyContent: 'space-between', marginBottom: 4 }}>
-            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em',
-              color: '#9ca3af', textTransform: 'uppercase' }}>
-              {hasNearby ? 'Nearby Spots' : 'Closest Spots'}
-            </div>
-            {hasNearby && (
-              <div style={{ fontSize: 10, color: '#a78bfa', fontWeight: 700 }}>
-                within 3 km
-              </div>
-            )}
-          </div>
-
-          <div style={{ fontSize: 11, color: '#c4b5fd', marginBottom: 14 }}>
-            {usingFallback
-              ? 'Explore from Tokyo Station · location not used yet'
-              : hasNearby
-                ? `${nearby.length} spot${nearby.length !== 1 ? 's' : ''} near you`
-                : `No spots within 3 km · showing nearest ${displaySpots.length}`}
-          </div>
-
-          {spotsWithDist.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '20px 0',
-              fontSize: 13, color: '#d1d5db' }}>Loading…</div>
-          )}
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {displaySpots.map((s, i) => (
-              <button key={s.id} type="button" onClick={() => onSelectSpot(s)} style={{
-                display: 'flex', alignItems: 'center', gap: 14,
-                width: '100%',
-                padding: '13px 4px',
-                background: 'transparent',
-                border: 'none',
-                borderBottom: i < displaySpots.length - 1
-                  ? '1px solid #f3f4f6' : 'none',
-                cursor: 'pointer',
-                textAlign: 'left',
-              }}>
-                <div style={{
-                  width: 42, height: 42, borderRadius: 13, flexShrink: 0,
-                  background: i === 0 && hasNearby
-                    ? `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`
-                    : 'linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 20,
-                  color: i === 0 && hasNearby ? '#fff' : THEME,
-                }}>★</div>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{
-                    fontWeight: 700, fontSize: 14, color: '#111827',
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}>{s.spot_name_en}</div>
-                  <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2,
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}>{s.anime_title_en}</div>
-                </div>
-                <div style={{
-                  fontSize: 12, fontWeight: 700, flexShrink: 0,
-                  color: i === 0 && hasNearby ? THEME : '#d1d5db',
-                }}>{formatDistance(s.dist)}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-        <div style={{
-          marginTop: 18,
-          padding: '12px 14px',
-          borderRadius: 18,
-          background: '#f9fafb',
-          color: '#6b7280',
-          fontSize: 12,
-          lineHeight: 1.55,
-        }}>
-          Showing spots from <strong style={{ color: '#4b5563' }}>{originLabel}</strong>.
-          {usingFallback && ' Tokyo Station is a browsing start point, not your current location.'}
-        </div>
-      </div>
-
-      {/* ── Sticky CTA ── */}
-      <div style={{
-        position: 'sticky', bottom: 0,
-        padding: '12px 16px 36px',
-        background: 'linear-gradient(to top, #fff 65%, transparent)',
-      }}>
-        <button onClick={onNearMe} style={{
-          display: 'block', width: '100%', padding: '17px',
-          borderRadius: 20, border: 'none',
-          background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
-          color: '#fff', fontWeight: 800, fontSize: 17, cursor: 'pointer',
-          boxShadow: '0 8px 28px rgba(124,58,237,0.38)',
-          letterSpacing: '0.01em',
-        }}>Find spots near me  ▶</button>
-      </div>
-    </div>
-  )
-}
-
 // ── 位置情報・コンパス許可カード ─────────────────────────────────────────
 function LocationPermissionCard({ onAllow, onSkip }) {
   return (
@@ -1971,7 +1582,6 @@ function App() {
     return () => clearTimeout(t)
   }, [gpsStatus, demoMode, gpsConsented])
 
-  const [showDashboard, setShowDashboard] = useState(true)
   const [userPrefs, setUserPrefs]   = useState(() => loadPrefs())
   const [showSurvey, setShowSurvey] = useState(() => ENABLE_ONBOARDING_SURVEY && !loadPrefs())
   const [showSettings, setShowSettings] = useState(false)
@@ -2227,49 +1837,6 @@ function App() {
     setCardExpanded(true)
     setShowSpotList(false)
     setShowSuggestions(false)
-  }
-
-  const handleDashboardNearMe = () => {
-    setShowDashboard(false)
-    setDemoMode(false)
-    setPlaying(false)
-    setStartPosMode(false)
-    setSelected(null)
-    setSelectedTourist(null)
-    resetNearbyTracking()
-    if (gpsConsented || locationPermissionAsked) {
-      setLocateTick(t => t + 1)
-      return
-    }
-    setShowLocationPrompt(true)
-  }
-
-  const handleDashboardPreviewRoute = () => {
-    setShowDashboard(false)
-    setShowLocationPrompt(false)
-    setDemoMode(true)
-    setPlaying(false)
-    setStartPosMode(false)
-    setStartPos(TOKYO_STATION)
-    setDemoPos(TOKYO_STATION)
-    setSelected(null)
-    setSelectedTourist(null)
-    resetNearbyTracking()
-  }
-
-  const handleDashboardSearchAnime = () => {
-    setShowDashboard(false)
-    setShowLocationPrompt(false)
-    setShowSuggestions(true)
-    window.setTimeout(() => searchInputRef.current?.focus(), 0)
-  }
-
-  const handleDashboardSpotSelect = spot => {
-    setShowDashboard(false)
-    setShowLocationPrompt(false)
-    setSelectedTourist(null)
-    setSelected(spot)
-    setCardExpanded(true)
   }
 
   const handleMapClick = (e) => {
@@ -2567,10 +2134,9 @@ function App() {
         >⚙️</button>
 
         {/* 周辺スポットパネル トグル */}
-        {!showDashboard && (
-          <button
-            onClick={() => setShowNearbyPanel(v => !v)}
-            title="Nearby spots"
+        <button
+          onClick={() => setShowNearbyPanel(v => !v)}
+          title="Nearby spots"
             style={{
               height: 30, padding: '0 10px', borderRadius: 10,
               border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 800,
@@ -2579,7 +2145,6 @@ function App() {
               letterSpacing: '0.04em',
             }}
           >📋 Nearby</button>
-        )}
 
         <span style={{ width: 1, height: 18, background: 'rgba(0,0,0,0.1)' }} />
 
@@ -2665,7 +2230,7 @@ function App() {
           onLocate={() => setLocateTick(t => t + 1)}
         />
       )}
-      {!showDashboard && showNearbyPanel && (
+      {showNearbyPanel && (
         <NearbySpotsPanel
           spots={nearbyPanelSpots}
           collapsed={!!selected && cardExpanded}
@@ -2698,23 +2263,8 @@ function App() {
         <LocationPermissionCard onAllow={handleLocationAllow} onSkip={handleLocationSkip} />
       )}
 
-      {/* 目的別ダッシュボード */}
-      {showDashboard && !showStampCard && (
-        <AppOverviewDashboard
-          spots={spots}
-          currentPos={livePos}
-          onNearMe={handleDashboardNearMe}
-          onPreviewRoute={handleDashboardPreviewRoute}
-          onSearchAnime={handleDashboardSearchAnime}
-          onSelectSpot={handleDashboardSpotSelect}
-          stampCardIds={stampCardIds}
-          acquiredStamps={acquiredStamps}
-          onOpenStampCard={() => setShowStampCard(true)}
-        />
-      )}
-
       {/* スタンプラリー：ミニバー（地図表示中に常時表示） */}
-      {!showDashboard && !showStampCard && stampCardIds?.length > 0 && (
+      {!showStampCard && stampCardIds?.length > 0 && (
         <StampMinibar
           total={stampCardIds.length}
           collected={[...acquiredStamps].filter(id => stampCardIds.includes(id)).length}
@@ -2728,11 +2278,14 @@ function App() {
           spots={spots}
           stampCardIds={stampCardIds}
           acquiredStamps={acquiredStamps}
-          onClose={() => setShowStampCard(false)}
+          onClose={() => {
+            setShowStampCard(false)
+            if (!gpsConsented && !locationPermissionAsked) setShowLocationPrompt(true)
+          }}
         />
       )}
 
-      {ENABLE_ONBOARDING_SURVEY && !showDashboard && showSurvey && (
+      {ENABLE_ONBOARDING_SURVEY && showSurvey && (
         <OnboardingSurvey onComplete={prefs => { setUserPrefs(prefs); setShowSurvey(false) }} />
       )}
       {showSettings && (
