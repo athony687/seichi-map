@@ -3399,6 +3399,7 @@ function App() {
           onDone={name => {
             setUserPrefs(prev => ({ ...(prev || {}), nickname: name }))
             setShowNicknameScreen(false)
+            setShowStampCard(true)
           }}
         />
       )}
