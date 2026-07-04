@@ -1822,7 +1822,7 @@ function App() {
 
   // ── スタンプラリー state ─────────────────────────────────────────────────
   const stampCardGeneratedRef               = useRef(false)
-  const [stampCardIds, setStampCardIds]     = useState(() => loadStampCard())
+  const [stampCardIds, setStampCardIds]     = useState(() => { const s = loadStampCard(); return s?.length > 0 ? s : null })
   const [acquiredStamps, setAcquiredStamps] = useState(() => loadStamps())
   const [showStampCard, setShowStampCard]   = useState(true)
   const [showNearbyPanel, setShowNearbyPanel] = useState(false)
@@ -1853,20 +1853,18 @@ function App() {
 
 
   // ── スタンプカード生成（spots読み込み後に一度だけ実行） ────────────────────
+  // 半径フィルタなし：距離順で近い順に最大 STAMP_CARD_SIZE 件を選ぶ
   useEffect(() => {
-    if (stampCardIds !== null || stampCardGeneratedRef.current || !spots.length) return
+    if (stampCardIds?.length > 0 || stampCardGeneratedRef.current || !spots.length) return
     stampCardGeneratedRef.current = true
     const refPos = browsingPos
     const card = spots
       .map(s => ({ spot: s, dist: haversine(refPos, { lat: s.lat, lng: s.lng }) }))
-      .filter(({ dist }) => dist <= STAMP_RADIUS_METERS)
       .sort((a, b) => a.dist - b.dist)
       .slice(0, STAMP_CARD_SIZE)
       .map(({ spot }) => spot.id)
-    if (card.length > 0) {
-      setStampCardIds(card)
-      saveStampCard(card)
-    }
+    setStampCardIds(card)
+    saveStampCard(card)
   }, [spots]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── スタンプ獲得（nearbySpots が変わるたびに判定） ───────────────────────
