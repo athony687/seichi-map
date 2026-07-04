@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
-import { APIProvider, Map, Marker, useMap } from '@vis.gl/react-google-maps'
+import { APIProvider, Map, Marker, AdvancedMarker, useMap } from '@vis.gl/react-google-maps'
 import { MarkerClusterer } from '@googlemaps/markerclusterer'
 
 // ============================================================
@@ -330,88 +330,51 @@ function SearchCamera({ spots, searchAnime }) {
 // ── AIキャッシュ ─────────────────────────────────────────────────────────
 const introCache = {}
 
-// ── スポットティーザー（2段階表示の第1段階）──────────────────────────────
+// ── 近接ラベル（ピン真上に浮かぶチップ）────────────────────────────────
 const isPlaceholder = t => !t || t.startsWith('PLACEHOLDER')
 
-function getTeaserHook(spot) {
-  const text = introCache[spot.id] || spot.intro_short_en || ''
-  if (text.length > 20) {
-    const m = text.match(/^.+?[.!?](?=\s|$)/)
-    const first = m ? m[0].trim() : text.slice(0, 90).trim()
-    if (first.length > 20) return first.length > 100 ? first.slice(0, 97) + '…' : first
-  }
-  return `Where ${spot.anime_title_en}'s story comes to life`
-}
-
-function SpotTeaser({ spot, currentPos, onExpand, onClose }) {
-  const hook = getTeaserHook(spot)
-  const dist = currentPos
-    ? formatDistance(haversine(currentPos, { lat: spot.lat, lng: spot.lng }))
-    : null
-
+function ProximityLabel({ spot, onTap }) {
   return (
-    <div style={{
-      position: 'absolute', bottom: 84, left: 12, right: 12,
-      maxWidth: 380, margin: '0 auto',
-      zIndex: 10, cursor: 'pointer',
-      animation: 'slideUp 0.32s cubic-bezier(0.34,1.4,0.64,1)',
-    }} onClick={onExpand}>
-      {/* ヘッダーリボン */}
+    <AdvancedMarker
+      position={{ lat: spot.lat, lng: spot.lng }}
+      onClick={onTap}
+      zIndex={20}
+    >
       <div style={{
-        background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
-        borderRadius: '18px 18px 0 0',
-        padding: '11px 44px 11px 16px',
-        position: 'relative',
+        transform: 'translateY(-52px)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        cursor: 'pointer', pointerEvents: 'auto',
+        animation: 'slideUp 0.28s cubic-bezier(0.34,1.4,0.64,1)',
       }}>
-        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)', fontWeight: 700,
-          letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 2 }}>
-          {spot.anime_title_en}
-        </div>
-        <div style={{ fontSize: 15, color: '#fff', fontWeight: 800, lineHeight: 1.2,
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {spot.spot_name_en}
-        </div>
-        <button
-          onClick={e => { e.stopPropagation(); onClose() }}
-          style={{
-            position: 'absolute', top: '50%', right: 10, transform: 'translateY(-50%)',
-            width: 26, height: 26, borderRadius: 8,
-            background: 'rgba(255,255,255,0.18)', border: 'none',
-            color: '#fff', fontSize: 13, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: 0,
-          }}
-        >✕</button>
-      </div>
-
-      {/* 本文 */}
-      <div style={{
-        background: 'rgba(255,255,255,0.96)',
-        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderRadius: '0 0 18px 18px',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.06)',
-        padding: '12px 16px 14px',
-      }}>
-        <p style={{ margin: '0 0 12px', fontSize: 13, color: '#374151',
-          lineHeight: 1.65, fontStyle: 'italic' }}>
-          "{hook}"
-        </p>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          {dist
-            ? <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>📍 {dist}</span>
-            : <span />}
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
-            background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
-            color: '#fff', fontSize: 12, fontWeight: 700,
-            padding: '7px 14px', borderRadius: 20,
-            boxShadow: '0 2px 10px rgba(124,58,237,0.35)',
-          }}>
-            Tap to explore <span style={{ fontSize: 10 }}>▶</span>
+        <div style={{
+          background: 'rgba(255,255,255,0.95)',
+          backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+          border: `1.5px solid ${THEME}`,
+          borderRadius: 20,
+          padding: '5px 12px',
+          boxShadow: '0 3px 12px rgba(124,58,237,0.25)',
+          maxWidth: 180,
+        }}>
+          <div style={{ fontSize: 9, color: THEME, fontWeight: 700,
+            letterSpacing: '0.08em', textTransform: 'uppercase',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {spot.anime_title_en}
+          </div>
+          <div style={{ fontSize: 12, color: '#1f2937', fontWeight: 700,
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {spot.spot_name_en}
           </div>
         </div>
+        {/* 下向き三角 */}
+        <div style={{
+          width: 0, height: 0,
+          borderLeft: '5px solid transparent',
+          borderRight: '5px solid transparent',
+          borderTop: `6px solid ${THEME}`,
+          marginTop: -1,
+        }} />
       </div>
-    </div>
+    </AdvancedMarker>
   )
 }
 
@@ -1444,6 +1407,7 @@ function App() {
   const [touristSpots, setTouristSpots] = useState([])
   const [selected, setSelected]         = useState(null)
   const [cardExpanded, setCardExpanded] = useState(false)
+  const [nearbySpots, setNearbySpots]   = useState([])
   const [selectedTourist, setSelectedTourist] = useState(null)
 
   useEffect(() => { setCardExpanded(false) }, [selected?.id])
@@ -1592,39 +1556,24 @@ function App() {
   // activePos: デモ中は擬似マーカー、ライブ中はGPS
   const activePos = demoMode ? demoPos : livePos
 
-  // 近接判定（両モードで自動表示。DEMOは離れたら自動クローズ、LIVEは手動クローズのみ）
+  // 近接判定（ラベル表示用。DEMOは離れたらカードも自動クローズ）
   useEffect(() => {
     if (!activePos || !spots.length) return
 
+    // 範囲内スポットをすべて nearbySpots に
+    const nearby = spots.filter(
+      s => haversine(activePos, { lat: s.lat, lng: s.lng }) < PROXIMITY_METERS
+    )
+    setNearbySpots(nearby)
+
+    // DEMO: 選択中スポットが範囲外に出たら自動クローズ
     if (demoMode) {
-      // DEMO: 離れたらカードを自動クローズ＋再トリガー許可
       setSelected(prev => {
         if (prev && haversine(activePos, { lat: prev.lat, lng: prev.lng }) > PROXIMITY_METERS) {
-          triggeredRef.current.delete(prev.id)
           return null
         }
         return prev
       })
-    } else {
-      // LIVE: カードは閉じないが、離れたら再トリガー可能にする
-      spots.forEach(spot => {
-        if (triggeredRef.current.has(spot.id) &&
-            haversine(activePos, { lat: spot.lat, lng: spot.lng }) > PROXIMITY_METERS) {
-          triggeredRef.current.delete(spot.id)
-        }
-      })
-    }
-
-    // 両モード共通: 100m以内に入ったら自動表示
-    for (const spot of spots) {
-      if (
-        haversine(activePos, { lat: spot.lat, lng: spot.lng }) < PROXIMITY_METERS &&
-        !triggeredRef.current.has(spot.id)
-      ) {
-        triggeredRef.current.add(spot.id)
-        setSelected(spot)
-        break
-      }
     }
   }, [activePos, spots, demoMode])
 
@@ -1639,6 +1588,7 @@ function App() {
 
   const handleSpotSelect = useCallback((spot) => {
     setSelected(spot)
+    setCardExpanded(true)
   }, [])
 
   const handleAnimeSelect = title => {
@@ -1651,6 +1601,7 @@ function App() {
   const handleSearchSpotSelect = spot => {
     setSelectedTourist(null)
     setSelected(spot)
+    setCardExpanded(true)
     setShowSpotList(false)
     setShowSuggestions(false)
   }
@@ -1758,6 +1709,25 @@ function App() {
           }
           {selected && (
             <SelectedSpotMarker spot={selected} onClick={() => {}} />
+          )}
+
+          {/* 近接ラベル（範囲内スポットのピン真上に表示） */}
+          {nearbySpots
+            .filter(s => !selected || s.id !== selected.id)
+            .map(s => (
+              <ProximityLabel
+                key={s.id}
+                spot={s}
+                onTap={() => { setSelected(s); setCardExpanded(true) }}
+              />
+            ))
+          }
+          {/* 選択中スポットにも近接ラベルを表示（カード未展開時） */}
+          {selected && !cardExpanded && nearbySpots.some(s => s.id === selected.id) && (
+            <ProximityLabel
+              spot={selected}
+              onTap={() => setCardExpanded(true)}
+            />
           )}
 
           {/* 現在地マーカー */}
@@ -2011,14 +1981,6 @@ function App() {
         <GpsLocateButton
           status={gpsStatus}
           onLocate={() => setLocateTick(t => t + 1)}
-        />
-      )}
-      {selected && !cardExpanded && (
-        <SpotTeaser
-          spot={selected}
-          currentPos={activePos}
-          onExpand={() => setCardExpanded(true)}
-          onClose={() => setSelected(null)}
         />
       )}
       {selected && cardExpanded && (
