@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
-import { APIProvider, Map, Marker, AdvancedMarker, useMap } from '@vis.gl/react-google-maps'
+import { APIProvider, Map, Marker, InfoWindow, useMap } from '@vis.gl/react-google-maps'
 import { MarkerClusterer } from '@googlemaps/markerclusterer'
 
 // ============================================================
@@ -336,46 +336,33 @@ const isPlaceholder = t => !t || t.startsWith('PLACEHOLDER')
 
 function ProximityLabel({ spot, onTap }) {
   return (
-    <AdvancedMarker
+    <InfoWindow
       position={{ lat: spot.lat, lng: spot.lng }}
-      onClick={onTap}
-      zIndex={20}
+      pixelOffset={[0, -32]}
+      disableAutoPan
+      headerDisabled
+      shouldFocus={false}
+      onCloseClick={onTap}
     >
-      <div style={{
-        transform: 'translateY(-52px)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        cursor: 'pointer', pointerEvents: 'auto',
-        animation: 'slideUp 0.28s cubic-bezier(0.34,1.4,0.64,1)',
-      }}>
-        <div style={{
-          background: 'rgba(255,255,255,0.95)',
-          backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-          border: `1.5px solid ${THEME}`,
-          borderRadius: 20,
-          padding: '5px 12px',
-          boxShadow: '0 3px 12px rgba(124,58,237,0.25)',
-          maxWidth: 180,
-        }}>
-          <div style={{ fontSize: 9, color: THEME, fontWeight: 700,
-            letterSpacing: '0.08em', textTransform: 'uppercase',
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {spot.anime_title_en}
-          </div>
-          <div style={{ fontSize: 12, color: '#1f2937', fontWeight: 700,
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {spot.spot_name_en}
-          </div>
+      <div
+        onClick={onTap}
+        style={{
+          cursor: 'pointer',
+          margin: '-6px -10px',
+          padding: '6px 12px',
+          background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
+          borderRadius: 10,
+        }}
+      >
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', fontWeight: 700,
+          letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+          {spot.anime_title_en}
         </div>
-        {/* 下向き三角 */}
-        <div style={{
-          width: 0, height: 0,
-          borderLeft: '5px solid transparent',
-          borderRight: '5px solid transparent',
-          borderTop: `6px solid ${THEME}`,
-          marginTop: -1,
-        }} />
+        <div style={{ fontSize: 12, color: '#fff', fontWeight: 700, whiteSpace: 'nowrap' }}>
+          {spot.spot_name_en}
+        </div>
       </div>
-    </AdvancedMarker>
+    </InfoWindow>
   )
 }
 
