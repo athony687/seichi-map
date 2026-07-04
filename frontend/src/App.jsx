@@ -1186,7 +1186,7 @@ function OnboardingSurvey({ onComplete }) {
 }
 
 // ── 目的別ダッシュボード ────────────────────────────────────────────────
-function AppOverviewDashboard({ spots, currentPos, onNearMe, onPreviewRoute, onSearchAnime, onSelectSpot }) {
+function AppOverviewDashboard({ spots, currentPos, onNearMe, onPreviewRoute, onSearchAnime, onSelectSpot, stampCardIds, acquiredStamps, onOpenStampCard }) {
   const pos = currentPos || TOKYO_STATION
   const usingFallback = !currentPos
 
@@ -1346,6 +1346,133 @@ function AppOverviewDashboard({ spots, currentPos, onNearMe, onPreviewRoute, onS
             })}
           </div>
         </div>
+
+        {/* ── Quest: Stamp Rally ── */}
+        {stampCardIds?.length > 0 && (() => {
+          const total     = stampCardIds.length
+          const collected = [...(acquiredStamps ?? [])].filter(id => stampCardIds.includes(id)).length
+          const remaining = total - collected
+          const isComplete = collected === total
+          const cardSpots = spots.filter(s => stampCardIds.includes(s.id))
+          const nextTargets = cardSpots
+            .filter(s => !(acquiredStamps ?? new Set()).has(s.id))
+            .map(s => ({ ...s, dist: haversine(pos, { lat: s.lat, lng: s.lng }) }))
+            .sort((a, b) => a.dist - b.dist)
+            .slice(0, 3)
+
+          return (
+            <div style={{ paddingTop: 28 }}>
+              {/* セクションラベル */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', color: '#9ca3af', textTransform: 'uppercase' }}>
+                  Active Quest
+                </div>
+                <button
+                  onClick={onOpenStampCard}
+                  style={{ background: 'none', border: 'none', fontSize: 11, fontWeight: 800, color: THEME, cursor: 'pointer', padding: 0 }}
+                >
+                  View full card →
+                </button>
+              </div>
+
+              {/* クエストカード本体 */}
+              <div style={{
+                borderRadius: 22, overflow: 'hidden',
+                background: isComplete
+                  ? 'linear-gradient(135deg, #78350f 0%, #92400e 100%)'
+                  : 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
+                boxShadow: '0 10px 32px rgba(30,27,75,0.22)',
+              }}>
+                {/* ヘッダー */}
+                <div style={{ padding: '16px 18px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 26 }}>🎫</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', color: isComplete ? '#fcd34d' : '#c4b5fd', textTransform: 'uppercase', marginBottom: 2 }}>
+                      Stamp Rally Mission
+                    </div>
+                    <div style={{ fontSize: 16, fontWeight: 900, color: '#fff', lineHeight: 1.25 }}>
+                      {isComplete ? 'All stamps collected! 🎉' : `Collect every stamp nearby`}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 進捗バー */}
+                <div style={{ padding: '0 18px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ flex: 1, height: 7, background: 'rgba(255,255,255,0.15)', borderRadius: 99, overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%',
+                      width: `${(collected / total) * 100}%`,
+                      background: isComplete ? 'linear-gradient(90deg,#fde68a,#fb923c)' : 'linear-gradient(90deg,#a78bfa,#f472b6)',
+                      borderRadius: 99, transition: 'width 0.6s cubic-bezier(0.34,1.56,0.64,1)',
+                    }} />
+                  </div>
+                  <span style={{ color: isComplete ? '#fde68a' : '#e0d7ff', fontSize: 13, fontWeight: 900, flexShrink: 0 }}>
+                    {collected}/{total}
+                  </span>
+                </div>
+
+                {/* 次のターゲット一覧 */}
+                {!isComplete && nextTargets.length > 0 && (
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div style={{ padding: '10px 18px 6px', fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase' }}>
+                      Next targets
+                    </div>
+                    {nextTargets.map((s, i) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => onSelectSpot(s)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 12,
+                          width: '100%', padding: '10px 18px',
+                          background: 'transparent', border: 'none',
+                          borderTop: i > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none',
+                          cursor: 'pointer', textAlign: 'left',
+                        }}
+                      >
+                        <span style={{
+                          width: 30, height: 30, borderRadius: 10, flexShrink: 0,
+                          background: 'rgba(255,255,255,0.1)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 15, color: '#a78bfa',
+                        }}>☆</span>
+                        <span style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{ display: 'block', fontSize: 13, fontWeight: 800, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {s.spot_name_en}
+                          </span>
+                          <span style={{ display: 'block', fontSize: 11, color: '#a78bfa', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {s.anime_title_en}
+                          </span>
+                        </span>
+                        <span style={{ fontSize: 11, fontWeight: 800, color: '#c4b5fd', flexShrink: 0 }}>
+                          {formatDistance(s.dist)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* ステータスフッター */}
+                <div style={{
+                  padding: '12px 18px', borderTop: '1px solid rgba(255,255,255,0.1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                }}>
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
+                    {isComplete ? 'You\'re a true pilgrimage champion!' : `${remaining} stamp${remaining !== 1 ? 's' : ''} remaining`}
+                  </span>
+                  <button
+                    onClick={onOpenStampCard}
+                    style={{
+                      background: 'rgba(255,255,255,0.14)', border: 'none',
+                      borderRadius: 14, color: '#fff', fontSize: 11,
+                      fontWeight: 800, padding: '6px 12px', cursor: 'pointer',
+                    }}
+                  >Open card</button>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
 
         {/* ── Nearby Spots ── */}
         <div style={{ paddingTop: 28 }}>
@@ -2580,6 +2707,9 @@ function App() {
           onPreviewRoute={handleDashboardPreviewRoute}
           onSearchAnime={handleDashboardSearchAnime}
           onSelectSpot={handleDashboardSpotSelect}
+          stampCardIds={stampCardIds}
+          acquiredStamps={acquiredStamps}
+          onOpenStampCard={() => setShowStampCard(true)}
         />
       )}
 
