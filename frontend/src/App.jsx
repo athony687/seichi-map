@@ -1,7 +1,17 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { APIProvider, Map, Marker, InfoWindow, useMap } from '@vis.gl/react-google-maps'
 import { MarkerClusterer } from '@googlemaps/markerclusterer'
-import { getQuestKey, loadQuestCompletions, saveQuestCompletions } from './questAlbum.js'
+import {
+  addAlbumEntry,
+  calculateQuestProgress,
+  createAlbumPhotoFromFile,
+  deleteAlbumEntry,
+  getQuestKey,
+  loadLocalQuestAlbum,
+  loadQuestCompletions,
+  saveQuestCompletions,
+  updateAlbumEntry,
+} from './questAlbum.js'
 
 // ============================================================
 // 汎用紹介文（AI生成失敗時・intro_short_en 未記入時のフォールバック）
@@ -1844,6 +1854,530 @@ function StampMinibar({ total, collected, onTap }) {
   )
 }
 
+function normalizeQuestForAlbum(quest, index) {
+  return {
+    ...quest,
+    title: quest.title || `Photo Quest ${index + 1}`,
+    category: quest.category || 'Photo Quest',
+    photoPrompt: quest.photo_prompt || quest.photoPrompt || quest.description || 'Upload a photo you took with your phone camera.',
+    impressionPrompt: quest.impression_prompt || quest.impressionPrompt || 'Add an optional comment about this memory.',
+  }
+}
+
+function buildQuestSets(spots) {
+  return spots
+    .filter(spot => Array.isArray(spot.quests) && spot.quests.length > 0)
+    .slice(0, 6)
+    .map(spot => ({
+      spot,
+      quests: spot.quests.slice(0, 3).map(normalizeQuestForAlbum),
+    }))
+}
+
+function getTotalQuestCount(questSets) {
+  return questSets.reduce((sum, questSet) => sum + questSet.quests.length, 0)
+}
+
+function formatCompletionTime(value) {
+  if (!value) return ''
+  try {
+    return new Intl.DateTimeFormat('en', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(value))
+  } catch {
+    return value
+  }
+}
+
+function QuestHomePanel({
+  questSets,
+  progress,
+  albumEntries,
+  uploadingQuestKey,
+  onStartQuest,
+  onShowAlbum,
+  onShowAlbumMap,
+  onUploadQuestPhoto,
+  onClose,
+}) {
+  const [impressions, setImpressions] = useState({})
+  const progressPercent = progress.totalQuestCount > 0
+    ? Math.min(100, (progress.completedCount / progress.totalQuestCount) * 100)
+    : 0
+
+  const handleFile = (questSet, quest, questIndex, file) => {
+    if (!file) return
+    const questKey = getQuestKey(questSet.spot.id, questIndex)
+    onUploadQuestPhoto(questSet.spot, quest, questIndex, file, impressions[questKey] || '')
+  }
+
+  return (
+    <section style={{
+      position: 'fixed',
+      inset: '58px 10px 84px',
+      maxWidth: 460,
+      margin: '0 auto',
+      zIndex: 2600,
+      background: 'rgba(255,255,255,0.97)',
+      border: '1px solid rgba(124,58,237,0.16)',
+      borderRadius: 22,
+      boxShadow: '0 18px 50px rgba(17,24,39,0.22)',
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+    }} aria-label="Kanagawa Quest Album home">
+      <div style={{ padding: '16px 18px 14px', background: 'linear-gradient(135deg, #1f2937, #4c1d95)', color: '#fff' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'start' }}>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: '0.16em', color: '#c4b5fd', textTransform: 'uppercase' }}>
+              Kanagawa Quest Album
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 950, lineHeight: 1.05, marginTop: 5 }}>
+              Quest Home
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              border: '1px solid rgba(255,255,255,0.22)',
+              background: 'rgba(255,255,255,0.1)',
+              color: '#fff',
+              borderRadius: 999,
+              padding: '7px 10px',
+              fontSize: 11,
+              fontWeight: 850,
+              cursor: 'pointer',
+            }}
+          >
+            Map
+          </button>
+        </div>
+
+        <div style={{ marginTop: 14, display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'end', gap: 12 }}>
+          <div>
+            <div style={{ fontSize: 38, fontWeight: 950, lineHeight: 1 }}>
+              {progress.completedCount}<span style={{ color: '#c4b5fd' }}>/{progress.totalQuestCount}</span>
+            </div>
+            <div style={{ fontSize: 12, color: '#ddd6fe', fontWeight: 800, marginTop: 3 }}>
+              quests cleared · {albumEntries.length} album memories
+            </div>
+          </div>
+          <div style={{ fontSize: 26 }}>🎫</div>
+        </div>
+        <div style={{ height: 8, borderRadius: 99, background: 'rgba(255,255,255,0.18)', overflow: 'hidden', marginTop: 12 }}>
+          <div style={{ width: `${progressPercent}%`, height: '100%', background: 'linear-gradient(90deg,#fbbf24,#f472b6)', borderRadius: 99 }} />
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: 12, borderBottom: '1px solid #ede9fe' }}>
+        <button
+          type="button"
+          onClick={onShowAlbum}
+          style={{ border: 'none', borderRadius: 14, background: '#ede9fe', color: THEME_DARK, fontSize: 13, fontWeight: 900, padding: '10px 12px', cursor: 'pointer' }}
+        >
+          View Album
+        </button>
+        <button
+          type="button"
+          onClick={onShowAlbumMap}
+          style={{ border: 'none', borderRadius: 14, background: '#111827', color: '#fff', fontSize: 13, fontWeight: 900, padding: '10px 12px', cursor: 'pointer' }}
+        >
+          Album Map
+        </button>
+      </div>
+
+      <div style={{ padding: 12, overflowY: 'auto' }}>
+        {questSets.length === 0 ? (
+          <div style={{ padding: 18, borderRadius: 16, background: '#f8fafc', color: '#64748b', fontSize: 13, lineHeight: 1.6 }}>
+            Curated Quest Data is not ready yet. Add one to three quests to a spot to start the album flow.
+          </div>
+        ) : questSets.map(questSet => (
+          <article key={questSet.spot.id} style={{
+            border: '1px solid #ede9fe',
+            borderRadius: 18,
+            padding: 12,
+            marginBottom: 10,
+            background: '#fff',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 9 }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 15, fontWeight: 950, color: '#111827', lineHeight: 1.25 }}>
+                  {questSet.spot.spot_name_en}
+                </div>
+                <div style={{ fontSize: 11, fontWeight: 850, color: THEME, marginTop: 2 }}>
+                  {questSet.spot.anime_title_en}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onStartQuest(questSet.spot)}
+                style={{
+                  flexShrink: 0,
+                  border: 'none',
+                  borderRadius: 999,
+                  background: '#f5f3ff',
+                  color: THEME_DARK,
+                  padding: '6px 9px',
+                  fontSize: 11,
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                }}
+              >
+                Start
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gap: 8 }}>
+              {questSet.quests.map((quest, questIndex) => {
+                const questKey = getQuestKey(questSet.spot.id, questIndex)
+                const isDone = albumEntries.some(entry => entry.questKey === questKey)
+                const isUploading = uploadingQuestKey === questKey
+                return (
+                  <div key={questKey} style={{
+                    borderRadius: 14,
+                    border: `1px solid ${isDone ? '#bbf7d0' : '#e5e7eb'}`,
+                    background: isDone ? '#ecfdf5' : '#f8fafc',
+                    padding: 10,
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'start' }}>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 10, fontWeight: 900, color: isDone ? '#15803d' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                          {isDone ? 'Quest Clear!' : quest.category}
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: 900, color: '#111827', marginTop: 2 }}>
+                          {quest.title}
+                        </div>
+                        <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.45, marginTop: 4 }}>
+                          {quest.photoPrompt}
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 20 }}>{isDone ? '✅' : '📸'}</span>
+                    </div>
+                    {!isDone && (
+                      <div style={{ display: 'grid', gap: 7, marginTop: 9 }}>
+                        <input
+                          type="text"
+                          value={impressions[questKey] || ''}
+                          onChange={e => setImpressions(prev => ({ ...prev, [questKey]: e.target.value }))}
+                          placeholder={quest.impressionPrompt}
+                          style={{
+                            width: '100%',
+                            boxSizing: 'border-box',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: 10,
+                            padding: '8px 9px',
+                            fontSize: 12,
+                          }}
+                        />
+                        <label style={{
+                          display: 'block',
+                          textAlign: 'center',
+                          borderRadius: 12,
+                          background: isUploading ? '#9ca3af' : THEME,
+                          color: '#fff',
+                          padding: '9px 10px',
+                          fontSize: 12,
+                          fontWeight: 900,
+                          cursor: isUploading ? 'default' : 'pointer',
+                        }}>
+                          {isUploading ? 'Saving Album Photo...' : 'Upload Photo'}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            disabled={isUploading}
+                            onChange={e => handleFile(questSet, quest, questIndex, e.target.files?.[0])}
+                            style={{ display: 'none' }}
+                          />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function AlbumEntryCard({ entry, onEditImpression, onReplacePhoto, onDelete, onShare }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(entry.impression || '')
+
+  useEffect(() => {
+    setDraft(entry.impression || '')
+  }, [entry.impression])
+
+  return (
+    <article style={{
+      border: '1px solid #e5e7eb',
+      borderRadius: 18,
+      background: '#fff',
+      overflow: 'hidden',
+      marginBottom: 12,
+    }}>
+      {entry.albumPhoto?.dataUrl && (
+        <img
+          src={entry.albumPhoto.dataUrl}
+          alt={entry.questTitle}
+          style={{ width: '100%', height: 170, objectFit: 'cover', display: 'block' }}
+        />
+      )}
+      <div style={{ padding: 13 }}>
+        <div style={{ fontSize: 10, fontWeight: 900, color: '#16a34a', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+          Quest Clear · Stamp acquired
+        </div>
+        <div style={{ fontSize: 16, fontWeight: 950, color: '#111827', marginTop: 4 }}>
+          {entry.questTitle}
+        </div>
+        <div style={{ fontSize: 12, color: THEME, fontWeight: 850, marginTop: 2 }}>
+          {entry.animeTitle}
+        </div>
+        <div style={{ fontSize: 12, color: '#64748b', marginTop: 3 }}>
+          {entry.spotName} · {formatCompletionTime(entry.completedAt)}
+        </div>
+
+        {editing ? (
+          <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
+            <textarea
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              rows={3}
+              placeholder="Add an optional comment"
+              style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #e5e7eb', borderRadius: 10, padding: 9, fontSize: 13, resize: 'vertical' }}
+            />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                onClick={() => { onEditImpression(entry.id, draft); setEditing(false) }}
+                style={{ flex: 1, border: 'none', borderRadius: 10, background: THEME, color: '#fff', padding: 9, fontSize: 12, fontWeight: 900, cursor: 'pointer' }}
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={() => { setDraft(entry.impression || ''); setEditing(false) }}
+                style={{ flex: 1, border: '1px solid #e5e7eb', borderRadius: 10, background: '#fff', color: '#64748b', padding: 9, fontSize: 12, fontWeight: 850, cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div style={{ fontSize: 13, color: entry.impression ? '#334155' : '#94a3b8', lineHeight: 1.55, marginTop: 10 }}>
+            {entry.impression || 'No comment yet.'}
+          </div>
+        )}
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
+          <button type="button" onClick={() => setEditing(true)} style={{ border: 'none', borderRadius: 10, background: '#f5f3ff', color: THEME_DARK, padding: 9, fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>
+            Edit Comment
+          </button>
+          <label style={{ textAlign: 'center', border: 'none', borderRadius: 10, background: '#eef2ff', color: '#3730a3', padding: 9, fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>
+            Change Photo
+            <input
+              type="file"
+              accept="image/*"
+              onChange={e => onReplacePhoto(entry.id, e.target.files?.[0])}
+              style={{ display: 'none' }}
+            />
+          </label>
+          <button type="button" onClick={() => onShare(entry)} style={{ border: 'none', borderRadius: 10, background: '#111827', color: '#fff', padding: 9, fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>
+            Share Card
+          </button>
+          <button type="button" onClick={() => onDelete(entry.id)} style={{ border: '1px solid #fecaca', borderRadius: 10, background: '#fff1f2', color: '#be123c', padding: 9, fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>
+            Delete
+          </button>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function QuestAlbumPanel({ entries, onClose, onShowMap, onEditImpression, onReplacePhoto, onDelete, onShare }) {
+  return (
+    <section style={{
+      position: 'fixed',
+      inset: '58px 10px 84px',
+      maxWidth: 460,
+      margin: '0 auto',
+      zIndex: 2700,
+      background: 'rgba(248,250,252,0.98)',
+      border: '1px solid #e5e7eb',
+      borderRadius: 22,
+      boxShadow: '0 18px 50px rgba(17,24,39,0.22)',
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+    }} aria-label="Local Quest Album">
+      <div style={{ padding: 14, background: '#fff', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 900, color: THEME, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+            Local Quest Album
+          </div>
+          <div style={{ fontSize: 20, fontWeight: 950, color: '#111827', marginTop: 2 }}>
+            {entries.length} memories
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 7 }}>
+          <button type="button" onClick={onShowMap} style={{ border: 'none', borderRadius: 999, background: '#111827', color: '#fff', padding: '8px 11px', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>
+            Map
+          </button>
+          <button type="button" onClick={onClose} style={{ border: '1px solid #e5e7eb', borderRadius: 999, background: '#fff', color: '#475569', padding: '8px 11px', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>
+            Close
+          </button>
+        </div>
+      </div>
+      <div style={{ padding: 12, overflowY: 'auto' }}>
+        {entries.length === 0 ? (
+          <div style={{ padding: 18, borderRadius: 16, background: '#fff', color: '#64748b', fontSize: 13, lineHeight: 1.6 }}>
+            No album memories yet. Clear a Photo Quest from Quest Home to add your first Quest Stamp.
+          </div>
+        ) : entries.map(entry => (
+          <AlbumEntryCard
+            key={entry.id}
+            entry={entry}
+            onEditImpression={onEditImpression}
+            onReplacePhoto={onReplacePhoto}
+            onDelete={onDelete}
+            onShare={onShare}
+          />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function AlbumMapMarker({ entry, onSelect }) {
+  if (typeof entry.lat !== 'number' || typeof entry.lng !== 'number') return null
+  return (
+    <Marker
+      position={{ lat: entry.lat, lng: entry.lng }}
+      title={entry.questTitle}
+      label={{ text: '✓', color: '#fff', fontWeight: '900' }}
+      zIndex={180}
+      icon={window.google?.maps ? {
+        path: window.google.maps.SymbolPath.CIRCLE,
+        fillColor: '#16a34a',
+        fillOpacity: 1,
+        strokeColor: '#fff',
+        strokeWeight: 3,
+        scale: 10,
+      } : undefined}
+      onClick={() => onSelect(entry)}
+    />
+  )
+}
+
+function ShareCardPreview({ dataUrl, onClose }) {
+  if (!dataUrl) return null
+  return (
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      zIndex: 9800,
+      background: 'rgba(15,23,42,0.78)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 18,
+    }}>
+      <div style={{ width: 'min(420px, 100%)', background: '#fff', borderRadius: 18, padding: 14, boxShadow: '0 18px 50px rgba(0,0,0,0.32)' }}>
+        <img src={dataUrl} alt="Generated Share Card" style={{ width: '100%', borderRadius: 12, display: 'block' }} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
+          <a
+            href={dataUrl}
+            download="seichi-map-share-card.jpg"
+            style={{ textAlign: 'center', textDecoration: 'none', borderRadius: 12, background: THEME, color: '#fff', padding: 10, fontSize: 13, fontWeight: 900 }}
+          >
+            Download
+          </a>
+          <button type="button" onClick={onClose} style={{ border: '1px solid #e5e7eb', borderRadius: 12, background: '#fff', color: '#475569', padding: 10, fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function loadImageForCanvas(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    image.onload = () => resolve(image)
+    image.onerror = () => reject(new Error('Unable to load share card image'))
+    image.src = src
+  })
+}
+
+async function generateShareCard(entry) {
+  const canvas = document.createElement('canvas')
+  canvas.width = 1080
+  canvas.height = 1350
+  const ctx = canvas.getContext('2d')
+
+  ctx.fillStyle = '#111827'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.fillStyle = '#f8fafc'
+  ctx.fillRect(44, 44, 992, 1262)
+
+  if (entry.albumPhoto?.dataUrl) {
+    const image = await loadImageForCanvas(entry.albumPhoto.dataUrl)
+    const target = { x: 84, y: 84, width: 912, height: 700 }
+    const sourceRatio = image.width / image.height
+    const targetRatio = target.width / target.height
+    let sx = 0
+    let sy = 0
+    let sw = image.width
+    let sh = image.height
+    if (sourceRatio > targetRatio) {
+      sw = image.height * targetRatio
+      sx = (image.width - sw) / 2
+    } else {
+      sh = image.width / targetRatio
+      sy = (image.height - sh) / 2
+    }
+    ctx.drawImage(image, sx, sy, sw, sh, target.x, target.y, target.width, target.height)
+  }
+
+  ctx.fillStyle = '#4c1d95'
+  ctx.fillRect(84, 820, 180, 42)
+  ctx.fillStyle = '#fff'
+  ctx.font = '700 24px system-ui, sans-serif'
+  ctx.fillText('Quest Clear', 105, 849)
+
+  ctx.fillStyle = '#111827'
+  ctx.font = '800 52px system-ui, sans-serif'
+  ctx.fillText(entry.questTitle || 'Kanagawa Quest', 84, 930, 900)
+  ctx.fillStyle = '#7c3aed'
+  ctx.font = '700 32px system-ui, sans-serif'
+  ctx.fillText(entry.animeTitle || 'seichi-map', 84, 986, 900)
+  ctx.fillStyle = '#475569'
+  ctx.font = '600 28px system-ui, sans-serif'
+  ctx.fillText(entry.spotName || 'Kanagawa', 84, 1034, 900)
+
+  if (entry.impression) {
+    ctx.fillStyle = '#334155'
+    ctx.font = '500 30px system-ui, sans-serif'
+    ctx.fillText(`"${entry.impression}"`, 84, 1110, 900)
+  }
+
+  ctx.fillStyle = '#111827'
+  ctx.font = '800 28px system-ui, sans-serif'
+  ctx.fillText('seichi-map Kanagawa Quest Album', 84, 1238)
+  ctx.fillStyle = '#16a34a'
+  ctx.font = '800 24px system-ui, sans-serif'
+  ctx.fillText('Stamp acquired', 760, 1238)
+
+  return canvas.toDataURL('image/jpeg', 0.9)
+}
+
 // ── App ───────────────────────────────────────────────────────────────────
 function App() {
   const [spots, setSpots]               = useState([])
@@ -1976,8 +2510,70 @@ function App() {
   const stampCardGeneratedRef               = useRef(false)
   const [stampCardIds, setStampCardIds]     = useState(() => { const s = loadStampCard(); return s?.length > 0 ? s : null })
   const [acquiredStamps, setAcquiredStamps] = useState(() => loadStamps())
-  const [showStampCard, setShowStampCard]   = useState(true)
+  const [showStampCard, setShowStampCard]   = useState(false)
   const [activeMission, setActiveMission]   = useState(null)  // 現在表示中のミッション対象スポット
+  const [questAlbum, setQuestAlbum] = useState(() => loadLocalQuestAlbum())
+  const [questHomeOpen, setQuestHomeOpen] = useState(true)
+  const [questAlbumOpen, setQuestAlbumOpen] = useState(false)
+  const [albumMapMode, setAlbumMapMode] = useState(false)
+  const [selectedAlbumEntry, setSelectedAlbumEntry] = useState(null)
+  const [uploadingQuestKey, setUploadingQuestKey] = useState(null)
+  const [shareCardDataUrl, setShareCardDataUrl] = useState(null)
+
+  const questSets = useMemo(() => buildQuestSets(spots), [spots])
+  const totalQuestCount = useMemo(() => getTotalQuestCount(questSets), [questSets])
+  const questProgress = useMemo(
+    () => calculateQuestProgress(totalQuestCount, questAlbum),
+    [totalQuestCount, questAlbum],
+  )
+
+  const handleQuestPhotoUpload = useCallback(async (spot, quest, questIndex, file, impression) => {
+    if (!file) return
+    const questKey = getQuestKey(spot.id, questIndex)
+    setUploadingQuestKey(questKey)
+    try {
+      const albumPhoto = await createAlbumPhotoFromFile(file)
+      const nextAlbum = addAlbumEntry({
+        questKey,
+        spotId: spot.id,
+        questIndex,
+        animeTitle: spot.anime_title_en,
+        spotName: spot.spot_name_en,
+        questTitle: quest.title,
+        area: spot.area || '',
+        lat: spot.lat,
+        lng: spot.lng,
+        albumPhoto,
+        impression,
+      })
+      setQuestAlbum(nextAlbum)
+      setSelectedAlbumEntry(nextAlbum.entries.find(entry => entry.questKey === questKey) || null)
+      setAlbumMapMode(true)
+    } finally {
+      setUploadingQuestKey(null)
+    }
+  }, [])
+
+  const handleEditAlbumImpression = useCallback((entryId, impression) => {
+    setQuestAlbum(updateAlbumEntry(entryId, { impression }))
+  }, [])
+
+  const handleReplaceAlbumPhoto = useCallback(async (entryId, file) => {
+    if (!file) return
+    const albumPhoto = await createAlbumPhotoFromFile(file)
+    setQuestAlbum(updateAlbumEntry(entryId, { albumPhoto }))
+  }, [])
+
+  const handleDeleteAlbumEntry = useCallback((entryId) => {
+    const nextAlbum = deleteAlbumEntry(entryId)
+    setQuestAlbum(nextAlbum)
+    setSelectedAlbumEntry(prev => prev?.id === entryId ? null : prev)
+  }, [])
+
+  const handleShareAlbumEntry = useCallback(async (entry) => {
+    const dataUrl = await generateShareCard(entry)
+    setShareCardDataUrl(dataUrl)
+  }, [])
 
   useEffect(() => {
     if (!searchAnime) { setAnimateSearch(false); return }
@@ -2250,6 +2846,43 @@ function App() {
           {selected && (
             <SelectedSpotMarker spot={selected} onClick={() => {}} />
           )}
+          {albumMapMode && questAlbum.entries.map(entry => (
+            <AlbumMapMarker
+              key={entry.id}
+              entry={entry}
+              onSelect={setSelectedAlbumEntry}
+            />
+          ))}
+          {albumMapMode && selectedAlbumEntry && typeof selectedAlbumEntry.lat === 'number' && typeof selectedAlbumEntry.lng === 'number' && (
+            <InfoWindow
+              position={{ lat: selectedAlbumEntry.lat, lng: selectedAlbumEntry.lng }}
+              onCloseClick={() => setSelectedAlbumEntry(null)}
+            >
+              <div style={{ width: 210, color: '#111827' }}>
+                {selectedAlbumEntry.albumPhoto?.dataUrl && (
+                  <img
+                    src={selectedAlbumEntry.albumPhoto.dataUrl}
+                    alt={selectedAlbumEntry.questTitle}
+                    style={{ width: '100%', height: 92, objectFit: 'cover', borderRadius: 10, marginBottom: 8 }}
+                  />
+                )}
+                <div style={{ fontSize: 11, fontWeight: 900, color: '#16a34a', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  Quest Clear
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 900, marginTop: 2 }}>
+                  {selectedAlbumEntry.questTitle}
+                </div>
+                <div style={{ fontSize: 12, color: THEME, fontWeight: 800, marginTop: 2 }}>
+                  {selectedAlbumEntry.animeTitle}
+                </div>
+                {selectedAlbumEntry.impression && (
+                  <div style={{ fontSize: 12, color: '#475569', marginTop: 6, lineHeight: 1.4 }}>
+                    {selectedAlbumEntry.impression}
+                  </div>
+                )}
+              </div>
+            </InfoWindow>
+          )}
 
           {/* 近接ラベル（範囲内スポットのピン真上に表示） */}
           {nearbySpots
@@ -2452,6 +3085,36 @@ function App() {
           }}
         >📔</button>
 
+        <button
+          onClick={() => {
+            setQuestHomeOpen(true)
+            setQuestAlbumOpen(false)
+          }}
+          title="Quest Home"
+          style={{
+            height: 30, padding: '0 10px', borderRadius: 10,
+            border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 800,
+            background: questHomeOpen ? '#ede9ff' : 'rgba(0,0,0,0.06)',
+            color: questHomeOpen ? THEME : '#555',
+            letterSpacing: '0.04em',
+          }}
+        >🎫 Quest</button>
+
+        <button
+          onClick={() => {
+            setQuestAlbumOpen(true)
+            setQuestHomeOpen(false)
+          }}
+          title="Quest Album"
+          style={{
+            height: 30, padding: '0 10px', borderRadius: 10,
+            border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 800,
+            background: questAlbumOpen ? '#dcfce7' : 'rgba(0,0,0,0.06)',
+            color: questAlbumOpen ? '#166534' : '#555',
+            letterSpacing: '0.04em',
+          }}
+        >✅ {questProgress.completedCount}/{questProgress.totalQuestCount || 0}</button>
+
         <span style={{ width: 1, height: 18, background: 'rgba(0,0,0,0.1)' }} />
 
         {/* DEMO / LIVE 切替 */}
@@ -2539,6 +3202,47 @@ function App() {
       {selected && cardExpanded && (
         <Card spot={selected} currentPos={browsingPos} onClose={closeCard} userPrefs={userPrefs} isFavorite={favorites.has(selected.id)} onToggleFavorite={toggleFavorite} weather={weather} defaultExpanded={true} />
       )}
+      {questHomeOpen && (
+        <QuestHomePanel
+          questSets={questSets}
+          progress={questProgress}
+          albumEntries={questAlbum.entries}
+          uploadingQuestKey={uploadingQuestKey}
+          onStartQuest={spot => {
+            handleSpotSelect(spot)
+            setQuestHomeOpen(false)
+          }}
+          onShowAlbum={() => {
+            setQuestAlbumOpen(true)
+            setQuestHomeOpen(false)
+          }}
+          onShowAlbumMap={() => {
+            setAlbumMapMode(true)
+            setQuestHomeOpen(false)
+            setQuestAlbumOpen(false)
+          }}
+          onUploadQuestPhoto={handleQuestPhotoUpload}
+          onClose={() => setQuestHomeOpen(false)}
+        />
+      )}
+      {questAlbumOpen && (
+        <QuestAlbumPanel
+          entries={questAlbum.entries}
+          onClose={() => setQuestAlbumOpen(false)}
+          onShowMap={() => {
+            setAlbumMapMode(true)
+            setQuestAlbumOpen(false)
+          }}
+          onEditImpression={handleEditAlbumImpression}
+          onReplacePhoto={handleReplaceAlbumPhoto}
+          onDelete={handleDeleteAlbumEntry}
+          onShare={handleShareAlbumEntry}
+        />
+      )}
+      <ShareCardPreview
+        dataUrl={shareCardDataUrl}
+        onClose={() => setShareCardDataUrl(null)}
+      />
       {/* GPSローディングオーバーレイ（同意後のみ表示） */}
       {!gpsReady && !demoMode && gpsConsented && (
         <div style={{

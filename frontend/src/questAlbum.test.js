@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
+  LEGACY_QUEST_COMPLETIONS_KEY,
   LOCAL_QUEST_ALBUM_KEY,
   addAlbumEntry,
   calculateQuestProgress,
@@ -8,6 +9,7 @@ import {
   deleteAlbumEntry,
   getQuestKey,
   loadLocalQuestAlbum,
+  updateAlbumEntry,
 } from './questAlbum.js'
 
 function createMemoryStorage() {
@@ -106,4 +108,27 @@ test('deleting an album entry removes completion and stamp state', () => {
   assert.equal(next.entries.length, 0)
   assert.deepEqual(next.completions, [])
   assert.deepEqual(next.stamps, [])
+  assert.deepEqual(JSON.parse(storage.getItem(LEGACY_QUEST_COMPLETIONS_KEY)), [])
+})
+
+test('updates an album entry without creating a duplicate', () => {
+  const storage = createMemoryStorage()
+  const album = addAlbumEntry({
+    spotId: 'enoshima-01',
+    questIndex: 0,
+    animeTitle: 'Tsuritama',
+    spotName: 'Benzaiten Nakamise-dori',
+    questTitle: 'Shopping Street Quest',
+    completedAt: '2026-07-05T12:00:00.000Z',
+    albumPhoto,
+  }, storage)
+
+  const next = updateAlbumEntry(album.entries[0].id, {
+    impression: 'The evening light was perfect.',
+  }, storage)
+
+  assert.equal(next.entries.length, 1)
+  assert.equal(next.entries[0].impression, 'The evening light was perfect.')
+  assert.deepEqual(next.completions, ['enoshima-01:0'])
+  assert.deepEqual(next.stamps, ['enoshima-01:0'])
 })

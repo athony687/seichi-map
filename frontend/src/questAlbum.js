@@ -107,7 +107,7 @@ export function saveQuestCompletions(completions, storage) {
   const nextAlbum = {
     ...album,
     completions: [...completionSet],
-    stamps: album.stamps.filter(stamp => completionSet.has(stamp)),
+    stamps: [...completionSet],
     entries: album.entries.filter(entry => completionSet.has(entry.questKey)),
   }
 
@@ -138,6 +138,8 @@ export function createAlbumEntry(input) {
     spotName: input.spotName,
     questTitle: input.questTitle,
     area: input.area || '',
+    lat: input.lat,
+    lng: input.lng,
     completedAt,
     albumPhoto: input.albumPhoto,
     impression: input.impression || '',
@@ -155,11 +157,33 @@ export function addAlbumEntry(input, storage) {
   completions.add(entry.questKey)
   stamps.add(entry.questKey)
 
-  return saveLocalQuestAlbum({
+  const savedAlbum = saveLocalQuestAlbum({
     ...album,
     entries: [...entries, entry],
     completions: [...completions],
     stamps: [...stamps],
+  }, storage)
+  saveLegacyQuestCompletions(new Set(savedAlbum.completions), storage)
+  return savedAlbum
+}
+
+export function updateAlbumEntry(entryId, updates, storage) {
+  const album = loadLocalQuestAlbum(storage)
+  const entries = album.entries.map(entry => (
+    entry.id === entryId
+      ? {
+          ...entry,
+          ...updates,
+          id: entry.id,
+          questKey: entry.questKey,
+          questStamp: entry.questStamp,
+        }
+      : entry
+  ))
+
+  return saveLocalQuestAlbum({
+    ...album,
+    entries,
   }, storage)
 }
 
@@ -172,12 +196,14 @@ export function deleteAlbumEntry(entryId, storage) {
   const completions = album.completions.filter(questKey => questKey !== removedEntry.questKey)
   const stamps = album.stamps.filter(questKey => questKey !== removedEntry.questKey)
 
-  return saveLocalQuestAlbum({
+  const savedAlbum = saveLocalQuestAlbum({
     ...album,
     entries,
     completions,
     stamps,
   }, storage)
+  saveLegacyQuestCompletions(new Set(savedAlbum.completions), storage)
+  return savedAlbum
 }
 
 export function calculateQuestProgress(totalQuestCount, albumOrCompletions) {
@@ -189,5 +215,59 @@ export function calculateQuestProgress(totalQuestCount, albumOrCompletions) {
     completedCount,
     totalQuestCount,
     remainingCount: Math.max(totalQuestCount - completedCount, 0),
+  }
+}
+
+export function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(file)
+  })
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    image.onload = () => resolve(image)
+    image.onerror = () => reject(new Error('Unable to load image'))
+    image.src = src
+  })
+}
+
+export async function createAlbumPhotoFromFile(file, options = {}) {
+  const maxEdge = options.maxEdge || 1400
+  const quality = options.quality || 0.82
+  const sourceDataUrl = await readFileAsDataUrl(file)
+
+  if (typeof document === 'undefined') {
+    return {
+      dataUrl: sourceDataUrl,
+      width: null,
+      height: null,
+      mimeType: file.type || 'image/jpeg',
+      source: 'resized',
+    }
+  }
+
+  const image = await loadImage(sourceDataUrl)
+  const scale = Math.min(1, maxEdge / Math.max(image.naturalWidth, image.naturalHeight))
+  const width = Math.max(1, Math.round(image.naturalWidth * scale))
+  const height = Math.max(1, Math.round(image.naturalHeight * scale))
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+
+  const context = canvas.getContext('2d')
+  context.drawImage(image, 0, 0, width, height)
+
+  const dataUrl = canvas.toDataURL('image/jpeg', quality)
+  return {
+    dataUrl,
+    width,
+    height,
+    mimeType: 'image/jpeg',
+    source: 'resized',
   }
 }
