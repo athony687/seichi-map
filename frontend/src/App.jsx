@@ -5,6 +5,7 @@ import {
   addAlbumEntry,
   calculateQuestProgress,
   createAlbumPhotoFromFile,
+  createEmptyQuestAlbum,
   deleteAlbumEntry,
   getQuestKey,
   loadLocalQuestAlbum,
@@ -1070,47 +1071,10 @@ const loadStampCard = () => { try { const r = localStorage.getItem(STAMP_CARD_KE
 const saveStampCard = c  => { try { localStorage.setItem(STAMP_CARD_KEY, JSON.stringify(c))    } catch {} }
 const saveFavorites = f => localStorage.setItem(FAVORITES_KEY, JSON.stringify([...f]))
 
-// ── ジャーナル IndexedDB ──────────────────────────────────────────────────
-const JDB_NAME = 'seichi_journal'
-const JDB_STORE = 'entries'
-function openJDB() {
-  return new Promise((res, rej) => {
-    const r = indexedDB.open(JDB_NAME, 1)
-    r.onupgradeneeded = e => e.target.result.createObjectStore(JDB_STORE, { keyPath: 'spotId' })
-    r.onsuccess = e => res(e.target.result)
-    r.onerror = e => rej(e.target.error)
-  })
-}
-async function jdbSave(entry) {
-  const db = await openJDB()
-  return new Promise((res, rej) => {
-    const tx = db.transaction(JDB_STORE, 'readwrite')
-    tx.objectStore(JDB_STORE).put(entry)
-    tx.oncomplete = res; tx.onerror = e => rej(e.target.error)
-  })
-}
-async function jdbGet(spotId) {
-  const db = await openJDB()
-  return new Promise((res, rej) => {
-    const tx = db.transaction(JDB_STORE, 'readonly')
-    const r = tx.objectStore(JDB_STORE).get(spotId)
-    r.onsuccess = e => res(e.target.result ?? null)
-    r.onerror = e => rej(e.target.error)
-  })
-}
-async function jdbGetAll() {
-  const db = await openJDB()
-  return new Promise((res, rej) => {
-    const tx = db.transaction(JDB_STORE, 'readonly')
-    const r = tx.objectStore(JDB_STORE).getAll()
-    r.onsuccess = e => res(e.target.result)
-    r.onerror = e => rej(e.target.error)
-  })
-}
-
 function QuestPanel({ spot }) {
   const quests = spot.quests || []
-  const [completed, setCompleted] = useState(() => loadQuestCompletions())
+  const [completed, setCompleted] = useState(new Set())
+  useEffect(() => { loadQuestCompletions().then(setCompleted) }, [])
 
   if (!quests.length) return null
 
@@ -1123,7 +1087,7 @@ function QuestPanel({ spot }) {
       const next = new Set(prev)
       if (next.has(key)) next.delete(key)
       else next.add(key)
-      saveQuestCompletions(next)
+      saveQuestCompletions(next)  // fire-and-forget async
       return next
     })
   }
@@ -1636,7 +1600,7 @@ function LocationPermissionCard({ onAllow, onSkip }) {
 }
 
 // ── スタンプカード全画面 ────────────────────────────────────────────────────
-function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose, onOpenJournal, journaledIds, nickname }) {
+function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose, nickname }) {
   const cardSpots = stampCardIds
     ? spots.filter(s => stampCardIds.includes(s.id))
     : []
@@ -1748,21 +1712,10 @@ function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose, onOpenJ
                 </div>
               )}
               {done && (
-                <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ marginTop: 8 }}>
                   <div style={{ display: 'inline-block', background: 'rgba(167,139,250,0.4)', borderRadius: 8, padding: '2px 8px', fontSize: 10, fontWeight: 800, color: '#c4b5fd', letterSpacing: '0.06em' }}>
                     STAMPED ✓
                   </div>
-                  {onOpenJournal && (
-                    <button
-                      onClick={e => { e.stopPropagation(); onOpenJournal(spot) }}
-                      style={{
-                        background: journaledIds?.has(spot.id) ? 'rgba(167,139,250,0.5)' : 'rgba(255,255,255,0.12)',
-                        border: 'none', borderRadius: 8, padding: '2px 8px',
-                        fontSize: 10, fontWeight: 800, color: '#fff', cursor: 'pointer',
-                        letterSpacing: '0.04em',
-                      }}
-                    >{journaledIds?.has(spot.id) ? '📝 メモあり' : '📝 メモ'}</button>
-                  )}
                 </div>
               )}
             </div>
@@ -1780,144 +1733,6 @@ function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose, onOpenJ
             fontSize: 72, animation: 'slideUp 0.5s ease-out',
             textAlign: 'center',
           }}>🎊<br /><span style={{ fontSize: 28, color: '#fde68a', fontWeight: 900 }}>Complete!</span></div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── ジャーナルエディター（写真＋メモ入力） ───────────────────────────────────
-function JournalEditor({ spot, onSave, onSkip }) {
-  const [photoUrl, setPhotoUrl] = useState(null)
-  const [memo, setMemo] = useState('')
-  const [saving, setSaving] = useState(false)
-  const fileRef = useRef(null)
-
-  useEffect(() => {
-    jdbGet(spot.id).then(e => {
-      if (!e) return
-      if (e.photo) setPhotoUrl(e.photo)
-      if (e.memo) setMemo(e.memo)
-    })
-  }, [spot.id])
-
-  const handleFile = e => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = ev => {
-      const url = ev.target.result
-      setPhotoUrl(url)
-      jdbSave({ spotId: spot.id, spotNameEn: spot.spot_name_en, animeEn: spot.anime_title_en, photo: url, memo, timestamp: Date.now() })
-    }
-    reader.readAsDataURL(file)
-  }
-
-  const handleSave = async () => {
-    setSaving(true)
-    await jdbSave({ spotId: spot.id, spotNameEn: spot.spot_name_en, animeEn: spot.anime_title_en, photo: photoUrl, memo, timestamp: Date.now() })
-    setSaving(false)
-    onSave()
-  }
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9650, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: '0 12px 32px' }}>
-      <div style={{ width: 'min(440px,100%)', background: 'linear-gradient(160deg,#1e1b4b 0%,#312e81 100%)', borderRadius: 24, padding: '20px 18px', boxShadow: '0 -4px 40px rgba(0,0,0,0.5)', border: '1.5px solid rgba(167,139,250,0.35)', maxHeight: '90vh', overflowY: 'auto' }}>
-        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 700, marginBottom: 2 }}>{spot.anime_title_en}</div>
-        <div style={{ color: '#fff', fontSize: 17, fontWeight: 900, marginBottom: 16 }}>{spot.spot_name_en}</div>
-
-        {/* 写真エリア */}
-        <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handleFile} style={{ display: 'none' }} />
-        {photoUrl ? (
-          <div style={{ position: 'relative', marginBottom: 12 }}>
-            <img src={photoUrl} alt="" style={{ width: '100%', borderRadius: 14, maxHeight: 220, objectFit: 'cover', display: 'block' }} />
-            <button onClick={() => fileRef.current?.click()} style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: 10, color: '#fff', fontSize: 11, fontWeight: 700, padding: '5px 10px', cursor: 'pointer' }}>Change</button>
-          </div>
-        ) : (
-          <button onClick={() => fileRef.current?.click()} style={{ width: '100%', padding: '22px 0', background: 'rgba(255,255,255,0.08)', border: '1.5px dashed rgba(167,139,250,0.4)', borderRadius: 14, color: '#a78bfa', fontSize: 13, fontWeight: 700, cursor: 'pointer', marginBottom: 12 }}>📷 Add Photo</button>
-        )}
-
-        {/* memo */}
-        <textarea
-          value={memo}
-          onChange={e => setMemo(e.target.value)}
-          onBlur={e => {
-            jdbSave({ spotId: spot.id, spotNameEn: spot.spot_name_en, animeEn: spot.anime_title_en, photo: photoUrl, memo: e.target.value, timestamp: Date.now() })
-          }}
-          placeholder="Write a note…"
-          rows={3}
-          style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(167,139,250,0.3)', borderRadius: 12, padding: '10px 12px', color: '#fff', fontSize: 13, resize: 'none', outline: 'none', fontFamily: 'inherit', marginBottom: 14 }}
-        />
-
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={onSkip} style={{ flex: 1, padding: '13px 0', borderRadius: 14, border: '1px solid rgba(255,255,255,0.2)', background: 'transparent', color: 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Skip</button>
-          <button onClick={handleSave} disabled={saving} style={{ flex: 2, padding: '13px 0', borderRadius: 14, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#a855f7)', color: '#fff', fontSize: 14, fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 16px rgba(124,58,237,0.45)' }}>{saving ? 'Saving…' : '💾 Save'}</button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── ジャーナルビューワー（記録一覧） ─────────────────────────────────────────
-function JournalViewer({ entries, spots, onOpenEditor, onClose }) {
-  const [detail, setDetail] = useState(null)
-
-  const spotById = useMemo(() => Object.fromEntries(spots.map(s => [s.id, s])), [spots])
-
-  const fmt = ts => {
-    const d = new Date(ts)
-    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`
-  }
-
-  if (detail) {
-    return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 9550, background: 'linear-gradient(160deg,#0f0a2a,#1e1b4b)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-        <div style={{ padding: '20px 18px 0', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={() => setDetail(null)} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 20, color: '#fff', fontSize: 12, fontWeight: 800, padding: '7px 14px', cursor: 'pointer' }}>← Back</button>
-          <div style={{ flex: 1 }}>
-            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 700 }}>{detail.animeEn}</div>
-            <div style={{ color: '#fff', fontSize: 15, fontWeight: 900 }}>{detail.spotNameEn}</div>
-          </div>
-          <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>{fmt(detail.timestamp)}</div>
-        </div>
-        {detail.photo && <img src={detail.photo} alt="" style={{ width: '100%', maxHeight: 320, objectFit: 'cover', marginTop: 16 }} />}
-        <div style={{ padding: '16px 18px', color: 'rgba(255,255,255,0.85)', fontSize: 14, lineHeight: 1.7, whiteSpace: 'pre-wrap', flex: 1 }}>{detail.memo || 'No note'}</div>
-        {onOpenEditor && spotById[detail.spotId] && (
-          <div style={{ padding: '0 18px 32px' }}>
-            <button onClick={() => { setDetail(null); onOpenEditor(spotById[detail.spotId]) }} style={{ width: '100%', padding: '13px 0', borderRadius: 14, border: 'none', background: 'rgba(167,139,250,0.3)', color: '#c4b5fd', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>📝 Edit</button>
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9550, background: 'linear-gradient(160deg,#0f0a2a,#1e1b4b)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-      <div style={{ padding: '24px 18px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <div style={{ display: 'inline-block', background: 'rgba(167,139,250,0.25)', borderRadius: 8, padding: '3px 10px', fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', color: '#c4b5fd', textTransform: 'uppercase', marginBottom: 10 }}>ALBUM</div>
-          <div style={{ color: '#fff', fontSize: 22, fontWeight: 900 }}>Album</div>
-        </div>
-        <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 22, color: '#fff', fontSize: 12, fontWeight: 800, padding: '9px 18px', cursor: 'pointer' }}>Close</button>
-      </div>
-
-      {entries.length === 0 ? (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.35)', fontSize: 14, padding: 40, textAlign: 'center' }}>
-          No memories yet.<br />Collect stamps and add photos!
-        </div>
-      ) : (
-        <div style={{ padding: '16px 14px 32px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {entries.map(e => (
-            <div key={e.spotId} onClick={() => setDetail(e)} style={{ background: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(167,139,250,0.2)', borderRadius: 16, overflow: 'hidden', cursor: 'pointer', display: 'flex', gap: 0 }}>
-              {e.photo && <img src={e.photo} alt="" style={{ width: 80, height: 80, objectFit: 'cover', flexShrink: 0 }} />}
-              <div style={{ padding: '10px 12px', flex: 1, minWidth: 0 }}>
-                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, fontWeight: 700, marginBottom: 2 }}>{e.animeEn}</div>
-                <div style={{ color: '#fff', fontSize: 13, fontWeight: 800, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.spotNameEn}</div>
-                <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.memo || 'No note'}</div>
-                <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, marginTop: 4 }}>{fmt(e.timestamp)}</div>
-              </div>
-            </div>
-          ))}
         </div>
       )}
     </div>
@@ -2568,22 +2383,9 @@ function App() {
   const autoWeather = useAutoWeather(wxPos, weatherOverride !== null)
   const weather = weatherOverride ?? autoWeather ?? 'sunny'
 
-  const [journalTarget, setJournalTarget]   = useState(null)
-  const [showJournal, setShowJournal]       = useState(false)
-  const [journalEntries, setJournalEntries] = useState([])
-  const [journaledIds, setJournaledIds]     = useState(new Set())
 
-  const refreshJournal = useCallback(() => {
-    jdbGetAll().then(all => {
-      const sorted = all.sort((a, b) => b.timestamp - a.timestamp)
-      setJournalEntries(sorted)
-      setJournaledIds(new Set(sorted.map(e => e.spotId)))
-    })
-  }, [])
 
-  useEffect(() => { refreshJournal() }, [])
 
-  const refreshJournaledIds = refreshJournal
 
   const [favorites, setFavorites] = useState(() => loadFavorites())
   const toggleFavorite = useCallback(id => {
@@ -2623,7 +2425,7 @@ function App() {
   const [acquiredStamps, setAcquiredStamps] = useState(() => loadStamps())
   const [showStampCard, setShowStampCard]   = useState(() => !!loadPrefs()?.nickname)
   const [activeMission, setActiveMission]   = useState(null)  // 現在表示中のミッション対象スポット
-  const [questAlbum, setQuestAlbum] = useState(() => loadLocalQuestAlbum())
+  const [questAlbum, setQuestAlbum] = useState(createEmptyQuestAlbum)
   const [questHomeOpen, setQuestHomeOpen] = useState(true)
   const [questAlbumOpen, setQuestAlbumOpen] = useState(false)
   const [albumMapMode, setAlbumMapMode] = useState(false)
@@ -2638,13 +2440,17 @@ function App() {
     [totalQuestCount, questAlbum],
   )
 
+  useEffect(() => {
+    loadLocalQuestAlbum().then(setQuestAlbum)
+  }, [])
+
   const handleQuestPhotoUpload = useCallback(async (spot, quest, questIndex, file, impression) => {
     if (!file) return
     const questKey = getQuestKey(spot.id, questIndex)
     setUploadingQuestKey(questKey)
     try {
       const albumPhoto = await createAlbumPhotoFromFile(file)
-      const nextAlbum = addAlbumEntry({
+      const nextAlbum = await addAlbumEntry({
         questKey,
         spotId: spot.id,
         questIndex,
@@ -2665,18 +2471,18 @@ function App() {
     }
   }, [])
 
-  const handleEditAlbumImpression = useCallback((entryId, impression) => {
-    setQuestAlbum(updateAlbumEntry(entryId, { impression }))
+  const handleEditAlbumImpression = useCallback(async (entryId, impression) => {
+    setQuestAlbum(await updateAlbumEntry(entryId, { impression }))
   }, [])
 
   const handleReplaceAlbumPhoto = useCallback(async (entryId, file) => {
     if (!file) return
     const albumPhoto = await createAlbumPhotoFromFile(file)
-    setQuestAlbum(updateAlbumEntry(entryId, { albumPhoto }))
+    setQuestAlbum(await updateAlbumEntry(entryId, { albumPhoto }))
   }, [])
 
-  const handleDeleteAlbumEntry = useCallback((entryId) => {
-    const nextAlbum = deleteAlbumEntry(entryId)
+  const handleDeleteAlbumEntry = useCallback(async (entryId) => {
+    const nextAlbum = await deleteAlbumEntry(entryId)
     setQuestAlbum(nextAlbum)
     setSelectedAlbumEntry(prev => prev?.id === entryId ? null : prev)
   }, [])
@@ -2751,7 +2557,6 @@ function App() {
       return next
     })
     setActiveMission(null)
-    setJournalTarget(completedSpot)
   }, [activeMission])
 
   // データ読み込み
@@ -3180,18 +2985,6 @@ function App() {
           }}
         >⚙️</button>
 
-        {/* ジャーナルボタン */}
-        <button
-          onClick={() => { refreshJournal(); setShowJournal(true) }}
-          title="Journal"
-          style={{
-            width: 30, height: 30, borderRadius: 10,
-            background: 'rgba(0,0,0,0.06)', border: 'none',
-            cursor: 'pointer', fontSize: 15,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >📔</button>
-
         <button
           onClick={() => {
             setQuestHomeOpen(true)
@@ -3418,29 +3211,9 @@ function App() {
             setShowStampCard(false)
             if (!gpsConsented && !locationPermissionAsked) setShowLocationPrompt(true)
           }}
-          onOpenJournal={spot => { setShowStampCard(false); setJournalTarget(spot) }}
-          journaledIds={journaledIds}
         />
       )}
 
-      {/* ジャーナル一覧 */}
-      {showJournal && (
-        <JournalViewer
-          entries={journalEntries}
-          spots={spots}
-          onOpenEditor={spot => { setShowJournal(false); setJournalTarget(spot) }}
-          onClose={() => setShowJournal(false)}
-        />
-      )}
-
-      {/* ジャーナルエディター */}
-      {journalTarget && (
-        <JournalEditor
-          spot={journalTarget}
-          onSave={() => { setJournalTarget(null); refreshJournaledIds() }}
-          onSkip={() => { setJournalTarget(null); refreshJournaledIds() }}
-        />
-      )}
 
       {ENABLE_ONBOARDING_SURVEY && showSurvey && (
         <OnboardingSurvey onComplete={prefs => { setUserPrefs(prefs); setShowSurvey(false) }} />

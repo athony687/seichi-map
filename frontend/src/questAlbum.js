@@ -14,12 +14,6 @@ export function createEmptyQuestAlbum() {
   }
 }
 
-function getStorage(storage) {
-  if (storage) return storage
-  if (typeof window === 'undefined') return null
-  return window.localStorage
-}
-
 function normalizeStringArray(value) {
   return Array.isArray(value) ? value.filter(item => typeof item === 'string') : []
 }
@@ -48,71 +42,86 @@ export function normalizeQuestAlbum(value) {
   }
 }
 
-export function loadLocalQuestAlbum(storage) {
-  const localStorage = getStorage(storage)
-  if (!localStorage) return createEmptyQuestAlbum()
+// ── IndexedDB ─────────────────────────────────────────────────────────────
+const QA_DB_NAME = 'seichi_quest_album'
+const QA_DB_STORE = 'data'
 
+function openQADB() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open(QA_DB_NAME, 1)
+    r.onupgradeneeded = e => e.target.result.createObjectStore(QA_DB_STORE)
+    r.onsuccess = e => res(e.target.result)
+    r.onerror = e => rej(e.target.error)
+  })
+}
+
+async function qadbLoad() {
+  const db = await openQADB()
+  return new Promise((res, rej) => {
+    const tx = db.transaction(QA_DB_STORE, 'readonly')
+    const r = tx.objectStore(QA_DB_STORE).get('album')
+    r.onsuccess = e => res(normalizeQuestAlbum(e.target.result ?? null))
+    r.onerror = e => rej(e.target.error)
+  })
+}
+
+async function qadbSave(album) {
+  const normalized = normalizeQuestAlbum(album)
+  const db = await openQADB()
+  return new Promise((res, rej) => {
+    const tx = db.transaction(QA_DB_STORE, 'readwrite')
+    tx.objectStore(QA_DB_STORE).put(normalized, 'album')
+    tx.oncomplete = () => res(normalized)
+    tx.onerror = e => rej(e.target.error)
+  })
+}
+
+// localStorage からの一回限りの移行
+async function migrateFromLocalStorage() {
   try {
     const raw = localStorage.getItem(LOCAL_QUEST_ALBUM_KEY)
-    return normalizeQuestAlbum(raw ? JSON.parse(raw) : null)
+    if (!raw) return
+    const parsed = JSON.parse(raw)
+    const album = normalizeQuestAlbum(parsed)
+    if (album.entries.length > 0 || album.completions.length > 0) {
+      await qadbSave(album)
+    }
+    localStorage.removeItem(LOCAL_QUEST_ALBUM_KEY)
+    localStorage.removeItem(LEGACY_QUEST_COMPLETIONS_KEY)
   } catch {
-    return createEmptyQuestAlbum()
+    // 移行失敗は無視
   }
 }
 
-export function saveLocalQuestAlbum(album, storage) {
-  const localStorage = getStorage(storage)
-  const normalized = normalizeQuestAlbum(album)
-  if (!localStorage) return normalized
+let _migratedOnce = false
 
-  try {
-    localStorage.setItem(LOCAL_QUEST_ALBUM_KEY, JSON.stringify(normalized))
-  } catch {
-    // Browsers can reject localStorage writes in private mode or when quota is full.
+export async function loadLocalQuestAlbum() {
+  if (!_migratedOnce) {
+    _migratedOnce = true
+    await migrateFromLocalStorage()
   }
-  return normalized
+  return qadbLoad()
 }
 
-export function loadLegacyQuestCompletions(storage) {
-  const localStorage = getStorage(storage)
-  if (!localStorage) return new Set()
-
-  try {
-    const raw = localStorage.getItem(LEGACY_QUEST_COMPLETIONS_KEY)
-    return raw ? new Set(JSON.parse(raw)) : new Set()
-  } catch {
-    return new Set()
-  }
+export async function saveLocalQuestAlbum(album) {
+  return qadbSave(album)
 }
 
-function saveLegacyQuestCompletions(completions, storage) {
-  const localStorage = getStorage(storage)
-  if (!localStorage) return
-
-  try {
-    localStorage.setItem(LEGACY_QUEST_COMPLETIONS_KEY, JSON.stringify([...completions]))
-  } catch {
-    // Keep quest completion updates non-fatal when localStorage is unavailable.
-  }
+export async function loadQuestCompletions() {
+  const album = await loadLocalQuestAlbum()
+  return new Set(album.completions)
 }
 
-export function loadQuestCompletions(storage) {
-  const album = loadLocalQuestAlbum(storage)
-  return new Set([...loadLegacyQuestCompletions(storage), ...album.completions])
-}
-
-export function saveQuestCompletions(completions, storage) {
+export async function saveQuestCompletions(completions) {
   const completionSet = new Set(completions)
-  const album = loadLocalQuestAlbum(storage)
+  const album = await loadLocalQuestAlbum()
   const nextAlbum = {
     ...album,
     completions: [...completionSet],
     stamps: [...completionSet],
     entries: album.entries.filter(entry => completionSet.has(entry.questKey)),
   }
-
-  saveLegacyQuestCompletions(completionSet, storage)
-  return saveLocalQuestAlbum(nextAlbum, storage)
+  return qadbSave(nextAlbum)
 }
 
 function createAlbumEntryId(questKey, completedAt) {
@@ -147,9 +156,9 @@ export function createAlbumEntry(input) {
   }
 }
 
-export function addAlbumEntry(input, storage) {
+export async function addAlbumEntry(input) {
   const entry = createAlbumEntry(input)
-  const album = loadLocalQuestAlbum(storage)
+  const album = await loadLocalQuestAlbum()
   const entries = album.entries.filter(existing => existing.questKey !== entry.questKey)
   const completions = new Set(album.completions)
   const stamps = new Set(album.stamps)
@@ -157,38 +166,26 @@ export function addAlbumEntry(input, storage) {
   completions.add(entry.questKey)
   stamps.add(entry.questKey)
 
-  const savedAlbum = saveLocalQuestAlbum({
+  return saveLocalQuestAlbum({
     ...album,
     entries: [...entries, entry],
     completions: [...completions],
     stamps: [...stamps],
-  }, storage)
-  saveLegacyQuestCompletions(new Set(savedAlbum.completions), storage)
-  return savedAlbum
+  })
 }
 
-export function updateAlbumEntry(entryId, updates, storage) {
-  const album = loadLocalQuestAlbum(storage)
+export async function updateAlbumEntry(entryId, updates) {
+  const album = await loadLocalQuestAlbum()
   const entries = album.entries.map(entry => (
     entry.id === entryId
-      ? {
-          ...entry,
-          ...updates,
-          id: entry.id,
-          questKey: entry.questKey,
-          questStamp: entry.questStamp,
-        }
+      ? { ...entry, ...updates, id: entry.id, questKey: entry.questKey, questStamp: entry.questStamp }
       : entry
   ))
-
-  return saveLocalQuestAlbum({
-    ...album,
-    entries,
-  }, storage)
+  return saveLocalQuestAlbum({ ...album, entries })
 }
 
-export function deleteAlbumEntry(entryId, storage) {
-  const album = loadLocalQuestAlbum(storage)
+export async function deleteAlbumEntry(entryId) {
+  const album = await loadLocalQuestAlbum()
   const removedEntry = album.entries.find(entry => entry.id === entryId)
   if (!removedEntry) return album
 
@@ -196,14 +193,7 @@ export function deleteAlbumEntry(entryId, storage) {
   const completions = album.completions.filter(questKey => questKey !== removedEntry.questKey)
   const stamps = album.stamps.filter(questKey => questKey !== removedEntry.questKey)
 
-  const savedAlbum = saveLocalQuestAlbum({
-    ...album,
-    entries,
-    completions,
-    stamps,
-  }, storage)
-  saveLegacyQuestCompletions(new Set(savedAlbum.completions), storage)
-  return savedAlbum
+  return saveLocalQuestAlbum({ ...album, entries, completions, stamps })
 }
 
 export function calculateQuestProgress(totalQuestCount, albumOrCompletions) {
