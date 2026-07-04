@@ -1841,6 +1841,9 @@ function JournalEditor({ spot, onSave, onSkip }) {
         <textarea
           value={memo}
           onChange={e => setMemo(e.target.value)}
+          onBlur={e => {
+            jdbSave({ spotId: spot.id, spotNameEn: spot.spot_name_en, animeEn: spot.anime_title_en, photo: photoUrl, memo: e.target.value, timestamp: Date.now() })
+          }}
           placeholder="メモを書く（感想・気づきなど）"
           rows={3}
           style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(167,139,250,0.3)', borderRadius: 12, padding: '10px 12px', color: '#fff', fontSize: 13, resize: 'none', outline: 'none', fontFamily: 'inherit', marginBottom: 14 }}
@@ -1897,8 +1900,8 @@ function JournalViewer({ spots, onOpenEditor, onClose }) {
     <div style={{ position: 'fixed', inset: 0, zIndex: 9550, background: 'linear-gradient(160deg,#0f0a2a,#1e1b4b)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
       <div style={{ padding: '24px 18px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <div style={{ display: 'inline-block', background: 'rgba(167,139,250,0.25)', borderRadius: 8, padding: '3px 10px', fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', color: '#c4b5fd', textTransform: 'uppercase', marginBottom: 10 }}>JOURNAL</div>
-          <div style={{ color: '#fff', fontSize: 22, fontWeight: 900 }}>旅の記録</div>
+          <div style={{ display: 'inline-block', background: 'rgba(167,139,250,0.25)', borderRadius: 8, padding: '3px 10px', fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', color: '#c4b5fd', textTransform: 'uppercase', marginBottom: 10 }}>ALBUM</div>
+          <div style={{ color: '#fff', fontSize: 22, fontWeight: 900 }}>アルバム</div>
         </div>
         <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 22, color: '#fff', fontSize: 12, fontWeight: 800, padding: '9px 18px', cursor: 'pointer' }}>閉じる</button>
       </div>
