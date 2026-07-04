@@ -18,6 +18,7 @@ const DEMO_STEP = 0.001   // degrees per tick (≈110m)
 const DEMO_TICK_MS = 600  // marker position update interval
 const ARRIVE_DEG = 0.001  // ≈110m, spot "arrived"
 const LOCATION_CONSENTED_KEY = 'seichi_location_consented'
+const ENABLE_ONBOARDING_SURVEY = false
 
 const MAP_STYLES_LIGHT = [
   { featureType: 'landscape',          elementType: 'geometry', stylers: [{ color: '#fefdf5' }] },
@@ -1167,19 +1168,8 @@ function OnboardingSurvey({ onComplete }) {
   )
 }
 
-// ── アプリ概要ダッシュボード ──────────────────────────────────────────────
-const DASHBOARD_FEATURES = [
-  ['📍', 'Live GPS tracking with compass direction'],
-  ['🎌', '35 anime pilgrimage spots across Japan'],
-  ['🔔', 'Auto-alert when within 100 m of a spot'],
-  ['🤖', 'AI introductions powered by Claude Haiku'],
-  ['🔍', 'Search by anime title'],
-  ['🌤️', 'Real-time weather visit tips'],
-  ['🎮', 'Demo mode — walk any route virtually'],
-  ['❤️', 'Save your favourite spots'],
-]
-
-function AppOverviewDashboard({ spots, currentPos, onExplore }) {
+// ── 目的別ダッシュボード ────────────────────────────────────────────────
+function AppOverviewDashboard({ spots, currentPos, onNearMe, onPreviewRoute, onSearchAnime, onSelectSpot }) {
   const pos = currentPos || TOKYO_STATION
   const usingFallback = !currentPos
 
@@ -1193,6 +1183,71 @@ function AppOverviewDashboard({ spots, currentPos, onExplore }) {
   const nearby = spotsWithDist.filter(s => s.dist <= 3000)
   const displaySpots = nearby.length > 0 ? nearby.slice(0, 5) : spotsWithDist.slice(0, 3)
   const hasNearby = nearby.length > 0
+  const originLabel = usingFallback ? 'Tokyo Station starting point' : 'Your current area'
+
+  const actionCard = ({ icon, label, title, body, meta, onClick, primary }) => (
+    <button
+      key={label}
+      type="button"
+      onClick={onClick}
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '44px 1fr',
+        gap: 13,
+        width: '100%',
+        padding: '16px',
+        borderRadius: 22,
+        border: primary ? `2px solid ${THEME}` : '1px solid rgba(124,58,237,0.14)',
+        background: primary
+          ? `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`
+          : '#fff',
+        color: primary ? '#fff' : '#1f2937',
+        boxShadow: primary
+          ? '0 10px 30px rgba(124,58,237,0.32)'
+          : '0 6px 22px rgba(31,41,55,0.08)',
+        cursor: 'pointer',
+        textAlign: 'left',
+      }}
+    >
+      <span style={{
+        width: 44, height: 44, borderRadius: 16,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: primary ? 'rgba(255,255,255,0.18)' : '#faf5ff',
+        fontSize: 24,
+      }}>{icon}</span>
+      <span>
+        <span style={{
+          display: 'block',
+          marginBottom: 3,
+          fontSize: 10,
+          fontWeight: 800,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: primary ? 'rgba(255,255,255,0.72)' : '#a78bfa',
+        }}>{label}</span>
+        <span style={{ display: 'block', fontSize: 17, fontWeight: 850, lineHeight: 1.25 }}>
+          {title}
+        </span>
+        <span style={{
+          display: 'block',
+          marginTop: 6,
+          color: primary ? 'rgba(255,255,255,0.82)' : '#6b7280',
+          fontSize: 13,
+          lineHeight: 1.55,
+        }}>{body}</span>
+        <span style={{
+          display: 'inline-flex',
+          marginTop: 10,
+          padding: '4px 9px',
+          borderRadius: 999,
+          background: primary ? 'rgba(255,255,255,0.18)' : '#f5f3ff',
+          color: primary ? '#fff' : THEME,
+          fontSize: 11,
+          fontWeight: 800,
+        }}>{meta}</span>
+      </span>
+    </button>
+  )
 
   return (
     <div style={{
@@ -1201,14 +1256,12 @@ function AppOverviewDashboard({ spots, currentPos, onExplore }) {
       overflowY: 'auto', WebkitOverflowScrolling: 'touch',
     }}>
 
-      {/* ── Hero ── */}
       <div style={{
-        padding: '56px 24px 32px',
+        padding: '46px 24px 28px',
         background: 'linear-gradient(150deg, #faf5ff 0%, #ede9fe 100%)',
         borderBottom: '1px solid rgba(124,58,237,0.1)',
         position: 'relative', overflow: 'hidden',
       }}>
-        {/* 装飾円 */}
         <div style={{
           position: 'absolute', top: -80, right: -80, width: 260, height: 260,
           borderRadius: '50%', background: 'rgba(124,58,237,0.08)', pointerEvents: 'none',
@@ -1234,43 +1287,46 @@ function AppOverviewDashboard({ spots, currentPos, onExplore }) {
         </div>
 
         <p style={{ fontSize: 15, color: '#4b5563', lineHeight: 1.7, margin: '0 0 24px',
-          maxWidth: 300 }}>
-          Your GPS guide to anime sacred spots across Japan — AI introductions appear
-          automatically as you walk.
+          maxWidth: 340 }}>
+          Open this in Japan to choose your next anime pilgrimage move:
+          nearby discovery, a route preview, or anime-title search.
         </p>
-
-        <button onClick={onExplore} style={{
-          display: 'inline-flex', alignItems: 'center', gap: 8,
-          padding: '11px 22px', borderRadius: 50,
-          background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
-          color: '#fff', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer',
-          boxShadow: '0 4px 16px rgba(124,58,237,0.35)',
-        }}>
-          Explore the Map <span style={{ fontSize: 11 }}>▶</span>
-        </button>
       </div>
 
       <div style={{ padding: '0 16px 120px' }}>
 
-        {/* ── Features ── */}
-        <div style={{ padding: '24px 0 4px' }}>
+        {/* ── Purpose choices ── */}
+        <div style={{ padding: '24px 0 8px' }}>
           <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em',
             color: '#9ca3af', textTransform: 'uppercase', marginBottom: 14 }}>
-            Main Features
+            What do you want to do?
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {DASHBOARD_FEATURES.map(([icon, label]) => (
-              <div key={label} style={{
-                display: 'flex', alignItems: 'flex-start', gap: 10,
-                padding: '12px 14px', borderRadius: 16,
-                background: '#faf5ff',
-                border: '1px solid rgba(124,58,237,0.1)',
-              }}>
-                <span style={{ fontSize: 19, lineHeight: 1, flexShrink: 0 }}>{icon}</span>
-                <span style={{ fontSize: 12, color: '#374151', lineHeight: 1.45,
-                  fontWeight: 500 }}>{label}</span>
-              </div>
-            ))}
+          <div style={{ display: 'grid', gap: 12 }}>
+            {actionCard({
+              icon: '📍',
+              label: 'Near me',
+              title: 'Find spots around me',
+              body: 'Use location only after this choice, then compare nearby anime spots by distance.',
+              meta: 'Best when you are already walking',
+              onClick: onNearMe,
+              primary: true,
+            })}
+            {actionCard({
+              icon: '🗾',
+              label: 'Preview route',
+              title: 'Browse from Tokyo Station',
+              body: 'No location permission needed. Use Tokyo Station as a clear starting point to understand the map.',
+              meta: 'Good before the trip',
+              onClick: onPreviewRoute,
+            })}
+            {actionCard({
+              icon: '🔍',
+              label: 'Search anime',
+              title: 'Start from a title',
+              body: 'Already know the anime? Jump to title search and see matching sacred spots.',
+              meta: 'Supporting path',
+              onClick: onSearchAnime,
+            })}
           </div>
         </div>
 
@@ -1291,7 +1347,7 @@ function AppOverviewDashboard({ spots, currentPos, onExplore }) {
 
           <div style={{ fontSize: 11, color: '#c4b5fd', marginBottom: 14 }}>
             {usingFallback
-              ? 'Based on Tokyo Station · GPS pending'
+              ? 'Explore from Tokyo Station · location not used yet'
               : hasNearby
                 ? `${nearby.length} spot${nearby.length !== 1 ? 's' : ''} near you`
                 : `No spots within 3 km · showing nearest ${displaySpots.length}`}
@@ -1304,11 +1360,16 @@ function AppOverviewDashboard({ spots, currentPos, onExplore }) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             {displaySpots.map((s, i) => (
-              <div key={s.id} style={{
+              <button key={s.id} type="button" onClick={() => onSelectSpot(s)} style={{
                 display: 'flex', alignItems: 'center', gap: 14,
+                width: '100%',
                 padding: '13px 4px',
+                background: 'transparent',
+                border: 'none',
                 borderBottom: i < displaySpots.length - 1
                   ? '1px solid #f3f4f6' : 'none',
+                cursor: 'pointer',
+                textAlign: 'left',
               }}>
                 <div style={{
                   width: 42, height: 42, borderRadius: 13, flexShrink: 0,
@@ -1332,9 +1393,21 @@ function AppOverviewDashboard({ spots, currentPos, onExplore }) {
                   fontSize: 12, fontWeight: 700, flexShrink: 0,
                   color: i === 0 && hasNearby ? THEME : '#d1d5db',
                 }}>{formatDistance(s.dist)}</div>
-              </div>
+              </button>
             ))}
           </div>
+        </div>
+        <div style={{
+          marginTop: 18,
+          padding: '12px 14px',
+          borderRadius: 18,
+          background: '#f9fafb',
+          color: '#6b7280',
+          fontSize: 12,
+          lineHeight: 1.55,
+        }}>
+          Showing spots from <strong style={{ color: '#4b5563' }}>{originLabel}</strong>.
+          {usingFallback && ' Tokyo Station is a browsing start point, not your current location.'}
         </div>
       </div>
 
@@ -1344,14 +1417,14 @@ function AppOverviewDashboard({ spots, currentPos, onExplore }) {
         padding: '12px 16px 36px',
         background: 'linear-gradient(to top, #fff 65%, transparent)',
       }}>
-        <button onClick={onExplore} style={{
+        <button onClick={onNearMe} style={{
           display: 'block', width: '100%', padding: '17px',
           borderRadius: 20, border: 'none',
           background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
           color: '#fff', fontWeight: 800, fontSize: 17, cursor: 'pointer',
           boxShadow: '0 8px 28px rgba(124,58,237,0.38)',
           letterSpacing: '0.01em',
-        }}>Explore the Map  ▶</button>
+        }}>Find spots near me  ▶</button>
       </div>
     </div>
   )
@@ -1421,9 +1494,10 @@ function App() {
   const triggeredRef = useRef(new Set())
   const [locateTick, setLocateTick] = useState(0)
 
-  // locationPermissionAsked はセッションごとにリセット（毎起動カードを出す）
-  // → requestPermission() が必ずボタン押下（ユーザージェスチャー）から呼ばれる
+  // Location permission is shown only after a location-based dashboard choice.
+  // This keeps browser permission requests tied to an explicit user intent.
   const [locationPermissionAsked, setLocationPermissionAsked] = useState(false)
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false)
   const [gpsConsented, setGpsConsented] = useState(
     () => { try { return !!localStorage.getItem(LOCATION_CONSENTED_KEY) } catch { return false } }
   )
@@ -1441,10 +1515,16 @@ function App() {
     await requestPermission()
     setGpsConsented(true)
     setLocationPermissionAsked(true)
+    setShowLocationPrompt(false)
   }, [requestPermission])
 
   const handleLocationSkip = useCallback(() => {
     setLocationPermissionAsked(true)
+    setShowLocationPrompt(false)
+    setDemoMode(true)
+    setStartPos(TOKYO_STATION)
+    setDemoPos(TOKYO_STATION)
+    setPlaying(false)
   }, [])
 
   const [gpsReady, setGpsReady] = useState(false)
@@ -1458,7 +1538,7 @@ function App() {
 
   const [showDashboard, setShowDashboard] = useState(true)
   const [userPrefs, setUserPrefs]   = useState(() => loadPrefs())
-  const [showSurvey, setShowSurvey] = useState(() => !loadPrefs())
+  const [showSurvey, setShowSurvey] = useState(() => ENABLE_ONBOARDING_SURVEY && !loadPrefs())
   const [showSettings, setShowSettings] = useState(false)
   const [mapTheme, setMapTheme] = useState(loadMapTheme)
   const [weatherOverride, setWeatherOverride] = useState(null)
@@ -1488,7 +1568,7 @@ function App() {
     setUserPrefs(null)
     Object.keys(introCache).forEach(k => delete introCache[k])
     setShowSettings(false)
-    setShowSurvey(true)
+    setShowSurvey(ENABLE_ONBOARDING_SURVEY)
   }
 
   const [searchQuery, setSearchQuery]         = useState('')
@@ -1496,6 +1576,7 @@ function App() {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [showSpotList, setShowSpotList]       = useState(false)
   const [animateSearch, setAnimateSearch]     = useState(false)
+  const searchInputRef = useRef(null)
 
   useEffect(() => {
     if (!searchAnime) { setAnimateSearch(false); return }
@@ -1604,6 +1685,46 @@ function App() {
     setCardExpanded(true)
     setShowSpotList(false)
     setShowSuggestions(false)
+  }
+
+  const handleDashboardNearMe = () => {
+    setShowDashboard(false)
+    setDemoMode(false)
+    setPlaying(false)
+    setStartPosMode(false)
+    setSelected(null)
+    setSelectedTourist(null)
+    if (gpsConsented || locationPermissionAsked) {
+      setLocateTick(t => t + 1)
+      return
+    }
+    setShowLocationPrompt(true)
+  }
+
+  const handleDashboardPreviewRoute = () => {
+    setShowDashboard(false)
+    setShowLocationPrompt(false)
+    setDemoMode(true)
+    setPlaying(false)
+    setStartPosMode(false)
+    setStartPos(TOKYO_STATION)
+    setDemoPos(TOKYO_STATION)
+    setSelected(null)
+    setSelectedTourist(null)
+  }
+
+  const handleDashboardSearchAnime = () => {
+    setShowDashboard(false)
+    setShowLocationPrompt(false)
+    setShowSuggestions(true)
+    window.setTimeout(() => searchInputRef.current?.focus(), 0)
+  }
+
+  const handleDashboardSpotSelect = spot => {
+    setShowDashboard(false)
+    setShowLocationPrompt(false)
+    setSelectedTourist(null)
+    setSelected(spot)
   }
 
   const handleMapClick = (e) => {
@@ -1778,6 +1899,7 @@ function App() {
             fontSize: 12, pointerEvents: 'none',
           }}>🔍</span>
           <input
+            ref={searchInputRef}
             type="text"
             placeholder="Search by anime title"
             value={searchQuery}
@@ -2002,21 +2124,24 @@ function App() {
         </div>
       )}
 
-      {/* 位置情報・コンパス許可カード（初回LIVEモードのみ） */}
-      {!demoMode && !locationPermissionAsked && (
+      {/* 位置情報・コンパス許可カード（Near me 選択後のみ） */}
+      {!demoMode && showLocationPrompt && !locationPermissionAsked && (
         <LocationPermissionCard onAllow={handleLocationAllow} onSkip={handleLocationSkip} />
       )}
 
-      {/* アプリ概要ダッシュボード（許可カード・サーベイより低い z-index） */}
+      {/* 目的別ダッシュボード */}
       {showDashboard && (
         <AppOverviewDashboard
           spots={spots}
           currentPos={livePos}
-          onExplore={() => setShowDashboard(false)}
+          onNearMe={handleDashboardNearMe}
+          onPreviewRoute={handleDashboardPreviewRoute}
+          onSearchAnime={handleDashboardSearchAnime}
+          onSelectSpot={handleDashboardSpotSelect}
         />
       )}
 
-      {showSurvey && (
+      {ENABLE_ONBOARDING_SURVEY && !showDashboard && showSurvey && (
         <OnboardingSurvey onComplete={prefs => { setUserPrefs(prefs); setShowSurvey(false) }} />
       )}
       {showSettings && (
