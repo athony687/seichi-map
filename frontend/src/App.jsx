@@ -1654,6 +1654,11 @@ function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose, onOpenJ
       {/* ヘッダー */}
       <div style={{ padding: '24px 20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div style={{ flex: 1, paddingRight: 12 }}>
+          {nickname && (
+            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
+              Welcome back, <span style={{ color: '#c4b5fd', fontWeight: 800 }}>{nickname}</span> 👋
+            </div>
+          )}
           <div style={{
             display: 'inline-block', background: 'rgba(167,139,250,0.25)', borderRadius: 8,
             padding: '3px 10px', fontSize: 10, fontWeight: 800, letterSpacing: '0.18em',
