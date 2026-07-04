@@ -22,6 +22,12 @@ const ARRIVE_DEG = 0.001  // ≈110m, spot "arrived"
 const LOCATION_CONSENTED_KEY = 'seichi_location_consented'
 const ENABLE_ONBOARDING_SURVEY = false
 
+// ── スタンプラリー設定 ──────────────────────────────────────────────────────
+const STAMP_KEY          = 'seichi_stamps'
+const STAMP_CARD_KEY     = 'seichi_stamp_card'
+const STAMP_RADIUS_METERS = 10000   // 10km 以内のスポットをカード対象に
+const STAMP_CARD_SIZE    = 10       // 最大スタンプ数
+
 const MAP_STYLES_LIGHT = [
   { featureType: 'landscape',          elementType: 'geometry', stylers: [{ color: '#fefdf5' }] },
   { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: '#fdfbec' }] },
@@ -1029,6 +1035,12 @@ const loadMapTheme = () => { try { return localStorage.getItem(MAP_THEME_KEY) ||
 
 const FAVORITES_KEY = 'seichi_favorites'
 const loadFavorites = () => { try { const r = localStorage.getItem(FAVORITES_KEY); return r ? new Set(JSON.parse(r)) : new Set() } catch { return new Set() } }
+
+// ── スタンプラリー用 localStorage ─────────────────────────────────────────
+const loadStamps    = () => { try { const r = localStorage.getItem(STAMP_KEY);     return r ? new Set(JSON.parse(r)) : new Set()  } catch { return new Set() } }
+const saveStamps    = s  => { try { localStorage.setItem(STAMP_KEY,     JSON.stringify([...s])) } catch {} }
+const loadStampCard = () => { try { const r = localStorage.getItem(STAMP_CARD_KEY); return r ? JSON.parse(r) : null               } catch { return null } }
+const saveStampCard = c  => { try { localStorage.setItem(STAMP_CARD_KEY, JSON.stringify(c))    } catch {} }
 const saveFavorites = f => localStorage.setItem(FAVORITES_KEY, JSON.stringify([...f]))
 
 function OnboardingSurvey({ onComplete }) {
@@ -1597,6 +1609,174 @@ function NearbyToast({ toast }) {
   )
 }
 
+// ── スタンプカード全画面 ────────────────────────────────────────────────────
+function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose }) {
+  const cardSpots = stampCardIds
+    ? spots.filter(s => stampCardIds.includes(s.id))
+    : []
+  const total     = stampCardIds?.length ?? 0
+  const collected = stampCardIds ? [...acquiredStamps].filter(id => stampCardIds.includes(id)).length : 0
+  const remaining = total - collected
+  const isComplete = total > 0 && collected === total
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9500,
+      background: 'linear-gradient(160deg, #0f0a2a 0%, #1e1b4b 40%, #312e81 80%, #4c1d95 100%)',
+      display: 'flex', flexDirection: 'column', overflowY: 'auto',
+    }}>
+      {/* ヘッダー */}
+      <div style={{ padding: '24px 20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ flex: 1, paddingRight: 12 }}>
+          <div style={{
+            display: 'inline-block', background: 'rgba(167,139,250,0.25)', borderRadius: 8,
+            padding: '3px 10px', fontSize: 10, fontWeight: 800, letterSpacing: '0.18em',
+            color: '#c4b5fd', textTransform: 'uppercase', marginBottom: 10,
+          }}>STAMP MISSION</div>
+          <div style={{ color: '#fff', fontSize: 24, fontWeight: 900, lineHeight: 1.2, marginBottom: 8 }}>
+            Your Anime<br />Stamp Rally
+          </div>
+          <div style={{ color: 'rgba(255,255,255,0.62)', fontSize: 13, lineHeight: 1.6 }}>
+            Your mission: collect every stamp nearby.
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          style={{
+            background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)',
+            borderRadius: 22, color: '#fff', fontSize: 12, fontWeight: 800,
+            padding: '9px 18px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+          }}
+        >View Map →</button>
+      </div>
+
+      {/* 進捗バー */}
+      <div style={{ padding: '18px 20px 0', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ flex: 1, height: 8, background: 'rgba(255,255,255,0.12)', borderRadius: 99, overflow: 'hidden' }}>
+          <div style={{
+            height: '100%',
+            width: `${total > 0 ? (collected / total) * 100 : 0}%`,
+            background: isComplete
+              ? 'linear-gradient(90deg, #fde68a, #fb923c)'
+              : 'linear-gradient(90deg, #a78bfa, #f472b6)',
+            borderRadius: 99, transition: 'width 0.6s cubic-bezier(0.34,1.56,0.64,1)',
+          }} />
+        </div>
+        <div style={{ color: isComplete ? '#fde68a' : '#fff', fontSize: 15, fontWeight: 900, flexShrink: 0 }}>
+          {collected}/{total}
+        </div>
+      </div>
+
+      {/* ステータスメッセージ */}
+      <div style={{ padding: '8px 20px 16px', fontSize: 13, fontWeight: 700, color: isComplete ? '#fde68a' : 'rgba(255,255,255,0.6)' }}>
+        {isComplete
+          ? '🎉 All stamps collected! You\'re a true pilgrimage champion!'
+          : stampCardIds === null
+          ? 'Generating your stamp card…'
+          : `${remaining} stamp${remaining !== 1 ? 's' : ''} left to collect`}
+      </div>
+
+      {/* スタンプグリッド */}
+      <div style={{ padding: '0 14px 32px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+        {stampCardIds === null ? (
+          <div style={{ gridColumn: '1/-1', textAlign: 'center', color: 'rgba(255,255,255,0.35)', padding: '40px 0', fontSize: 14 }}>
+            Loading spots…
+          </div>
+        ) : cardSpots.map(spot => {
+          const done = acquiredStamps.has(spot.id)
+          return (
+            <div key={spot.id} style={{
+              background: done ? 'rgba(167,139,250,0.22)' : 'rgba(255,255,255,0.06)',
+              border: `1.5px solid ${done ? 'rgba(167,139,250,0.55)' : 'rgba(255,255,255,0.09)'}`,
+              borderRadius: 16, padding: '13px 14px',
+              position: 'relative', overflow: 'hidden',
+              transition: 'all 0.35s',
+            }}>
+              {done && (
+                <div style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                  display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end',
+                  padding: '0 10px 8px 0', pointerEvents: 'none',
+                }}>
+                  <span style={{ fontSize: 32, opacity: 0.25 }}>✅</span>
+                </div>
+              )}
+              <div style={{
+                fontSize: 9.5, fontWeight: 800, letterSpacing: '0.1em',
+                textTransform: 'uppercase', marginBottom: 5,
+                color: done ? '#c4b5fd' : 'rgba(255,255,255,0.35)',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>{spot.anime_title_en}</div>
+              <div style={{
+                fontSize: 13, fontWeight: 800, lineHeight: 1.35,
+                color: done ? '#fff' : 'rgba(255,255,255,0.58)',
+              }}>{spot.spot_name_en}</div>
+              {spot.area && (
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.32)', marginTop: 5 }}>
+                  {spot.area}
+                </div>
+              )}
+              {done && (
+                <div style={{ marginTop: 8, display: 'inline-block', background: 'rgba(167,139,250,0.4)', borderRadius: 8, padding: '2px 8px', fontSize: 10, fontWeight: 800, color: '#c4b5fd', letterSpacing: '0.06em' }}>
+                  STAMPED ✓
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* 完了時の祝い演出 */}
+      {isComplete && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 100, pointerEvents: 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            fontSize: 72, animation: 'slideUp 0.5s ease-out',
+            textAlign: 'center',
+          }}>🎊<br /><span style={{ fontSize: 28, color: '#fde68a', fontWeight: 900 }}>Complete!</span></div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── スタンプ進捗ミニバー（地図上に常時表示） ────────────────────────────────
+function StampMinibar({ total, collected, onTap }) {
+  if (!total) return null
+  const isComplete = collected === total
+  return (
+    <div
+      onClick={onTap}
+      style={{
+        position: 'fixed', top: 58, left: '50%', transform: 'translateX(-50%)',
+        zIndex: 800, cursor: 'pointer',
+        background: isComplete ? 'rgba(120,53,15,0.92)' : 'rgba(15,10,42,0.88)',
+        backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+        borderRadius: 22, padding: '6px 14px',
+        display: 'flex', alignItems: 'center', gap: 9,
+        boxShadow: '0 4px 18px rgba(0,0,0,0.28)',
+        border: `1px solid ${isComplete ? 'rgba(253,230,138,0.4)' : 'rgba(167,139,250,0.3)'}`,
+        transition: 'all 0.3s',
+      }}
+    >
+      <span style={{ fontSize: 15 }}>🎫</span>
+      <div style={{ width: 56, height: 5, background: 'rgba(255,255,255,0.18)', borderRadius: 99, overflow: 'hidden' }}>
+        <div style={{
+          height: '100%',
+          width: `${(collected / total) * 100}%`,
+          background: isComplete ? 'linear-gradient(90deg,#fde68a,#fb923c)' : 'linear-gradient(90deg,#a78bfa,#f472b6)',
+          borderRadius: 99, transition: 'width 0.5s',
+        }} />
+      </div>
+      <span style={{ color: isComplete ? '#fde68a' : '#e0d7ff', fontSize: 12, fontWeight: 800, letterSpacing: '0.04em' }}>
+        {collected}/{total}{isComplete ? ' 🎉' : ''}
+      </span>
+    </div>
+  )
+}
+
 // ── App ───────────────────────────────────────────────────────────────────
 function App() {
   const [spots, setSpots]               = useState([])
@@ -1706,6 +1886,13 @@ function App() {
   const [animateSearch, setAnimateSearch]     = useState(false)
   const searchInputRef = useRef(null)
 
+  // ── スタンプラリー state ─────────────────────────────────────────────────
+  const stampCardGeneratedRef               = useRef(false)
+  const [stampCardIds, setStampCardIds]     = useState(() => loadStampCard())
+  const [acquiredStamps, setAcquiredStamps] = useState(() => loadStamps())
+  const [showStampCard, setShowStampCard]   = useState(true)
+  const [showNearbyPanel, setShowNearbyPanel] = useState(false)
+
   useEffect(() => {
     if (!searchAnime) { setAnimateSearch(false); return }
     setAnimateSearch(true)
@@ -1730,6 +1917,37 @@ function App() {
       : [],
     [spots, searchAnime])
 
+
+  // ── スタンプカード生成（spots読み込み後に一度だけ実行） ────────────────────
+  useEffect(() => {
+    if (stampCardIds !== null || stampCardGeneratedRef.current || !spots.length) return
+    stampCardGeneratedRef.current = true
+    const refPos = browsingPos
+    const card = spots
+      .map(s => ({ spot: s, dist: haversine(refPos, { lat: s.lat, lng: s.lng }) }))
+      .filter(({ dist }) => dist <= STAMP_RADIUS_METERS)
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, STAMP_CARD_SIZE)
+      .map(({ spot }) => spot.id)
+    if (card.length > 0) {
+      setStampCardIds(card)
+      saveStampCard(card)
+    }
+  }, [spots]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── スタンプ獲得（nearbySpots が変わるたびに判定） ───────────────────────
+  useEffect(() => {
+    if (!nearbySpots.length || !stampCardIds?.length) return
+    const newIds = nearbySpots
+      .filter(s => stampCardIds.includes(s.id) && !acquiredStamps.has(s.id))
+      .map(s => s.id)
+    if (!newIds.length) return
+    setAcquiredStamps(prev => {
+      const next = new Set([...prev, ...newIds])
+      saveStamps(next)
+      return next
+    })
+  }, [nearbySpots, stampCardIds]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // データ読み込み
   useEffect(() => {
@@ -2221,6 +2439,21 @@ function App() {
           }}
         >⚙️</button>
 
+        {/* 周辺スポットパネル トグル */}
+        {!showDashboard && (
+          <button
+            onClick={() => setShowNearbyPanel(v => !v)}
+            title="Nearby spots"
+            style={{
+              height: 30, padding: '0 10px', borderRadius: 10,
+              border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 800,
+              background: showNearbyPanel ? '#ede9ff' : 'rgba(0,0,0,0.06)',
+              color: showNearbyPanel ? THEME : '#555',
+              letterSpacing: '0.04em',
+            }}
+          >📋 Nearby</button>
+        )}
+
         <span style={{ width: 1, height: 18, background: 'rgba(0,0,0,0.1)' }} />
 
         {/* DEMO / LIVE 切替 */}
@@ -2305,7 +2538,7 @@ function App() {
           onLocate={() => setLocateTick(t => t + 1)}
         />
       )}
-      {!showDashboard && (
+      {!showDashboard && showNearbyPanel && (
         <NearbySpotsPanel
           spots={nearbyPanelSpots}
           collapsed={!!selected && cardExpanded}
@@ -2339,7 +2572,7 @@ function App() {
       )}
 
       {/* 目的別ダッシュボード */}
-      {showDashboard && (
+      {showDashboard && !showStampCard && (
         <AppOverviewDashboard
           spots={spots}
           currentPos={livePos}
@@ -2347,6 +2580,25 @@ function App() {
           onPreviewRoute={handleDashboardPreviewRoute}
           onSearchAnime={handleDashboardSearchAnime}
           onSelectSpot={handleDashboardSpotSelect}
+        />
+      )}
+
+      {/* スタンプラリー：ミニバー（地図表示中に常時表示） */}
+      {!showDashboard && !showStampCard && stampCardIds?.length > 0 && (
+        <StampMinibar
+          total={stampCardIds.length}
+          collected={[...acquiredStamps].filter(id => stampCardIds.includes(id)).length}
+          onTap={() => setShowStampCard(true)}
+        />
+      )}
+
+      {/* スタンプラリー：全画面カード */}
+      {showStampCard && (
+        <StampCardScreen
+          spots={spots}
+          stampCardIds={stampCardIds}
+          acquiredStamps={acquiredStamps}
+          onClose={() => setShowStampCard(false)}
         />
       )}
 
