@@ -8,8 +8,8 @@ import { MarkerClusterer } from '@googlemaps/markerclusterer'
 const GENERIC_INTRO = `Welcome to this anime pilgrimage spot! This location appeared in a beloved anime series and draws fans from around the world. Come and experience the scenery that inspired the story.`
 // ============================================================
 
-const TOKYO = { lat: 35.6762, lng: 139.6503 }
-const TOKYO_STATION = { lat: 35.6812, lng: 139.7671 }
+const KANAGAWA_CENTER = { lat: 35.4478, lng: 139.6425 }
+const YOKOHAMA_STATION = { lat: 35.4658, lng: 139.6223 }
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
 const PROXIMITY_METERS = 500
 const NEARBY_PANEL_METERS = 3000
@@ -738,11 +738,11 @@ function useLiveGPS(enabled) {
   const [status, setStatus] = useState('idle')
   useEffect(() => {
     if (!enabled) { setStatus('idle'); setPos(null); return }
-    if (!navigator.geolocation) { setPos(TOKYO_STATION); setStatus('error'); return }
+    if (!navigator.geolocation) { setPos(YOKOHAMA_STATION); setStatus('error'); return }
     setStatus('pending')
     const id = navigator.geolocation.watchPosition(
       ({ coords }) => { setPos({ lat: coords.latitude, lng: coords.longitude }); setStatus('ok') },
-      () => { setPos(TOKYO_STATION); setStatus('error') },
+      () => { setPos(YOKOHAMA_STATION); setStatus('error') },
       { enableHighAccuracy: true, maximumAge: 5000 },
     )
     return () => navigator.geolocation.clearWatch(id)
@@ -755,7 +755,7 @@ function GpsLocateButton({ status, onLocate }) {
     idle:    null,
     pending: { icon: '⌛', label: 'Locating…',    color: '#9ca3af', bg: '#f9fafb', disabled: true },
     ok:      { icon: '📍', label: 'My Location',  color: '#1d6ef5', bg: '#eff6ff', disabled: false },
-    error:   { icon: '⚠️', label: 'Tokyo Sta.',   color: '#dc2626', bg: '#fef2f2', disabled: false },
+    error:   { icon: '⚠️', label: 'Yokohama',   color: '#dc2626', bg: '#fef2f2', disabled: false },
   }
   const c = cfg[status]
   if (!c) return null
@@ -1336,7 +1336,7 @@ function OnboardingSurvey({ onComplete }) {
 
 // ── 目的別ダッシュボード ────────────────────────────────────────────────
 function AppOverviewDashboard({ spots, currentPos, onNearMe, onPreviewRoute, onSearchAnime, onSelectSpot }) {
-  const pos = currentPos || TOKYO_STATION
+  const pos = currentPos || YOKOHAMA_STATION
   const usingFallback = !currentPos
 
   const spotsWithDist = useMemo(() => {
@@ -1349,7 +1349,7 @@ function AppOverviewDashboard({ spots, currentPos, onNearMe, onPreviewRoute, onS
   const nearby = spotsWithDist.filter(s => s.dist <= 3000)
   const displaySpots = nearby.length > 0 ? nearby.slice(0, 5) : spotsWithDist.slice(0, 3)
   const hasNearby = nearby.length > 0
-  const originLabel = usingFallback ? 'Tokyo Station starting point' : 'Your current area'
+  const originLabel = usingFallback ? 'Yokohama Station starting point' : 'Your current area'
 
   const actionCard = ({ icon, label, title, body, meta, onClick, primary }) => (
     <button
@@ -1444,7 +1444,7 @@ function AppOverviewDashboard({ spots, currentPos, onNearMe, onPreviewRoute, onS
         }}>
           <span style={{ fontSize: 13 }}>🗾</span>
           <span style={{ fontSize: 11, fontWeight: 700, color: THEME,
-            letterSpacing: '0.08em', textTransform: 'uppercase' }}>Anime Pilgrimage · Japan</span>
+            letterSpacing: '0.08em', textTransform: 'uppercase' }}>Anime Pilgrimage · Kanagawa</span>
         </div>
 
         <div style={{ fontSize: 38, fontWeight: 900, letterSpacing: '-0.03em',
@@ -1454,7 +1454,7 @@ function AppOverviewDashboard({ spots, currentPos, onNearMe, onPreviewRoute, onS
 
         <p style={{ fontSize: 15, color: '#4b5563', lineHeight: 1.7, margin: '0 0 24px',
           maxWidth: 340 }}>
-          Open this in Japan to choose your next anime pilgrimage move:
+          Open this in Kanagawa to choose your next anime pilgrimage move:
           nearby discovery, a route preview, or anime-title search.
         </p>
       </div>
@@ -1480,8 +1480,8 @@ function AppOverviewDashboard({ spots, currentPos, onNearMe, onPreviewRoute, onS
             {actionCard({
               icon: '🗾',
               label: 'Preview route',
-              title: 'Browse from Tokyo Station',
-              body: 'No location permission needed. Use Tokyo Station as a clear starting point to understand the map.',
+              title: 'Browse from Yokohama Station',
+              body: 'No location permission needed. Use Yokohama Station as a clear starting point to understand the map.',
               meta: 'Good before the trip',
               onClick: onPreviewRoute,
             })}
@@ -1513,7 +1513,7 @@ function AppOverviewDashboard({ spots, currentPos, onNearMe, onPreviewRoute, onS
 
           <div style={{ fontSize: 11, color: '#c4b5fd', marginBottom: 14 }}>
             {usingFallback
-              ? 'Explore from Tokyo Station · location not used yet'
+              ? 'Explore from Yokohama Station · location not used yet'
               : hasNearby
                 ? `${nearby.length} spot${nearby.length !== 1 ? 's' : ''} near you`
                 : `No spots within 3 km · showing nearest ${displaySpots.length}`}
@@ -1573,7 +1573,7 @@ function AppOverviewDashboard({ spots, currentPos, onNearMe, onPreviewRoute, onS
           lineHeight: 1.55,
         }}>
           Showing spots from <strong style={{ color: '#4b5563' }}>{originLabel}</strong>.
-          {usingFallback && ' Tokyo Station is a browsing start point, not your current location.'}
+          {usingFallback && ' Yokohama Station is a browsing start point, not your current location.'}
         </div>
       </div>
 
@@ -1644,7 +1644,7 @@ function NearbySpotsPanel({ spots, collapsed, usingFallback, onSelectSpot }) {
   const visibleSpots = spots.slice(0, 6)
   const title = `Nearby Spots · ${spots.length}`
   const referenceText = usingFallback
-    ? 'Showing spots from Tokyo Station'
+    ? 'Showing spots from Yokohama Station'
     : 'Showing spots within 3 km'
 
   if (collapsed) {
@@ -1659,7 +1659,7 @@ function NearbySpotsPanel({ spots, collapsed, usingFallback, onSelectSpot }) {
       }}>
         {title}
         <span style={{ marginLeft: 8, color: '#9ca3af', fontWeight: 700 }}>
-          {usingFallback ? 'Tokyo Station' : 'near you'}
+          {usingFallback ? 'Yokohama Station' : 'near you'}
         </span>
       </div>
     )
@@ -1811,8 +1811,8 @@ function App() {
     setLocationPermissionAsked(true)
     setShowLocationPrompt(false)
     setDemoMode(true)
-    setStartPos(TOKYO_STATION)
-    setDemoPos(TOKYO_STATION)
+    setStartPos(YOKOHAMA_STATION)
+    setDemoPos(YOKOHAMA_STATION)
     setPlaying(false)
   }, [])
 
@@ -1925,11 +1925,11 @@ function App() {
 
   // activePos: デモ中は擬似マーカー、ライブ中はGPS
   const activePos = demoMode ? demoPos : livePos
-  const browsingPos = activePos || TOKYO_STATION
+  const browsingPos = activePos || YOKOHAMA_STATION
   const usingDefaultReferencePoint =
     !activePos ||
-    (demoMode && startPos?.lat === TOKYO_STATION.lat && startPos?.lng === TOKYO_STATION.lng)
-  const nearbyReferenceMode = usingDefaultReferencePoint ? 'tokyo-station' : demoMode ? 'demo' : 'live'
+    (demoMode && startPos?.lat === YOKOHAMA_STATION.lat && startPos?.lng === YOKOHAMA_STATION.lng)
+  const nearbyReferenceMode = usingDefaultReferencePoint ? 'yokohama-station' : demoMode ? 'demo' : 'live'
 
   // 近接判定（ラベル表示用。DEMOは離れたらカードも自動クローズ）
   useEffect(() => {
@@ -2066,8 +2066,8 @@ function App() {
     setDemoMode(true)
     setPlaying(false)
     setStartPosMode(false)
-    setStartPos(TOKYO_STATION)
-    setDemoPos(TOKYO_STATION)
+    setStartPos(YOKOHAMA_STATION)
+    setDemoPos(YOKOHAMA_STATION)
     setSelected(null)
     setSelectedTourist(null)
     resetNearbyTracking()
@@ -2111,8 +2111,8 @@ function App() {
       <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY} language="en" region="JP">
         <Map
           style={{ width: '100%', height: '100%' }}
-          defaultCenter={TOKYO}
-          defaultZoom={6}
+          defaultCenter={KANAGAWA_CENTER}
+          defaultZoom={10}
           minZoom={5}
           gestureHandling="greedy"
           disableDefaultUI={true}
