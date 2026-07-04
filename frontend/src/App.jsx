@@ -1828,6 +1828,10 @@ function App() {
   const { pos: livePos, status: gpsStatus } = useLiveGPS(!demoMode && gpsConsented)
   const { heading, requestPermission } = useDeviceHeading()
 
+  // activePos / browsingPos を先に宣言して、以降のすべての useEffect deps で TDZ にならないようにする
+  const activePos = demoMode ? demoPos : livePos
+  const browsingPos = activePos || YOKOHAMA_STATION
+
   const handleLocationAllow = useCallback(async () => {
     try { localStorage.setItem(LOCATION_CONSENTED_KEY, 'true') } catch {}
     // 位置情報の許可をボタン押下（ユーザージェスチャー）から明示的にトリガー
@@ -2005,9 +2009,7 @@ function App() {
       })
   }, [])
 
-  // activePos: デモ中は擬似マーカー、ライブ中はGPS
-  const activePos = demoMode ? demoPos : livePos
-  const browsingPos = activePos || YOKOHAMA_STATION
+  // activePos / browsingPos はファイル先頭で宣言済み
   const usingDefaultReferencePoint =
     !activePos ||
     (demoMode && startPos?.lat === YOKOHAMA_STATION.lat && startPos?.lng === YOKOHAMA_STATION.lng)
