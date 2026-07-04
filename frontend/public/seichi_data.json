@@ -673,5 +673,83 @@
     "generic_intro_en": "",
     "official_url": "",
     "hours": "Outdoor area always open"
+  },
+  {
+    "id": "shimokitazawa-bocchi-01",
+    "spot_name_ja": "下北沢SHELTER",
+    "spot_name_en": "Shimokitazawa SHELTER",
+    "anime_title_ja": "ぼっち・ざ・ろっく！",
+    "anime_title_en": "Bocchi the Rock!",
+    "scene_description": "結束バンドの活動拠点であるライブハウス『STARRY』のモデルとされるライブハウス。初ライブなど作中の重要な場面で繰り返し登場する。",
+    "intro_short_en": "This real Shimokitazawa live house is widely recognised as the model for 'STARRY,' the venue where the band Kessoku Band performs and hangs out throughout 'Bocchi the Rock!'. It remains an active concert venue today, so visitors should check show schedules and be mindful not to disturb staff or performers. It's just a few minutes on foot from Shimokitazawa Station.",
+    "lat": 35.66057,
+    "lng": 139.66735,
+    "area": "Shimokitazawa, Setagaya-ku, Tokyo",
+    "nearest_station": "Keio Inokashira Line / Odakyu Line Shimokitazawa Station",
+    "access_note": "下北沢駅から徒歩約3分。営業中のライブハウスのため見学時は配慮を",
+    "photo_url": "",
+    "tags": [
+      "walkable",
+      "live-house",
+      "photo-spot",
+      "paid"
+    ],
+    "verified": false,
+    "source": "https://anime-pilgrimage.com/bocchi-the-rock/",
+    "generic_intro_en": "",
+    "official_url": "https://bocchi.rocks/",
+    "hours": "Check live house schedule (evenings, showtimes vary)"
+  },
+  {
+    "id": "shimokitazawa-bocchi-02",
+    "spot_name_ja": "どんぐりひろば公園",
+    "spot_name_en": "Donguri Hiroba Park",
+    "anime_title_ja": "ぼっち・ざ・ろっく！",
+    "anime_title_en": "Bocchi the Rock!",
+    "scene_description": "アー写(アーティスト写真)のロケーション探しや、後藤ひとりが作詞に悩む場面などに登場する公園のモデル。",
+    "intro_short_en": "This small neighbourhood park in Shimokitazawa is the real-world model for the park where Kessoku Band scouts locations for their artist photos in 'Bocchi the Rock!'. Some of the same playground equipment seen in the anime is still there today. It's about a 10-minute walk from Shimokitazawa Station, on the opposite side of the tracks from the main nightlife area.",
+    "lat": 35.65908,
+    "lng": 139.66365,
+    "area": "Shimokitazawa, Setagaya-ku, Tokyo",
+    "nearest_station": "Keio Inokashira Line / Odakyu Line Shimokitazawa Station",
+    "access_note": "下北沢駅から徒歩約10分",
+    "photo_url": "",
+    "tags": [
+      "walkable",
+      "park",
+      "free",
+      "photo-spot"
+    ],
+    "verified": false,
+    "source": "https://anime-pilgrimage.com/bocchi-the-rock/",
+    "generic_intro_en": "",
+    "official_url": "https://bocchi.rocks/",
+    "hours": "Always open"
+  },
+  {
+    "id": "kanazawahakkei-bocchi-01",
+    "spot_name_ja": "金沢八景駅周辺",
+    "spot_name_en": "Kanazawa-Hakkei Station area",
+    "anime_title_ja": "ぼっち・ざ・ろっく！",
+    "anime_title_en": "Bocchi the Rock!",
+    "scene_description": "主人公・後藤ひとりの自宅最寄り駅とされるエリアで、きくり先輩との出会いや路上ライブのシーンの舞台となる横浜市金沢区のスポット。",
+    "intro_short_en": "Kanazawa-Hakkei in Yokohama is treated as the neighbourhood where Hitori Goto lives in 'Bocchi the Rock!', and the area around the station and nearby Hirakata Bay is linked to her first meeting and street performance with senior musician Kikuri. It offers a much quieter, residential contrast to the Shimokitazawa scenes. The bay promenade nearby is a pleasant, easy walk for fans continuing their pilgrimage into Kanagawa.",
+    "lat": 35.33143,
+    "lng": 139.61146,
+    "area": "Kanazawa-ku, Yokohama, Kanagawa",
+    "nearest_station": "Keikyu Main Line / Seaside Line Kanazawa-Hakkei Station",
+    "access_note": "京急金沢八景駅すぐ。平潟湾プロムナードは駅から徒歩圏内",
+    "photo_url": "",
+    "tags": [
+      "walkable",
+      "free",
+      "residential",
+      "waterfront"
+    ],
+    "verified": false,
+    "source": "https://www.mapple.net/original/480262/",
+    "generic_intro_en": "",
+    "official_url": "https://bocchi.rocks/",
+    "hours": "Always open"
   }
 ]
