@@ -1464,7 +1464,7 @@ function NearestStampBar({ spot, onTap }) {
 function SplashScreen({ onDone }) {
   const [fading, setFading] = useState(false)
   useEffect(() => {
-    const t = setTimeout(() => setFading(true), 1500)
+    const t = setTimeout(() => setFading(true), 3000)
     return () => clearTimeout(t)
   }, [])
   return (
