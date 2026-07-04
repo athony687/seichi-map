@@ -1738,7 +1738,11 @@ function JournalEditor({ spot, onSave, onSkip }) {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = ev => setPhotoUrl(ev.target.result)
+    reader.onload = ev => {
+      const url = ev.target.result
+      setPhotoUrl(url)
+      jdbSave({ spotId: spot.id, spotNameEn: spot.spot_name_en, animeEn: spot.anime_title_en, photo: url, memo, timestamp: Date.now() })
+    }
     reader.readAsDataURL(file)
   }
 
