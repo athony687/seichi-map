@@ -30,14 +30,19 @@ header {
 
 
 
-
+#root {
+    margin-top: 50px; /* ヘッダーの高さ分だけ下にずらす */
+    padding: 20px;    /* 見やすくするための余白 */
+}
 
 .progress-container-gradient {
     width: 50%;
-    height: 20px;
+    height: 20px auto;
     background: #f0fdf4;
     border-radius: 5px;
     overflow: hidden;
+    position: relative;
+    z-index: 999;
 }
 
 .progress-bar-gradient {
