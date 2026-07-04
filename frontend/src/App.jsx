@@ -336,18 +336,21 @@ const introCache = {}
 // ── 近接ラベル（ピン真上に浮かぶチップ）────────────────────────────────
 const isPlaceholder = t => !t || t.startsWith('PLACEHOLDER')
 
-function getTeaserHook(spot) {
-  const raw = introCache[spot.id] || (!isPlaceholder(spot.intro_short_en) ? spot.intro_short_en : '')
-  if (raw && raw.length > 20) {
-    const m = raw.match(/^.+?[.!?](?=\s|$)/)
-    const first = m ? m[0].trim() : raw.slice(0, 75).trim()
-    if (first.length > 15) return first.length > 80 ? first.slice(0, 77) + '…' : first
-  }
-  return `A scene from ${spot.anime_title_en} was filmed right here.`
+const POP_HOOKS = [
+  t => `You're literally inside ${t} right now 🌸`,
+  t => `This is THAT scene from ${t} 🎬`,
+  t => `${t} fans — this is your moment ✨`,
+  t => `Step into the world of ${t} 🗾`,
+  t => `${t} was filmed right here 🎌`,
+  t => `Welcome to ${t} IRL 🌟`,
+]
+
+function getPopHook(spot) {
+  const hash = spot.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
+  return POP_HOOKS[hash % POP_HOOKS.length](spot.anime_title_en)
 }
 
 function ProximityLabel({ spot, onTap }) {
-  const hook = getTeaserHook(spot)
   return (
     <InfoWindow
       position={{ lat: spot.lat, lng: spot.lng }}
@@ -362,25 +365,19 @@ function ProximityLabel({ spot, onTap }) {
         style={{
           cursor: 'pointer',
           margin: '-6px -10px',
-          padding: '8px 12px',
+          padding: '8px 13px',
           background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
           borderRadius: 10,
-          maxWidth: 220,
+          maxWidth: 230,
         }}
       >
-        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.65)', fontWeight: 700,
-          letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap',
-          overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', fontWeight: 700,
+          letterSpacing: '0.1em', textTransform: 'uppercase',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 3 }}>
           {spot.anime_title_en}
         </div>
-        <div style={{ fontSize: 13, color: '#fff', fontWeight: 800,
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 3 }}>
-          {spot.spot_name_en}
-        </div>
-        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.85)', fontStyle: 'italic',
-          lineHeight: 1.4, overflow: 'hidden',
-          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-          {hook}
+        <div style={{ fontSize: 13, color: '#fff', fontWeight: 800, lineHeight: 1.35 }}>
+          {getPopHook(spot)}
         </div>
       </div>
     </InfoWindow>
