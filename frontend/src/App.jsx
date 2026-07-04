@@ -2990,13 +2990,12 @@ function App() {
           onClick={() => { setQuestAlbumOpen(true); setQuestHomeOpen(false) }}
           title="Album"
           style={{
-            height: 30, padding: '0 10px', borderRadius: 10,
-            border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 800,
+            width: 30, height: 30, borderRadius: 10,
+            border: 'none', cursor: 'pointer', fontSize: 15,
             background: questAlbumOpen ? '#ede9ff' : 'rgba(0,0,0,0.06)',
-            color: questAlbumOpen ? THEME : '#555',
-            letterSpacing: '0.04em',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
-        >📷 Album</button>
+        >📷</button>
 
         <button
           onClick={() => {
