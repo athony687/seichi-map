@@ -466,141 +466,155 @@ function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavori
   return (
     <div style={{
       position: 'absolute', bottom: 84, left: 12, right: 12,
-      maxWidth: 380, margin: '0 auto',
-      background: 'white', borderRadius: 20,
-      boxShadow: '0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)',
+      maxWidth: 400, margin: '0 auto',
+      background: 'rgba(255,255,255,0.97)',
+      backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
+      borderRadius: 24,
+      boxShadow: '0 2px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.12), 0 24px 48px rgba(124,58,237,0.1)',
+      border: '1px solid rgba(255,255,255,0.9)',
       zIndex: 10, overflow: 'hidden',
     }}>
+      {/* ヘッダー */}
       <div
         onClick={() => setExpanded(e => !e)}
         style={{
-          background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
-          padding: '14px 88px 14px 18px', cursor: 'pointer',
+          background: `linear-gradient(135deg, ${THEME} 0%, #6d28d9 50%, ${THEME_DARK} 100%)`,
+          padding: '16px 80px 16px 20px', cursor: 'pointer',
+          position: 'relative',
         }}
       >
-        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', fontWeight: 600,
-          letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 4 }}>
-          {spot.anime_title_en}
-        </div>
-        <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
+        {/* アニメタイトル */}
+        <div style={{
+          fontSize: 10, color: 'rgba(255,255,255,0.65)', fontWeight: 700,
+          letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 5,
+        }}>{spot.anime_title_en}</div>
+
+        {/* スポット名 */}
+        <div style={{ fontSize: 19, fontWeight: 900, color: '#fff', lineHeight: 1.2, marginBottom: 8 }}>
           {spot.spot_name_en}
         </div>
-        {spot.area && (
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 }}>
-            📍 {spot.area}
-          </div>
-        )}
-        {distText && (
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>
-            🚶 {distText}
-          </div>
-        )}
-        {spot.hours && (
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>
-            🕐 {spot.hours}
-          </div>
-        )}
+
+        {/* メタ情報チップ列 */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+          {spot.area && (
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.78)', fontWeight: 600 }}>
+              📍 {spot.area}
+            </span>
+          )}
+          {distText && (
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.78)', fontWeight: 600 }}>
+              · 🚶 {distText}
+            </span>
+          )}
+          {spot.hours && (
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.78)', fontWeight: 600 }}>
+              · 🕐 {spot.hours}
+            </span>
+          )}
+        </div>
+
         {(() => { const msg = getWeatherMessage(spot.tags, weather); return msg ? (
           <div style={{
-            marginTop: 6, padding: '4px 10px', borderRadius: 10,
-            background: 'rgba(255,255,255,0.18)',
-            fontSize: 12, color: '#fff', display: 'inline-block',
+            marginTop: 8, padding: '3px 10px', borderRadius: 20,
+            background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(4px)',
+            fontSize: 11, color: '#fff', display: 'inline-block', fontWeight: 600,
           }}>{msg}</div>
         ) : null })()}
+
+        {/* 展開トグル */}
         <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 4,
-          marginTop: 8, padding: '4px 10px', borderRadius: 20,
-          background: 'rgba(255,255,255,0.25)',
-          fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '0.03em',
+          position: 'absolute', bottom: 14, right: expanded ? 76 : 14,
+          display: 'inline-flex', alignItems: 'center', gap: 3,
+          padding: '3px 10px', borderRadius: 20,
+          background: 'rgba(255,255,255,0.18)',
+          fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.9)', letterSpacing: '0.05em',
+          transition: 'right 0.2s',
         }}>
-          {expanded ? '▲ close' : '▼ read more'}
+          {expanded ? '▲ CLOSE' : '▼ MORE'}
         </div>
       </div>
 
-      {/* ❤️ と ✕ を flex で横並び（重なり防止） */}
+      {/* お気に入り＋閉じるボタン */}
       <div style={{
-        position: 'absolute', top: 10, right: 12,
+        position: 'absolute', top: 12, right: 12,
         display: 'flex', gap: 6, alignItems: 'center',
       }}>
         <button
           onClick={e => { e.stopPropagation(); onToggleFavorite(spot.id) }}
           style={{
-            background: 'rgba(255,255,255,0.2)', border: 'none',
-            fontSize: 15, width: 28, height: 28,
+            background: 'rgba(255,255,255,0.22)', border: 'none',
+            fontSize: 15, width: 30, height: 30,
             borderRadius: '50%', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backdropFilter: 'blur(8px)',
           }}
         >{isFavorite ? '❤️' : '🤍'}</button>
         <button onClick={onClose} style={{
-          background: 'rgba(255,255,255,0.2)', border: 'none',
-          color: '#fff', fontSize: 16, width: 28, height: 28,
+          background: 'rgba(255,255,255,0.22)', border: 'none',
+          color: '#fff', fontSize: 14, width: 30, height: 30,
           borderRadius: '50%', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
+          backdropFilter: 'blur(8px)', fontWeight: 700,
         }}>✕</button>
       </div>
 
       {expanded && (
-        <div style={{ padding: '0 0 12px' }}>
-          {/* 写真エリア（photo_url が設定されていれば表示） */}
+        <div>
           {spot.photo_url && (
             <img
               src={spot.photo_url}
               alt={spot.spot_name_en}
-              style={{
-                width: '100%', maxHeight: 180, objectFit: 'cover', display: 'block',
-              }}
+              style={{ width: '100%', maxHeight: 190, objectFit: 'cover', display: 'block' }}
             />
           )}
-          <div style={{ padding: '12px 18px 0' }}>
-            <div style={{ fontSize: 14, color: '#333', lineHeight: 1.7 }}>
+          <div style={{ padding: '14px 20px 4px' }}>
+            <div style={{ fontSize: 14, color: '#374151', lineHeight: 1.75 }}>
               {loading ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#aaa', paddingTop: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#9ca3af', paddingTop: 4 }}>
                   <div style={{
-                    width: 15, height: 15, border: '2px solid #e0e0e0',
-                    borderTop: '2px solid #7c3aed', borderRadius: '50%',
+                    width: 14, height: 14, border: '2px solid #e5e7eb',
+                    borderTop: `2px solid ${THEME}`, borderRadius: '50%',
                     animation: 'spin 0.8s linear infinite', flexShrink: 0,
                   }} />
                   <span style={{ fontSize: 13 }}>Generating introduction…</span>
                 </div>
               ) : intro}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+          </div>
+          <div style={{ padding: '10px 16px 16px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}`}
+              target="_blank" rel="noopener noreferrer"
+              onClick={e => e.stopPropagation()}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '7px 16px', borderRadius: 22,
+                background: `linear-gradient(135deg, ${THEME}, #a855f7)`,
+                color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none',
+                boxShadow: '0 3px 12px rgba(124,58,237,0.35)',
+              }}
+            >🗺️ Directions</a>
+            {spot.official_url && (
               <a
-                href={`https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}`}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={spot.official_url} target="_blank" rel="noopener noreferrer"
                 onClick={e => e.stopPropagation()}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5,
-                  padding: '6px 14px', borderRadius: 20,
-                  background: THEME, color: '#fff',
+                  padding: '7px 16px', borderRadius: 22,
+                  background: '#f3f4f6', color: '#374151',
                   fontSize: 12, fontWeight: 700, textDecoration: 'none',
+                  border: '1px solid #e5e7eb',
                 }}
-              >🗺️ Get directions</a>
-              {spot.official_url && (
-                <a
-                  href={spot.official_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={e => e.stopPropagation()}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 5,
-                    padding: '6px 14px', borderRadius: 20,
-                    background: '#f3f4f6', color: '#374151',
-                    fontSize: 12, fontWeight: 700, textDecoration: 'none',
-                  }}
-                >
-                  {spot.official_url.includes('youtube.com') || spot.official_url.includes('youtu.be')
-                    ? '▶ Watch trailer'
-                    : '🌐 Official site'}
-                </a>
-              )}
-              <div style={{ fontSize: 11, color: '#bbb', marginLeft: 'auto' }}>
-                {!loading && (aiOk ? '✨ AI generated' : '📄 description')}
-              </div>
+              >
+                {spot.official_url.includes('youtube.com') || spot.official_url.includes('youtu.be')
+                  ? '▶ Trailer' : '🌐 Official'}
+              </a>
+            )}
+            <div style={{ fontSize: 10, color: '#d1d5db', marginLeft: 'auto', fontWeight: 600 }}>
+              {!loading && (aiOk ? '✨ AI' : '📄')}
             </div>
-            <QuestPanel spot={spot} />
           </div>
+          <QuestPanel spot={spot} />
         </div>
       )}
     </div>
@@ -766,9 +780,9 @@ function useLiveGPS(enabled) {
 function GpsLocateButton({ status, onLocate }) {
   const cfg = {
     idle:    null,
-    pending: { icon: '⌛', label: 'Locating…',    color: '#9ca3af', bg: '#f9fafb', disabled: true },
-    ok:      { icon: '📍', label: 'My Location',  color: '#1d6ef5', bg: '#eff6ff', disabled: false },
-    error:   { icon: '⚠️', label: 'Yokohama',   color: '#dc2626', bg: '#fef2f2', disabled: false },
+    pending: { icon: '⌛', label: 'Locating…',   dot: '#9ca3af', disabled: true },
+    ok:      { icon: '⊕',  label: 'My Location', dot: '#1d6ef5', disabled: false },
+    error:   { icon: '⚠',  label: 'Yokohama',    dot: '#f59e0b', disabled: false },
   }
   const c = cfg[status]
   if (!c) return null
@@ -777,17 +791,19 @@ function GpsLocateButton({ status, onLocate }) {
       onClick={c.disabled ? undefined : onLocate}
       style={{
         position: 'absolute', bottom: 24, right: 16, zIndex: 10,
-        background: c.bg, border: `2px solid ${c.color}`,
-        color: c.color, borderRadius: 16,
-        padding: '6px 12px',
-        display: 'flex', alignItems: 'center', gap: 6,
+        background: 'rgba(255,255,255,0.92)',
+        backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255,255,255,0.8)',
+        color: '#1a1a2e', borderRadius: 22,
+        padding: '8px 14px 8px 10px',
+        display: 'flex', alignItems: 'center', gap: 7,
         cursor: c.disabled ? 'default' : 'pointer',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
-        fontSize: 13, fontWeight: 700, opacity: c.disabled ? 0.6 : 1,
-        userSelect: 'none',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.1)',
+        fontSize: 12, fontWeight: 700, opacity: c.disabled ? 0.5 : 1,
+        userSelect: 'none', transition: 'opacity 0.2s',
       }}
     >
-      <span style={{ fontSize: 16 }}>{c.icon}</span>
+      <span style={{ width: 8, height: 8, borderRadius: '50%', background: c.dot, flexShrink: 0 }} />
       <span>{c.label}</span>
     </button>
   )
@@ -1462,33 +1478,39 @@ function NearestStampBar({ spot, onTap }) {
       onClick={onTap}
       style={{
         position: 'fixed', bottom: 82, left: '50%', transform: 'translateX(-50%)',
-        width: 'min(380px, calc(100vw - 24px))', zIndex: 20, cursor: 'pointer',
-        background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-        borderRadius: 20, padding: '11px 16px',
-        boxShadow: '0 4px 22px rgba(0,0,0,0.13)',
-        border: '1.5px solid rgba(124,58,237,0.18)',
-        display: 'flex', alignItems: 'center', gap: 12,
-        animation: 'slideUp 0.25s ease-out',
+        width: 'min(390px, calc(100vw - 24px))', zIndex: 20, cursor: 'pointer',
+        background: 'rgba(255,255,255,0.95)',
+        backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
+        borderRadius: 22, padding: '10px 14px 10px 10px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.04), 0 12px 32px rgba(124,58,237,0.12)',
+        border: '1px solid rgba(167,139,250,0.25)',
+        display: 'flex', alignItems: 'center', gap: 11,
+        animation: 'slideUp 0.28s cubic-bezier(0.34,1.56,0.64,1)',
       }}
     >
-      <span style={{
-        width: 40, height: 40, borderRadius: 13, flexShrink: 0,
-        background: 'linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%)',
+      <div style={{
+        width: 42, height: 42, borderRadius: 14, flexShrink: 0,
+        background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 20,
-      }}>🎯</span>
+        fontSize: 19, boxShadow: '0 4px 12px rgba(124,58,237,0.35)',
+      }}>🎯</div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 10, fontWeight: 800, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 2 }}>
+        <div style={{ fontSize: 10, fontWeight: 800, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 1 }}>
           Next stamp · {formatDistance(spot.dist)}
         </div>
-        <div style={{ fontSize: 14, fontWeight: 800, color: '#1f2937', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ fontSize: 14, fontWeight: 800, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {spot.spot_name_en}
         </div>
-        <div style={{ fontSize: 11, color: THEME, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ fontSize: 11, color: '#7c3aed', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {spot.anime_title_en}
         </div>
       </div>
-      <span style={{ fontSize: 18, color: '#d1d5db', flexShrink: 0, lineHeight: 1 }}>›</span>
+      <div style={{
+        width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+        background: 'linear-gradient(135deg, #ede9fe, #ddd6fe)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 13, color: '#7c3aed', fontWeight: 800,
+      }}>›</div>
     </div>
   )
 }
@@ -1498,40 +1520,54 @@ function LocationPermissionCard({ onAllow, onSkip }) {
   return (
     <div style={{
       position: 'fixed', inset: 0,
-      background: 'rgba(0,0,0,0.45)',
+      background: 'rgba(10,8,28,0.6)',
+      backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
       display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
       zIndex: 9999,
     }}>
       <div style={{
-        background: '#fff', borderRadius: '28px 28px 0 0',
-        padding: '36px 28px 56px', width: '100%', maxWidth: 480,
-        boxShadow: '0 -8px 40px rgba(0,0,0,0.18)',
+        background: '#fff', borderRadius: '32px 32px 0 0',
+        padding: '32px 24px 52px', width: '100%', maxWidth: 480,
+        boxShadow: '0 -2px 4px rgba(0,0,0,0.04), 0 -16px 64px rgba(0,0,0,0.2)',
       }}>
-        <div style={{ textAlign: 'center', fontSize: 48, marginBottom: 18 }}>📍🧭</div>
-        <div style={{ fontWeight: 800, fontSize: 21, textAlign: 'center', marginBottom: 12, color: '#1a1a2e' }}>
+        {/* アイコン */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 22 }}>
+          {['📍', '🧭'].map((icon, i) => (
+            <div key={i} style={{
+              width: 56, height: 56, borderRadius: 18,
+              background: i === 0 ? 'linear-gradient(135deg,#7c3aed,#a855f7)' : 'linear-gradient(135deg,#0ea5e9,#2563eb)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 26, boxShadow: `0 6px 20px ${i === 0 ? 'rgba(124,58,237,0.3)' : 'rgba(37,99,235,0.3)'}`,
+            }}>{icon}</div>
+          ))}
+        </div>
+
+        <div style={{ fontWeight: 900, fontSize: 22, textAlign: 'center', marginBottom: 10, color: '#111827' }}>
           Location & Compass
         </div>
-        <div style={{ fontSize: 14, color: '#555', lineHeight: 1.75, textAlign: 'center', marginBottom: 32 }}>
-          This app uses your <strong>location</strong> to detect nearby anime spots,
-          and your <strong>compass</strong> to show the direction you're facing.
+        <div style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.8, textAlign: 'center', marginBottom: 28 }}>
+          Detects <strong style={{ color: '#374151' }}>nearby anime spots</strong> and shows
+          the <strong style={{ color: '#374151' }}>direction</strong> you're facing.
         </div>
+
         <button
           onClick={onAllow}
           style={{
-            display: 'block', width: '100%', padding: '16px', borderRadius: 16, border: 'none',
-            background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
-            color: '#fff', fontWeight: 700, fontSize: 16, cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(124,58,237,0.4)', marginBottom: 12,
+            display: 'block', width: '100%', padding: '16px', borderRadius: 18, border: 'none',
+            background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+            color: '#fff', fontWeight: 800, fontSize: 16, cursor: 'pointer',
+            boxShadow: '0 4px 20px rgba(124,58,237,0.4)', marginBottom: 10,
+            letterSpacing: '0.02em',
           }}
-        >Allow</button>
+        >Allow Access</button>
         <button
           onClick={onSkip}
           style={{
-            display: 'block', width: '100%', padding: '14px', borderRadius: 16,
-            border: '1.5px solid #e5e7eb', background: '#fff',
-            color: '#888', fontWeight: 600, fontSize: 14, cursor: 'pointer',
+            display: 'block', width: '100%', padding: '14px', borderRadius: 18,
+            border: '1px solid #f3f4f6', background: '#fafafa',
+            color: '#9ca3af', fontWeight: 600, fontSize: 13, cursor: 'pointer',
           }}
-        >Use without location</button>
+        >Continue without location</button>
       </div>
     </div>
   )
@@ -2983,65 +3019,61 @@ function App() {
         </div>
         {showSuggestions && suggestions.length > 0 && (
           <div style={{
-            position: 'absolute', top: '100%', right: 0, width: 220, marginTop: 4,
-            background: 'white', borderRadius: 10,
-            boxShadow: '0 4px 16px rgba(0,0,0,0.2)', overflow: 'hidden', zIndex: 2001,
+            position: 'absolute', top: '100%', right: 0, width: 230, marginTop: 6,
+            background: 'rgba(255,255,255,0.97)',
+            backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+            borderRadius: 16, overflow: 'hidden', zIndex: 2001,
+            boxShadow: '0 4px 6px rgba(0,0,0,0.05), 0 16px 40px rgba(0,0,0,0.18)',
+            border: '1px solid rgba(255,255,255,0.8)',
           }}>
-            {suggestions.slice(0, 6).map(title => (
+            {suggestions.slice(0, 6).map((title, i) => (
               <div
                 key={title}
-                onMouseDown={e => {
-                  e.preventDefault()
-                  handleAnimeSelect(title)
-                }}
-                onTouchEnd={() => {
-                  handleAnimeSelect(title)
-                }}
+                onMouseDown={e => { e.preventDefault(); handleAnimeSelect(title) }}
+                onTouchEnd={() => handleAnimeSelect(title)}
                 style={{
-                  padding: '10px 12px', cursor: 'pointer', fontSize: 14,
-                  color: '#333', borderBottom: '1px solid #f3f4f6',
+                  padding: '11px 14px', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+                  color: '#1f2937',
+                  borderBottom: i < suggestions.length - 1 ? '1px solid #f3f4f6' : 'none',
                 }}
-              >
-                {title}
-              </div>
+              >{title}</div>
             ))}
           </div>
         )}
         {showSpotList && searchAnime && searchAnimeSpots.length > 0 && (
           <div style={{
-            position: 'absolute', top: '100%', right: 0, width: 280, maxWidth: 'calc(100vw - 16px)',
-            maxHeight: 280, marginTop: 4,
-            background: 'white', borderRadius: 10,
-            boxShadow: '0 4px 16px rgba(0,0,0,0.2)', overflowY: 'auto', zIndex: 2001,
+            position: 'absolute', top: '100%', right: 0, width: 290, maxWidth: 'calc(100vw - 16px)',
+            maxHeight: 280, marginTop: 6,
+            background: 'rgba(255,255,255,0.97)',
+            backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+            borderRadius: 16, overflowY: 'auto', zIndex: 2001,
+            boxShadow: '0 4px 6px rgba(0,0,0,0.05), 0 16px 40px rgba(0,0,0,0.18)',
+            border: '1px solid rgba(255,255,255,0.8)',
           }}>
             <div style={{
-              padding: '9px 12px', fontSize: 11, fontWeight: 700,
-              color: '#777', borderBottom: '1px solid #f3f4f6',
-              textTransform: 'uppercase',
+              padding: '9px 14px', fontSize: 10, fontWeight: 800,
+              color: '#9ca3af', borderBottom: '1px solid #f3f4f6',
+              textTransform: 'uppercase', letterSpacing: '0.08em',
             }}>
-              {searchAnimeSpots.length} seichi spots
+              {searchAnimeSpots.length} spots
             </div>
-            {searchAnimeSpots.map(spot => (
+            {searchAnimeSpots.map((spot, i) => (
               <button
                 key={spot.id}
-                onMouseDown={e => {
-                  e.preventDefault()
-                  handleSearchSpotSelect(spot)
-                }}
+                onMouseDown={e => { e.preventDefault(); handleSearchSpotSelect(spot) }}
                 onTouchEnd={() => handleSearchSpotSelect(spot)}
                 style={{
-                  width: '100%', padding: '10px 12px',
-                  background: 'white', border: 'none', borderBottom: '1px solid #f3f4f6',
+                  width: '100%', padding: '10px 14px',
+                  background: 'transparent', border: 'none',
+                  borderBottom: i < searchAnimeSpots.length - 1 ? '1px solid #f9fafb' : 'none',
                   cursor: 'pointer', textAlign: 'left',
                 }}
               >
-                <div style={{ fontSize: 14, color: '#222', fontWeight: 700, lineHeight: 1.35 }}>
+                <div style={{ fontSize: 13, color: '#111827', fontWeight: 700, lineHeight: 1.35 }}>
                   {spot.spot_name_en}
                 </div>
                 {spot.area && (
-                  <div style={{ fontSize: 12, color: '#777', marginTop: 2, lineHeight: 1.35 }}>
-                    {spot.area}
-                  </div>
+                  <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{spot.area}</div>
                 )}
               </button>
             ))}
@@ -3052,11 +3084,11 @@ function App() {
       {/* コントロールバー */}
       <div style={{
         position: 'absolute', bottom: 32, left: 12,
-        background: 'rgba(255,255,255,0.82)',
-        backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-        borderRadius: 24, padding: '6px 10px',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.13), 0 1px 4px rgba(0,0,0,0.07)',
-        border: '1px solid rgba(255,255,255,0.65)',
+        background: 'rgba(255,255,255,0.92)',
+        backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
+        borderRadius: 26, padding: '7px 12px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.12)',
+        border: '1px solid rgba(255,255,255,0.9)',
         display: 'flex', gap: 6, alignItems: 'center',
         zIndex: 10, userSelect: 'none',
         maxWidth: 'calc(100vw - 24px)',
