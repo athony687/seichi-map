@@ -336,6 +336,20 @@ const introCache = {}
 // ── 近接ラベル（ピン真上に浮かぶチップ）────────────────────────────────
 const isPlaceholder = t => !t || t.startsWith('PLACEHOLDER')
 
+const POP_HOOKS = [
+  t => `You're literally inside ${t} right now 🌸`,
+  t => `This is THAT scene from ${t} 🎬`,
+  t => `${t} fans — this is your moment ✨`,
+  t => `Step into the world of ${t} 🗾`,
+  t => `${t} was filmed right here 🎌`,
+  t => `Welcome to ${t} IRL 🌟`,
+]
+
+function getPopHook(spot) {
+  const hash = spot.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
+  return POP_HOOKS[hash % POP_HOOKS.length](spot.anime_title_en)
+}
+
 function ProximityLabel({ spot, onTap }) {
   return (
     <InfoWindow
@@ -351,17 +365,19 @@ function ProximityLabel({ spot, onTap }) {
         style={{
           cursor: 'pointer',
           margin: '-6px -10px',
-          padding: '6px 12px',
+          padding: '8px 13px',
           background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
           borderRadius: 10,
+          maxWidth: 230,
         }}
       >
-        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', fontWeight: 700,
-          letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', fontWeight: 700,
+          letterSpacing: '0.1em', textTransform: 'uppercase',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 3 }}>
           {spot.anime_title_en}
         </div>
-        <div style={{ fontSize: 12, color: '#fff', fontWeight: 700, whiteSpace: 'nowrap' }}>
-          {spot.spot_name_en}
+        <div style={{ fontSize: 13, color: '#fff', fontWeight: 800, lineHeight: 1.35 }}>
+          {getPopHook(spot)}
         </div>
       </div>
     </InfoWindow>
@@ -1592,7 +1608,6 @@ function App() {
   const [nearbyToast, setNearbyToast] = useState(null)
   const [selectedTourist, setSelectedTourist] = useState(null)
 
-  useEffect(() => { setCardExpanded(false) }, [selected?.id])
 
   const [demoMode, setDemoMode]         = useState(false)
   const [playing, setPlaying]           = useState(false)
@@ -1833,6 +1848,11 @@ function App() {
     setNearbyToast(null)
   }
 
+  const closeCard = useCallback(() => {
+    setSelected(null)
+    setCardExpanded(false)
+  }, [])
+
   const handleReset = () => {
     setPlaying(false)
     setDemoPos(null)
@@ -1841,6 +1861,7 @@ function App() {
     triggeredRef.current.clear()
     resetNearbyTracking()
     setSelected(null)
+    setCardExpanded(false)
   }
 
   const handleSpotSelect = useCallback((spot) => {
@@ -1964,7 +1985,7 @@ function App() {
               title={t.name}
               icon={{ path: 0, fillColor: '#f97316', fillOpacity: 0.9,
                 strokeColor: '#fff', strokeWeight: 2, scale: 5 }}
-              onClick={() => { setSelectedTourist(t); setSelected(null) }}
+              onClick={() => { setSelectedTourist(t); closeCard() }}
             />
           ))}
 
@@ -2293,7 +2314,7 @@ function App() {
         />
       )}
       {selected && cardExpanded && (
-        <Card spot={selected} currentPos={browsingPos} onClose={() => setSelected(null)} userPrefs={userPrefs} isFavorite={favorites.has(selected.id)} onToggleFavorite={toggleFavorite} weather={weather} defaultExpanded={true} />
+        <Card spot={selected} currentPos={browsingPos} onClose={closeCard} userPrefs={userPrefs} isFavorite={favorites.has(selected.id)} onToggleFavorite={toggleFavorite} weather={weather} defaultExpanded={true} />
       )}
       <NearbyToast toast={nearbyToast} />
       {/* GPSローディングオーバーレイ（同意後のみ表示） */}
