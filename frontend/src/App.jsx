@@ -2618,7 +2618,7 @@ function App() {
   const stampCardGeneratedRef               = useRef(false)
   const [stampCardIds, setStampCardIds]     = useState(() => { const s = loadStampCard(); return s?.length > 0 ? s : null })
   const [acquiredStamps, setAcquiredStamps] = useState(() => loadStamps())
-  const [showStampCard, setShowStampCard]   = useState(false)
+  const [showStampCard, setShowStampCard]   = useState(() => !!loadPrefs()?.nickname)
   const [activeMission, setActiveMission]   = useState(null)  // 現在表示中のミッション対象スポット
   const [questAlbum, setQuestAlbum] = useState(() => loadLocalQuestAlbum())
   const [questHomeOpen, setQuestHomeOpen] = useState(true)
