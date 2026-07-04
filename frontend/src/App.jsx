@@ -11,7 +11,7 @@ const GENERIC_INTRO = `Welcome to this anime pilgrimage spot! This location appe
 const TOKYO = { lat: 35.6762, lng: 139.6503 }
 const TOKYO_STATION = { lat: 35.6812, lng: 139.7671 }
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
-const PROXIMITY_METERS = 100
+const PROXIMITY_METERS = 500
 const THEME = '#7c3aed'
 const THEME_DARK = '#4c1d95'
 const DEMO_STEP = 0.001   // degrees per tick (≈110m)
@@ -330,15 +330,98 @@ function SearchCamera({ spots, searchAnime }) {
 // ── AIキャッシュ ─────────────────────────────────────────────────────────
 const introCache = {}
 
-// ── スポットカード（距離表示付き）────────────────────────────────────────
+// ── スポットティーザー（2段階表示の第1段階）──────────────────────────────
 const isPlaceholder = t => !t || t.startsWith('PLACEHOLDER')
 
-function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavorite, weather }) {
+function getTeaserHook(spot) {
+  const text = introCache[spot.id] || spot.intro_short_en || ''
+  if (text.length > 20) {
+    const m = text.match(/^.+?[.!?](?=\s|$)/)
+    const first = m ? m[0].trim() : text.slice(0, 90).trim()
+    if (first.length > 20) return first.length > 100 ? first.slice(0, 97) + '…' : first
+  }
+  return `Where ${spot.anime_title_en}'s story comes to life`
+}
+
+function SpotTeaser({ spot, currentPos, onExpand, onClose }) {
+  const hook = getTeaserHook(spot)
+  const dist = currentPos
+    ? formatDistance(haversine(currentPos, { lat: spot.lat, lng: spot.lng }))
+    : null
+
+  return (
+    <div style={{
+      position: 'absolute', bottom: 84, left: 12, right: 12,
+      maxWidth: 380, margin: '0 auto',
+      zIndex: 10, cursor: 'pointer',
+      animation: 'slideUp 0.32s cubic-bezier(0.34,1.4,0.64,1)',
+    }} onClick={onExpand}>
+      {/* ヘッダーリボン */}
+      <div style={{
+        background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
+        borderRadius: '18px 18px 0 0',
+        padding: '11px 44px 11px 16px',
+        position: 'relative',
+      }}>
+        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)', fontWeight: 700,
+          letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 2 }}>
+          {spot.anime_title_en}
+        </div>
+        <div style={{ fontSize: 15, color: '#fff', fontWeight: 800, lineHeight: 1.2,
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {spot.spot_name_en}
+        </div>
+        <button
+          onClick={e => { e.stopPropagation(); onClose() }}
+          style={{
+            position: 'absolute', top: '50%', right: 10, transform: 'translateY(-50%)',
+            width: 26, height: 26, borderRadius: 8,
+            background: 'rgba(255,255,255,0.18)', border: 'none',
+            color: '#fff', fontSize: 13, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 0,
+          }}
+        >✕</button>
+      </div>
+
+      {/* 本文 */}
+      <div style={{
+        background: 'rgba(255,255,255,0.96)',
+        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        borderRadius: '0 0 18px 18px',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.06)',
+        padding: '12px 16px 14px',
+      }}>
+        <p style={{ margin: '0 0 12px', fontSize: 13, color: '#374151',
+          lineHeight: 1.65, fontStyle: 'italic' }}>
+          "{hook}"
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          {dist
+            ? <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>📍 {dist}</span>
+            : <span />}
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
+            color: '#fff', fontSize: 12, fontWeight: 700,
+            padding: '7px 14px', borderRadius: 20,
+            boxShadow: '0 2px 10px rgba(124,58,237,0.35)',
+          }}>
+            Tap to explore <span style={{ fontSize: 10 }}>▶</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── スポットカード（距離表示付き）────────────────────────────────────────
+function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavorite, weather, defaultExpanded }) {
   const staticIntro = spot.generic_intro_en || (!isPlaceholder(spot.intro_short_en) ? spot.intro_short_en : GENERIC_INTRO)
   const [intro, setIntro]   = useState(introCache[spot.id] || staticIntro)
   const [loading, setLoading] = useState(!introCache[spot.id])
   const [aiOk, setAiOk]     = useState(!!introCache[spot.id])
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(defaultExpanded ?? false)
 
   const distText = currentPos
     ? formatDistance(haversine(currentPos, { lat: spot.lat, lng: spot.lng }))
@@ -1360,7 +1443,10 @@ function App() {
   const [spots, setSpots]               = useState([])
   const [touristSpots, setTouristSpots] = useState([])
   const [selected, setSelected]         = useState(null)
+  const [cardExpanded, setCardExpanded] = useState(false)
   const [selectedTourist, setSelectedTourist] = useState(null)
+
+  useEffect(() => { setCardExpanded(false) }, [selected?.id])
 
   const [demoMode, setDemoMode]         = useState(false)
   const [playing, setPlaying]           = useState(false)
@@ -1927,8 +2013,16 @@ function App() {
           onLocate={() => setLocateTick(t => t + 1)}
         />
       )}
-      {selected && (
-        <Card spot={selected} currentPos={activePos} onClose={() => setSelected(null)} userPrefs={userPrefs} isFavorite={favorites.has(selected.id)} onToggleFavorite={toggleFavorite} weather={weather} />
+      {selected && !cardExpanded && (
+        <SpotTeaser
+          spot={selected}
+          currentPos={activePos}
+          onExpand={() => setCardExpanded(true)}
+          onClose={() => setSelected(null)}
+        />
+      )}
+      {selected && cardExpanded && (
+        <Card spot={selected} currentPos={activePos} onClose={() => setSelected(null)} userPrefs={userPrefs} isFavorite={favorites.has(selected.id)} onToggleFavorite={toggleFavorite} weather={weather} defaultExpanded={true} />
       )}
       {/* GPSローディングオーバーレイ（同意後のみ表示） */}
       {!gpsReady && !demoMode && gpsConsented && (

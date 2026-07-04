@@ -56,6 +56,10 @@ button:focus-visible {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+@keyframes slideUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
 
 @media (prefers-color-scheme: light) {
   :root {
