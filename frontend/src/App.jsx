@@ -1193,9 +1193,14 @@ function App() {
 
   const handleLocationAllow = useCallback(async () => {
     try { localStorage.setItem(LOCATION_CONSENTED_KEY, 'true') } catch {}
+    // 位置情報の許可をボタン押下（ユーザージェスチャー）から明示的にトリガー
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(() => {}, () => {}, { enableHighAccuracy: true })
+    }
+    // コンパス許可（iOS）もジェスチャー内で実行
+    await requestPermission()
     setGpsConsented(true)
     setLocationPermissionAsked(true)
-    await requestPermission()  // ボタン押下からなので iOS もジェスチャー扱い
   }, [requestPermission])
 
   const handleLocationSkip = useCallback(() => {
