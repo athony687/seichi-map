@@ -1148,140 +1148,164 @@ function AppOverviewDashboard({ spots, currentPos, onExplore }) {
   const displaySpots = nearby.length > 0 ? nearby.slice(0, 5) : spotsWithDist.slice(0, 3)
   const hasNearby = nearby.length > 0
 
-  const sectionCard = {
-    background: '#fff', borderRadius: 20, padding: '20px',
-    boxShadow: '0 2px 16px rgba(124,58,237,0.07)',
-    border: '1px solid rgba(124,58,237,0.09)',
-  }
-  const sectionTitle = {
-    fontWeight: 800, fontSize: 15, color: THEME, marginBottom: 12,
-  }
-  const subNote = {
-    fontSize: 11, color: '#9ca3af', marginBottom: 10, marginTop: -6,
-  }
-
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 200,
-      background: 'linear-gradient(160deg, #f8f6ff 0%, #ede9fe 60%, #ddd6fe 100%)',
+      background: '#fff',
       overflowY: 'auto', WebkitOverflowScrolling: 'touch',
     }}>
 
-      {/* ヘッダー */}
+      {/* ── Hero ── */}
       <div style={{
-        background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
-        padding: '52px 24px 28px', color: '#fff',
+        padding: '56px 24px 32px',
+        background: 'linear-gradient(150deg, #faf5ff 0%, #ede9fe 100%)',
+        borderBottom: '1px solid rgba(124,58,237,0.1)',
+        position: 'relative', overflow: 'hidden',
       }}>
-        <div style={{ fontSize: 40, marginBottom: 10 }}>🗾</div>
-        <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-          Animap.jp
+        {/* 装飾円 */}
+        <div style={{
+          position: 'absolute', top: -80, right: -80, width: 260, height: 260,
+          borderRadius: '50%', background: 'rgba(124,58,237,0.08)', pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'absolute', bottom: -40, left: -40, width: 160, height: 160,
+          borderRadius: '50%', background: 'rgba(124,58,237,0.05)', pointerEvents: 'none',
+        }} />
+
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          background: 'rgba(124,58,237,0.1)', borderRadius: 20,
+          padding: '4px 12px', marginBottom: 16,
+        }}>
+          <span style={{ fontSize: 13 }}>🗾</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: THEME,
+            letterSpacing: '0.08em', textTransform: 'uppercase' }}>Anime Pilgrimage · Japan</span>
         </div>
-        <div style={{ fontSize: 12, opacity: 0.7, marginTop: 6, fontWeight: 600,
-          letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-          App Overview
+
+        <div style={{ fontSize: 38, fontWeight: 900, letterSpacing: '-0.03em',
+          lineHeight: 1.05, color: '#1a1033', marginBottom: 12 }}>
+          Animap<span style={{ color: THEME }}>.jp</span>
         </div>
+
+        <p style={{ fontSize: 15, color: '#4b5563', lineHeight: 1.7, margin: '0 0 24px',
+          maxWidth: 300 }}>
+          Your GPS guide to anime sacred spots across Japan — AI introductions appear
+          automatically as you walk.
+        </p>
+
+        <button onClick={onExplore} style={{
+          display: 'inline-flex', alignItems: 'center', gap: 8,
+          padding: '11px 22px', borderRadius: 50,
+          background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
+          color: '#fff', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer',
+          boxShadow: '0 4px 16px rgba(124,58,237,0.35)',
+        }}>
+          Explore the Map <span style={{ fontSize: 11 }}>▶</span>
+        </button>
       </div>
 
-      {/* ボディ */}
-      <div style={{ padding: '20px 16px 120px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ padding: '0 16px 120px' }}>
 
-        {/* What is Animap.jp? */}
-        <section style={sectionCard}>
-          <div style={sectionTitle}>📖  What is Animap.jp?</div>
-          <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.8, margin: 0 }}>
-            Animap.jp is an anime pilgrimage guide for visitors to Japan.
-            It uses your <strong>live GPS location</strong> to detect sacred anime spots
-            within 100 m and shows <strong>AI-generated introductions</strong> for each
-            scene — no manual searching needed.
-          </p>
-        </section>
-
-        {/* Main Features */}
-        <section style={sectionCard}>
-          <div style={sectionTitle}>✨  Main Features</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {/* ── Features ── */}
+        <div style={{ padding: '24px 0 4px' }}>
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em',
+            color: '#9ca3af', textTransform: 'uppercase', marginBottom: 14 }}>
+            Main Features
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {DASHBOARD_FEATURES.map(([icon, label]) => (
-              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-                  background: 'rgba(124,58,237,0.08)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 18,
-                }}>{icon}</div>
-                <span style={{ fontSize: 14, color: '#374151', lineHeight: 1.4 }}>{label}</span>
+              <div key={label} style={{
+                display: 'flex', alignItems: 'flex-start', gap: 10,
+                padding: '12px 14px', borderRadius: 16,
+                background: '#faf5ff',
+                border: '1px solid rgba(124,58,237,0.1)',
+              }}>
+                <span style={{ fontSize: 19, lineHeight: 1, flexShrink: 0 }}>{icon}</span>
+                <span style={{ fontSize: 12, color: '#374151', lineHeight: 1.45,
+                  fontWeight: 500 }}>{label}</span>
               </div>
             ))}
           </div>
-        </section>
+        </div>
 
-        {/* Nearby Spots */}
-        <section style={sectionCard}>
-          <div style={sectionTitle}>
-            📌  {hasNearby ? 'Nearby Spots  (within 3 km)' : 'Closest Spots'}
+        {/* ── Nearby Spots ── */}
+        <div style={{ paddingTop: 28 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline',
+            justifyContent: 'space-between', marginBottom: 4 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em',
+              color: '#9ca3af', textTransform: 'uppercase' }}>
+              {hasNearby ? 'Nearby Spots' : 'Closest Spots'}
+            </div>
+            {hasNearby && (
+              <div style={{ fontSize: 10, color: '#a78bfa', fontWeight: 700 }}>
+                within 3 km
+              </div>
+            )}
           </div>
-          {usingFallback && (
-            <div style={subNote}>Showing from Tokyo Station — GPS location pending</div>
-          )}
-          {!usingFallback && hasNearby && (
-            <div style={subNote}>
-              {nearby.length} spot{nearby.length !== 1 ? 's' : ''} within 3 km of your location
-            </div>
-          )}
-          {!hasNearby && spotsWithDist.length > 0 && (
-            <div style={subNote}>No spots within 3 km — showing nearest {displaySpots.length}</div>
-          )}
+
+          <div style={{ fontSize: 11, color: '#c4b5fd', marginBottom: 14 }}>
+            {usingFallback
+              ? 'Based on Tokyo Station · GPS pending'
+              : hasNearby
+                ? `${nearby.length} spot${nearby.length !== 1 ? 's' : ''} near you`
+                : `No spots within 3 km · showing nearest ${displaySpots.length}`}
+          </div>
+
           {spotsWithDist.length === 0 && (
-            <div style={{ fontSize: 13, color: '#9ca3af', textAlign: 'center', padding: '12px 0' }}>
-              Loading spots…
-            </div>
+            <div style={{ textAlign: 'center', padding: '20px 0',
+              fontSize: 13, color: '#d1d5db' }}>Loading…</div>
           )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             {displaySpots.map((s, i) => (
               <div key={s.id} style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                padding: '10px 12px', borderRadius: 14,
-                background: i === 0 && hasNearby
-                  ? 'rgba(124,58,237,0.06)' : 'rgba(0,0,0,0.025)',
+                display: 'flex', alignItems: 'center', gap: 14,
+                padding: '13px 4px',
+                borderBottom: i < displaySpots.length - 1
+                  ? '1px solid #f3f4f6' : 'none',
               }}>
                 <div style={{
-                  width: 40, height: 40, borderRadius: 12, flexShrink: 0,
-                  background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
+                  width: 42, height: 42, borderRadius: 13, flexShrink: 0,
+                  background: i === 0 && hasNearby
+                    ? `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`
+                    : 'linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#fff', fontSize: 18,
+                  fontSize: 20,
+                  color: i === 0 && hasNearby ? '#fff' : THEME,
                 }}>★</div>
-                <div style={{ minWidth: 0 }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{
-                    fontWeight: 700, fontSize: 14, color: '#1f2937',
+                    fontWeight: 700, fontSize: 14, color: '#111827',
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   }}>{s.spot_name_en}</div>
-                  <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
-                    {s.anime_title_en}
-                    <span style={{ color: '#d1d5db', margin: '0 5px' }}>·</span>
-                    {formatDistance(s.dist)}
-                  </div>
+                  <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2,
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>{s.anime_title_en}</div>
                 </div>
+                <div style={{
+                  fontSize: 12, fontWeight: 700, flexShrink: 0,
+                  color: i === 0 && hasNearby ? THEME : '#d1d5db',
+                }}>{formatDistance(s.dist)}</div>
               </div>
             ))}
           </div>
-        </section>
+        </div>
       </div>
 
-      {/* 固定CTAボタン */}
+      {/* ── Sticky CTA ── */}
       <div style={{
         position: 'sticky', bottom: 0,
-        padding: '14px 16px 36px',
-        background: 'linear-gradient(to top, rgba(221,214,254,1) 55%, transparent)',
+        padding: '12px 16px 36px',
+        background: 'linear-gradient(to top, #fff 65%, transparent)',
       }}>
-        <button
-          onClick={onExplore}
-          style={{
-            display: 'block', width: '100%', padding: '17px',
-            borderRadius: 20, border: 'none',
-            background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
-            color: '#fff', fontWeight: 800, fontSize: 17, cursor: 'pointer',
-            boxShadow: '0 6px 24px rgba(124,58,237,0.4)',
-          }}
-        >Explore the Map  ▶</button>
+        <button onClick={onExplore} style={{
+          display: 'block', width: '100%', padding: '17px',
+          borderRadius: 20, border: 'none',
+          background: `linear-gradient(135deg, ${THEME} 0%, ${THEME_DARK} 100%)`,
+          color: '#fff', fontWeight: 800, fontSize: 17, cursor: 'pointer',
+          boxShadow: '0 8px 28px rgba(124,58,237,0.38)',
+          letterSpacing: '0.01em',
+        }}>Explore the Map  ▶</button>
       </div>
     </div>
   )
