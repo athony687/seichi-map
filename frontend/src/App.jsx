@@ -12,6 +12,7 @@ const KANAGAWA_CENTER = { lat: 35.4478, lng: 139.6425 }
 const YOKOHAMA_STATION = { lat: 35.4658, lng: 139.6223 }
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
 const PROXIMITY_METERS = 500
+const MISSION_TRIGGER_METERS = 200  // ミッション発動半径（デモでも動くよう大きめ）
 const NEARBY_PANEL_METERS = 3000
 const NEARBY_TOAST_COOLDOWN_MS = 30000
 const THEME = '#7c3aed'
@@ -1343,6 +1344,85 @@ function OnboardingSurvey({ onComplete }) {
   )
 }
 
+// ── ミッション定義（後で差し替え可能） ───────────────────────────────────
+// spot を受け取り { title, description, hint } を返す。
+// 本物のミッション内容・判定ロジックはここだけ変更すれば差し込める。
+function getMission(spot) {
+  return {
+    title: '📸 フォトミッション',
+    description: `この場所で写真を撮ろう！\n"${spot.spot_name_en}" に来た証拠を残そう。`,
+    hint: 'Tip: アニメのシーンと同じアングルを探してみよう',
+  }
+}
+
+// ── ミッション画面 ────────────────────────────────────────────────────────
+function MissionScreen({ spot, onComplete }) {
+  const mission = getMission(spot)
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9600,
+      background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(10px)',
+      display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+      padding: '0 12px 32px',
+      animation: 'slideUp 0.28s cubic-bezier(0.34,1.56,0.64,1)',
+    }}>
+      <div style={{
+        width: 'min(440px, 100%)',
+        background: 'linear-gradient(160deg, #1e1b4b 0%, #312e81 100%)',
+        borderRadius: 24, padding: '24px 20px 20px',
+        boxShadow: '0 -4px 40px rgba(0,0,0,0.5)',
+        border: '1.5px solid rgba(167,139,250,0.35)',
+      }}>
+        {/* バッジ */}
+        <div style={{
+          display: 'inline-block', background: 'rgba(167,139,250,0.25)',
+          borderRadius: 8, padding: '3px 10px', fontSize: 10, fontWeight: 800,
+          letterSpacing: '0.18em', color: '#c4b5fd', textTransform: 'uppercase', marginBottom: 12,
+        }}>MISSION</div>
+
+        {/* スポット情報 */}
+        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 700, marginBottom: 2 }}>
+          {spot.anime_title_en}
+        </div>
+        <div style={{ color: '#fff', fontSize: 20, fontWeight: 900, marginBottom: 18, lineHeight: 1.3 }}>
+          {spot.spot_name_en}
+        </div>
+
+        {/* ミッション内容（差し替えポイント） */}
+        <div style={{
+          background: 'rgba(255,255,255,0.08)', borderRadius: 14,
+          padding: '14px 16px', marginBottom: 8,
+        }}>
+          <div style={{ color: '#a78bfa', fontSize: 13, fontWeight: 800, marginBottom: 8 }}>
+            {mission.title}
+          </div>
+          <div style={{ color: 'rgba(255,255,255,0.88)', fontSize: 14, lineHeight: 1.65, whiteSpace: 'pre-line' }}>
+            {mission.description}
+          </div>
+        </div>
+
+        {mission.hint && (
+          <div style={{ color: 'rgba(255,255,255,0.38)', fontSize: 11, marginBottom: 22, paddingLeft: 2 }}>
+            {mission.hint}
+          </div>
+        )}
+
+        {/* 完了ボタン（ここが完了判定のトリガー。後でロジックを差し込む） */}
+        <button
+          onClick={onComplete}
+          style={{
+            width: '100%', padding: '16px', borderRadius: 16, border: 'none',
+            background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+            color: '#fff', fontSize: 16, fontWeight: 900, cursor: 'pointer',
+            boxShadow: '0 4px 20px rgba(124,58,237,0.5)',
+            letterSpacing: '0.04em',
+          }}
+        >✅ ミッション完了！</button>
+      </div>
+    </div>
+  )
+}
+
 // ── 未収集スタンプ最近接バー ─────────────────────────────────────────────
 function NearestStampBar({ spot, onTap }) {
   if (!spot) return null
@@ -1826,6 +1906,7 @@ function App() {
   const [acquiredStamps, setAcquiredStamps] = useState(() => loadStamps())
   const [showStampCard, setShowStampCard]   = useState(true)
   const [showNearbyPanel, setShowNearbyPanel] = useState(false)
+  const [activeMission, setActiveMission]   = useState(null)  // 現在表示中のミッション対象スポット
 
   useEffect(() => {
     if (!searchAnime) { setAnimateSearch(false); return }
@@ -1867,19 +1948,31 @@ function App() {
     saveStampCard(card)
   }, [spots]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── スタンプ獲得（nearbySpots が変わるたびに判定） ───────────────────────
+  // ── ミッション発動（MISSION_TRIGGER_METERS 以内に未取得スタンプスポットが来たら表示） ──
+  // ミッション中は新規発動しない。完了後に再判定する。
   useEffect(() => {
-    if (!nearbySpots.length || !stampCardIds?.length) return
-    const newIds = nearbySpots
-      .filter(s => stampCardIds.includes(s.id) && !acquiredStamps.has(s.id))
-      .map(s => s.id)
-    if (!newIds.length) return
+    if (!activePos || !stampCardIds?.length || activeMission) return
+    const nearest = spots
+      .filter(s =>
+        stampCardIds.includes(s.id) &&
+        !acquiredStamps.has(s.id) &&
+        haversine(activePos, { lat: s.lat, lng: s.lng }) <= MISSION_TRIGGER_METERS
+      )
+      .map(s => ({ ...s, dist: haversine(activePos, { lat: s.lat, lng: s.lng }) }))
+      .sort((a, b) => a.dist - b.dist)[0]
+    if (nearest) setActiveMission(nearest)
+  }, [activePos, stampCardIds, spots, acquiredStamps, activeMission]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── ミッション完了 → スタンプ付与 ─────────────────────────────────────
+  const handleMissionComplete = useCallback(() => {
+    if (!activeMission) return
     setAcquiredStamps(prev => {
-      const next = new Set([...prev, ...newIds])
+      const next = new Set([...prev, activeMission.id])
       saveStamps(next)
       return next
     })
-  }, [nearbySpots, stampCardIds]) // eslint-disable-line react-hooks/exhaustive-deps
+    setActiveMission(null)
+  }, [activeMission])
 
   // データ読み込み
   useEffect(() => {
@@ -2476,11 +2569,19 @@ function App() {
         />
       )}
 
-      {/* 未収集スタンプ最近接バー（カード非展開時のみ表示） */}
-      {!showStampCard && !cardExpanded && nearestUnstampedSpot && (
+      {/* 未収集スタンプ最近接バー（カード非展開・ミッション非表示時のみ） */}
+      {!showStampCard && !cardExpanded && !activeMission && nearestUnstampedSpot && (
         <NearestStampBar
           spot={nearestUnstampedSpot}
           onTap={() => handleSpotSelect(nearestUnstampedSpot)}
+        />
+      )}
+
+      {/* ミッション画面（スタンプカード非表示時のみ） */}
+      {activeMission && !showStampCard && (
+        <MissionScreen
+          spot={activeMission}
+          onComplete={handleMissionComplete}
         />
       )}
 
