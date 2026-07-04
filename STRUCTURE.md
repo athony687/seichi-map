@@ -1,5 +1,7 @@
 # プロジェクト構成まとめ（STRUCTURE.md）
 
+最終更新: 2026-07-04
+
 ## システム全体像
 
 ```
@@ -45,15 +47,15 @@ seichi-map/
 │   ├── src/
 │   │   ├── App.jsx         ← ★ アプリ本体。コンポーネントがすべてここ
 │   │   ├── main.jsx        ← エントリーポイント（LINE IAB 自動リロード含む）
-│   │   └── index.css       ← 全体スタイル（スピナーアニメーション等）
+│   │   └── index.css       ← 全体スタイル（スピナーアニメーション・slideUp 等）
 │   ├── public/
-│   │   ├── seichi_data.json    ← 聖地データ 35 件
+│   │   ├── seichi_data.json    ← 聖地データ 76 件
 │   │   ├── tourist_spots.json  ← 観光スポット 25 件（関西 10 + 関東 15）
 │   │   ├── manifest.json       ← PWA 設定（ホーム画面追加用）
 │   │   ├── icon-192.png        ← PWA アイコン
 │   │   └── icon-512.png        ← PWA アイコン（大）
-│   ├── index.html
-│   ├── style.css           ← header / loading-overlay のスタイル
+│   ├── index.html          ← <header> に "Animap.jp" ロゴを含む
+│   ├── style.css           ← header / #root / progress-bar のスタイル
 │   ├── vite.config.js
 │   ├── package.json
 │   ├── .env               ← ローカル用 API キー（Git に上げない）
@@ -64,11 +66,16 @@ seichi-map/
 │   ├── requirements.txt
 │   └── .env               ← Anthropic API キー（Git に上げない）
 │
+├── docs/
+│   └── nearby-spots-panel-spec.md  ← NearbySpotsPanel の仕様書
+│
 ├── CLAUDE.md              ← プロジェクト仕様書
 ├── FUNCTIONS.md           ← ユーザー向け機能一覧
 ├── STRUCTURE.md           ← このファイル
 ├── PROGRESS.md            ← 開発進捗
 ├── SETUP.md               ← ローカル起動手順
+├── CONTEXT.md             ← 背景・経緯のメモ
+├── CHANGELOG_B3_onwards.md← B3 以降の変更ログ
 └── .gitignore
 ```
 
@@ -80,14 +87,16 @@ seichi-map/
 
 | 定数 | 値 | 意味 |
 |---|---|---|
-| `PROXIMITY_METERS` | `100` | 何メートル以内に近づいたらカードを自動表示するか |
+| `PROXIMITY_METERS` | `500` | 何メートル以内に近づいたらラベルを自動表示するか |
 | `DEMO_STEP` | `0.001°` | デモマーカーが 1 ティックで進む距離（≈ 110m） |
 | `DEMO_TICK_MS` | `600` | デモマーカーの更新間隔（ミリ秒） |
 | `ARRIVE_DEG` | `0.001°` | スポット「到着」判定の半径（≈ 110m） |
 | `TOKYO` | 35.6762, 139.6503 | 地図のデフォルト中心 |
 | `TOKYO_STATION` | 35.6812, 139.7671 | GPS 取得失敗時のフォールバック位置 |
 | `THEME` | `#7c3aed` | テーマカラー（紫） |
+| `THEME_DARK` | （紫系濃い色） | ProximityLabel グラデーション終端色 |
 | `LOCATION_CONSENTED_KEY` | `'seichi_location_consented'` | GPS 同意を localStorage に保存するキー |
+| `POP_HOOKS` | 配列（6パターン） | ProximityLabel に表示するポップな一言フック |
 
 ### localStorage キー一覧
 
@@ -106,9 +115,7 @@ seichi-map/
 
 ---
 
-### コンポーネント・関数 一覧
-
-#### ユーティリティ関数
+### ユーティリティ関数
 
 | 名前 | 役割 |
 |---|---|
@@ -119,10 +126,11 @@ seichi-map/
 | `loadPrefs()` / `savePrefs(p)` | localStorage からユーザー設定を読み書き |
 | `loadMapTheme()` | localStorage からマップテーマを読み込む |
 | `loadFavorites()` / `saveFavorites(f)` | localStorage からお気に入りを読み書き |
+| `getPopHook(spot)` | spot.id のハッシュ値から `POP_HOOKS` を選択し、アニメ名を埋めた一言フックを返す |
 
 ---
 
-#### フック（状態を持つロジック）
+### フック（状態を持つロジック）
 
 | フック | 役割 |
 |---|---|
@@ -132,27 +140,31 @@ seichi-map/
 
 ---
 
-#### コンポーネント（画面部品）
+### コンポーネント（画面部品）
 
-| コンポーネント | 役割 |
-|---|---|
-| `LocationPermissionCard` | LIVE モード起動時に毎回表示するボトムシート。Allow で GPS と iOS コンパスの許可を同時トリガー |
-| `SelectedSpotMarker` | 選択中の聖地に表示するパルス（点滅）マーカー |
-| `ClusteredSpotMarkers` | 35件の聖地ピンをクラスタリング付きで表示。検索ヒット時は赤ピン強調、他はグレー減光 |
-| `DemoEngine` | デモモード専用。仮想マーカーを地図上で自動移動させるエンジン |
-| `LiveCamera` | LIVE モード専用。スポット選択時・GPS ボタン押下時のカメラ制御 |
-| `SearchCamera` | 検索ヒット時に該当聖地群へカメラをフィット |
-| `Card` | 聖地の情報カード。AI 生成紹介文・天気メッセージ・距離・お気に入りを表示 |
-| `TouristPopup` | 観光スポットタップ時のポップアップ |
-| `GpsLocateButton` | LIVE モード専用。右下の GPS ボタン。取得状況を色で表示 |
-| `SettingsScreen` | ⚙️ から開く設定画面。アコーディオン形式で設定項目を表示 |
-| `OnboardingSurvey` | 初回起動時の全画面アンケート（4ステップ） |
+| コンポーネント | 行 | 役割 |
+|---|---|---|
+| `SelectedSpotMarker` | L139 | 選択中の聖地に表示するパルス（点滅）マーカー |
+| `ClusteredSpotMarkers` | L157 | 76件の聖地ピンをクラスタリング付きで表示。検索ヒット時は赤ピン強調、他はグレー減光 |
+| `DemoEngine` | L189 | デモモード専用。仮想マーカーを地図上で自動移動させるエンジン |
+| `LiveCamera` | L290 | LIVE モード専用。スポット選択時・GPS ボタン押下時のカメラ制御 |
+| `SearchCamera` | L315 | 検索ヒット時に該当聖地群へカメラをフィット |
+| `ProximityLabel` | L353 | 現在地から 500m 以内の聖地ピン上に表示するフローティングラベル（`InfoWindow` ベース）。タップでカードを展開 |
+| `Card` | L388 | 聖地の情報カード。AI 生成紹介文・天気メッセージ・距離・お気に入りを表示 |
+| `TouristPopup` | L594 | 観光スポットタップ時のポップアップ |
+| `GpsLocateButton` | L749 | LIVE モード専用。右下の GPS ボタン。取得状況を色で表示 |
+| `SettingsScreen` | L780 | ⚙️ から開く設定画面。アコーディオン形式で設定項目を表示 |
+| `OnboardingSurvey` | L1034 | 初回起動時の全画面アンケート（4ステップ） |
+| `AppOverviewDashboard` | L1177 | アプリ起動直後の全画面ダッシュボード。Near Me / Preview Route / Search Anime の3アクションと聖地一覧 |
+| `LocationPermissionCard` | L1439 | LIVE モード起動時に毎回表示するボトムシート。Allow で GPS と iOS コンパスの許可を同時トリガー |
+| `NearbySpotsPanel` | L1482 | マップ下部に現在地周辺のスポット一覧を表示するパネル |
+| `NearbyToast` | L1584 | 新たに 500m 圏内に入ったスポットのトースト通知 |
 
 #### 親コンポーネント
 
-| コンポーネント | 役割 |
-|---|---|
-| `App` | アプリ全体の状態管理。モード切替・地図クリック・近接判定・カード表示・検索・設定・アンケートを制御 |
+| コンポーネント | 行 | 役割 |
+|---|---|---|
+| `App` | L1601 | アプリ全体の状態管理。モード切替・地図クリック・近接判定・カード表示・検索・設定・アンケートを制御 |
 
 ---
 
@@ -160,9 +172,13 @@ seichi-map/
 
 | 状態 | 意味 |
 |---|---|
-| `spots` | 聖地データ 35 件 |
+| `spots` | 聖地データ 76 件 |
 | `touristSpots` | 観光スポット 25 件 |
 | `selected` | 現在カードに表示中のスポット（null = カードなし） |
+| `cardExpanded` | `true` のとき完全カードを表示。`false` のとき ProximityLabel のみ |
+| `nearbySpots` | 現在地から 500m 以内のスポット配列（ProximityLabel のレンダリングに使用） |
+| `nearbyPanelSpots` | NearbySpotsPanel に渡す周辺スポット配列 |
+| `nearbyToast` | 現在表示中のトースト情報（null = 非表示） |
 | `selectedTourist` | タップされた観光スポット（null = ポップアップなし） |
 | `demoMode` | `true` = DEMO モード、`false` = LIVE モード（デフォルト: LIVE） |
 | `playing` | デモ再生中かどうか |
@@ -174,6 +190,7 @@ seichi-map/
 | `gpsConsented` | ユーザーが位置情報を許可したか（localStorage 永続化） |
 | `gpsReady` | GPS 取得が完了した（または断念した）かどうか |
 | `heading` | スマホの向き（方位角 0〜359°）。`useDeviceHeading` から取得 |
+| `showDashboard` | `true` のときダッシュボードを全画面表示 |
 | `userPrefs` | ユーザーの好み（nickname / familiarity / mood / travelStyle） |
 | `showSurvey` | 初回アンケートを表示するかどうか |
 | `showSettings` | 設定画面を表示するかどうか |
@@ -185,6 +202,14 @@ seichi-map/
 | `showSuggestions` | 検索候補リストを表示するかどうか |
 | `animateSearch` | 検索ヒット直後のピンアニメーションフラグ |
 
+### App の主要な派生値・ヘルパー
+
+| 名前 | 意味 |
+|---|---|
+| `browsingPos` | `activePos`（GPS/デモ位置）があればそれ、なければ `TOKYO_STATION`。距離計算に使う |
+| `activePos` | DEMO なら `demoPos`、LIVE なら `livePos` |
+| `closeCard` | `setSelected(null)` と `setCardExpanded(false)` を同時に実行する useCallback ヘルパー |
+
 ---
 
 ### モードの違い
@@ -193,8 +218,9 @@ seichi-map/
 |---|---|---|
 | 現在地マーカー | 仮想マーカー（デモエンジンが移動） | GPS マーカー（実際の位置） |
 | コンパス扇形 | 非表示 | 表示（heading が取得できている場合） |
-| カードの表示条件 | マーカーが 100m 以内に自動表示 | ピンタップ or 100m 以内で自動表示 |
-| カードの閉じ条件 | マーカーが 100m 以上離れたら自動クローズ | ✕ ボタンまたは地図タップ |
+| ラベル表示条件 | マーカーが 500m 以内のスポットにラベル | GPS が 500m 以内のスポットにラベル |
+| カードの表示条件 | ラベル or ピンタップで展開 | ラベル or ピンタップで展開 |
+| カードの閉じ条件 | ✕ ボタン or マーカーが 500m 以上離れたら自動クローズ | ✕ ボタンまたは地図タップ |
 | カメラ | DemoEngine が追跡 | LiveCamera が制御 |
 | GPS ボタン | 非表示 | 右下に表示 |
 | 天気取得位置 | `startPos`（開始地点）| `livePos`（現在地） |
@@ -237,6 +263,8 @@ seichi-map/
 | `generic_intro_en` | （空欄可） | AI 生成失敗時のフォールバック |
 | `area` | `Uji, Kyoto` | エリア名 |
 | `verified` | `true` | 座標・事実を人間が確認済みか |
+| `hours` | `9:00–17:00 · Daily` | 開館時間（空欄可） |
+| `official_url` | URL または空欄 | 公式サイト |
 
 ### tourist_spots.json（観光スポット）
 
