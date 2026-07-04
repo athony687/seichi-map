@@ -1043,6 +1043,44 @@ const loadStampCard = () => { try { const r = localStorage.getItem(STAMP_CARD_KE
 const saveStampCard = c  => { try { localStorage.setItem(STAMP_CARD_KEY, JSON.stringify(c))    } catch {} }
 const saveFavorites = f => localStorage.setItem(FAVORITES_KEY, JSON.stringify([...f]))
 
+// ── ジャーナル IndexedDB ──────────────────────────────────────────────────
+const JDB_NAME = 'seichi_journal'
+const JDB_STORE = 'entries'
+function openJDB() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open(JDB_NAME, 1)
+    r.onupgradeneeded = e => e.target.result.createObjectStore(JDB_STORE, { keyPath: 'spotId' })
+    r.onsuccess = e => res(e.target.result)
+    r.onerror = e => rej(e.target.error)
+  })
+}
+async function jdbSave(entry) {
+  const db = await openJDB()
+  return new Promise((res, rej) => {
+    const tx = db.transaction(JDB_STORE, 'readwrite')
+    tx.objectStore(JDB_STORE).put(entry)
+    tx.oncomplete = res; tx.onerror = e => rej(e.target.error)
+  })
+}
+async function jdbGet(spotId) {
+  const db = await openJDB()
+  return new Promise((res, rej) => {
+    const tx = db.transaction(JDB_STORE, 'readonly')
+    const r = tx.objectStore(JDB_STORE).get(spotId)
+    r.onsuccess = e => res(e.target.result ?? null)
+    r.onerror = e => rej(e.target.error)
+  })
+}
+async function jdbGetAll() {
+  const db = await openJDB()
+  return new Promise((res, rej) => {
+    const tx = db.transaction(JDB_STORE, 'readonly')
+    const r = tx.objectStore(JDB_STORE).getAll()
+    r.onsuccess = e => res(e.target.result)
+    r.onerror = e => rej(e.target.error)
+  })
+}
+
 const QUEST_COMPLETIONS_KEY = 'seichi_quest_completions'
 const loadQuestCompletions = () => {
   try {
@@ -1505,7 +1543,7 @@ function LocationPermissionCard({ onAllow, onSkip }) {
 }
 
 // ── スタンプカード全画面 ────────────────────────────────────────────────────
-function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose }) {
+function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose, onOpenJournal, journaledIds }) {
   const cardSpots = stampCardIds
     ? spots.filter(s => stampCardIds.includes(s.id))
     : []
@@ -1612,8 +1650,21 @@ function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose }) {
                 </div>
               )}
               {done && (
-                <div style={{ marginTop: 8, display: 'inline-block', background: 'rgba(167,139,250,0.4)', borderRadius: 8, padding: '2px 8px', fontSize: 10, fontWeight: 800, color: '#c4b5fd', letterSpacing: '0.06em' }}>
-                  STAMPED ✓
+                <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ display: 'inline-block', background: 'rgba(167,139,250,0.4)', borderRadius: 8, padding: '2px 8px', fontSize: 10, fontWeight: 800, color: '#c4b5fd', letterSpacing: '0.06em' }}>
+                    STAMPED ✓
+                  </div>
+                  {onOpenJournal && (
+                    <button
+                      onClick={e => { e.stopPropagation(); onOpenJournal(spot) }}
+                      style={{
+                        background: journaledIds?.has(spot.id) ? 'rgba(167,139,250,0.5)' : 'rgba(255,255,255,0.12)',
+                        border: 'none', borderRadius: 8, padding: '2px 8px',
+                        fontSize: 10, fontWeight: 800, color: '#fff', cursor: 'pointer',
+                        letterSpacing: '0.04em',
+                      }}
+                    >{journaledIds?.has(spot.id) ? '📝 メモあり' : '📝 メモ'}</button>
+                  )}
                 </div>
               )}
             </div>
@@ -1631,6 +1682,142 @@ function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose }) {
             fontSize: 72, animation: 'slideUp 0.5s ease-out',
             textAlign: 'center',
           }}>🎊<br /><span style={{ fontSize: 28, color: '#fde68a', fontWeight: 900 }}>Complete!</span></div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── ジャーナルエディター（写真＋メモ入力） ───────────────────────────────────
+function JournalEditor({ spot, onSave, onSkip }) {
+  const [photoUrl, setPhotoUrl] = useState(null)
+  const [memo, setMemo] = useState('')
+  const [saving, setSaving] = useState(false)
+  const fileRef = useRef(null)
+
+  useEffect(() => {
+    jdbGet(spot.id).then(e => {
+      if (!e) return
+      if (e.photo) setPhotoUrl(e.photo)
+      if (e.memo) setMemo(e.memo)
+    })
+  }, [spot.id])
+
+  const handleFile = e => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => setPhotoUrl(ev.target.result)
+    reader.readAsDataURL(file)
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    await jdbSave({ spotId: spot.id, spotNameEn: spot.spot_name_en, animeEn: spot.anime_title_en, photo: photoUrl, memo, timestamp: Date.now() })
+    setSaving(false)
+    onSave()
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9650, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: '0 12px 32px' }}>
+      <div style={{ width: 'min(440px,100%)', background: 'linear-gradient(160deg,#1e1b4b 0%,#312e81 100%)', borderRadius: 24, padding: '20px 18px', boxShadow: '0 -4px 40px rgba(0,0,0,0.5)', border: '1.5px solid rgba(167,139,250,0.35)', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 700, marginBottom: 2 }}>{spot.anime_title_en}</div>
+        <div style={{ color: '#fff', fontSize: 17, fontWeight: 900, marginBottom: 16 }}>{spot.spot_name_en}</div>
+
+        {/* 写真エリア */}
+        <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handleFile} style={{ display: 'none' }} />
+        {photoUrl ? (
+          <div style={{ position: 'relative', marginBottom: 12 }}>
+            <img src={photoUrl} alt="" style={{ width: '100%', borderRadius: 14, maxHeight: 220, objectFit: 'cover', display: 'block' }} />
+            <button onClick={() => fileRef.current?.click()} style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: 10, color: '#fff', fontSize: 11, fontWeight: 700, padding: '5px 10px', cursor: 'pointer' }}>変更</button>
+          </div>
+        ) : (
+          <button onClick={() => fileRef.current?.click()} style={{ width: '100%', padding: '22px 0', background: 'rgba(255,255,255,0.08)', border: '1.5px dashed rgba(167,139,250,0.4)', borderRadius: 14, color: '#a78bfa', fontSize: 13, fontWeight: 700, cursor: 'pointer', marginBottom: 12 }}>📷 写真を追加</button>
+        )}
+
+        {/* メモエリア */}
+        <textarea
+          value={memo}
+          onChange={e => setMemo(e.target.value)}
+          placeholder="メモを書く（感想・気づきなど）"
+          rows={3}
+          style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(167,139,250,0.3)', borderRadius: 12, padding: '10px 12px', color: '#fff', fontSize: 13, resize: 'none', outline: 'none', fontFamily: 'inherit', marginBottom: 14 }}
+        />
+
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button onClick={onSkip} style={{ flex: 1, padding: '13px 0', borderRadius: 14, border: '1px solid rgba(255,255,255,0.2)', background: 'transparent', color: 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>スキップ</button>
+          <button onClick={handleSave} disabled={saving} style={{ flex: 2, padding: '13px 0', borderRadius: 14, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#a855f7)', color: '#fff', fontSize: 14, fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 16px rgba(124,58,237,0.45)' }}>{saving ? '保存中…' : '💾 保存'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── ジャーナルビューワー（記録一覧） ─────────────────────────────────────────
+function JournalViewer({ spots, onOpenEditor, onClose }) {
+  const [entries, setEntries] = useState([])
+  const [detail, setDetail] = useState(null)
+
+  useEffect(() => {
+    jdbGetAll().then(all => setEntries(all.sort((a, b) => b.timestamp - a.timestamp)))
+  }, [])
+
+  const spotById = useMemo(() => Object.fromEntries(spots.map(s => [s.id, s])), [spots])
+
+  const fmt = ts => {
+    const d = new Date(ts)
+    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`
+  }
+
+  if (detail) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 9550, background: 'linear-gradient(160deg,#0f0a2a,#1e1b4b)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        <div style={{ padding: '20px 18px 0', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button onClick={() => setDetail(null)} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 20, color: '#fff', fontSize: 12, fontWeight: 800, padding: '7px 14px', cursor: 'pointer' }}>← 戻る</button>
+          <div style={{ flex: 1 }}>
+            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 700 }}>{detail.animeEn}</div>
+            <div style={{ color: '#fff', fontSize: 15, fontWeight: 900 }}>{detail.spotNameEn}</div>
+          </div>
+          <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>{fmt(detail.timestamp)}</div>
+        </div>
+        {detail.photo && <img src={detail.photo} alt="" style={{ width: '100%', maxHeight: 320, objectFit: 'cover', marginTop: 16 }} />}
+        <div style={{ padding: '16px 18px', color: 'rgba(255,255,255,0.85)', fontSize: 14, lineHeight: 1.7, whiteSpace: 'pre-wrap', flex: 1 }}>{detail.memo || '（メモなし）'}</div>
+        {onOpenEditor && spotById[detail.spotId] && (
+          <div style={{ padding: '0 18px 32px' }}>
+            <button onClick={() => { setDetail(null); onOpenEditor(spotById[detail.spotId]) }} style={{ width: '100%', padding: '13px 0', borderRadius: 14, border: 'none', background: 'rgba(167,139,250,0.3)', color: '#c4b5fd', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>📝 編集する</button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9550, background: 'linear-gradient(160deg,#0f0a2a,#1e1b4b)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+      <div style={{ padding: '24px 18px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <div style={{ display: 'inline-block', background: 'rgba(167,139,250,0.25)', borderRadius: 8, padding: '3px 10px', fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', color: '#c4b5fd', textTransform: 'uppercase', marginBottom: 10 }}>JOURNAL</div>
+          <div style={{ color: '#fff', fontSize: 22, fontWeight: 900 }}>旅の記録</div>
+        </div>
+        <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 22, color: '#fff', fontSize: 12, fontWeight: 800, padding: '9px 18px', cursor: 'pointer' }}>閉じる</button>
+      </div>
+
+      {entries.length === 0 ? (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.35)', fontSize: 14, padding: 40, textAlign: 'center' }}>
+          まだ記録がありません。<br />スタンプを集めてメモを残そう！
+        </div>
+      ) : (
+        <div style={{ padding: '16px 14px 32px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {entries.map(e => (
+            <div key={e.spotId} onClick={() => setDetail(e)} style={{ background: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(167,139,250,0.2)', borderRadius: 16, overflow: 'hidden', cursor: 'pointer', display: 'flex', gap: 0 }}>
+              {e.photo && <img src={e.photo} alt="" style={{ width: 80, height: 80, objectFit: 'cover', flexShrink: 0 }} />}
+              <div style={{ padding: '10px 12px', flex: 1, minWidth: 0 }}>
+                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, fontWeight: 700, marginBottom: 2 }}>{e.animeEn}</div>
+                <div style={{ color: '#fff', fontSize: 13, fontWeight: 800, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.spotNameEn}</div>
+                <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.memo || '（メモなし）'}</div>
+                <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, marginTop: 4 }}>{fmt(e.timestamp)}</div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -1756,6 +1943,18 @@ function App() {
   const autoWeather = useAutoWeather(wxPos, weatherOverride !== null)
   const weather = weatherOverride ?? autoWeather ?? 'sunny'
 
+  const [journalTarget, setJournalTarget] = useState(null)
+  const [showJournal, setShowJournal]     = useState(false)
+  const [journaledIds, setJournaledIds]   = useState(new Set())
+
+  useEffect(() => {
+    jdbGetAll().then(all => setJournaledIds(new Set(all.map(e => e.spotId))))
+  }, [])
+
+  const refreshJournaledIds = useCallback(() => {
+    jdbGetAll().then(all => setJournaledIds(new Set(all.map(e => e.spotId))))
+  }, [])
+
   const [favorites, setFavorites] = useState(() => loadFavorites())
   const toggleFavorite = useCallback(id => {
     setFavorites(prev => {
@@ -1853,12 +2052,14 @@ function App() {
   // ── ミッション完了 → スタンプ付与 ─────────────────────────────────────
   const handleMissionComplete = useCallback(() => {
     if (!activeMission) return
+    const completedSpot = activeMission
     setAcquiredStamps(prev => {
       const next = new Set([...prev, activeMission.id])
       saveStamps(next)
       return next
     })
     setActiveMission(null)
+    setJournalTarget(completedSpot)
   }, [activeMission])
 
   // データ読み込み
@@ -2254,6 +2455,18 @@ function App() {
           }}
         >⚙️</button>
 
+        {/* ジャーナルボタン */}
+        <button
+          onClick={() => setShowJournal(true)}
+          title="Journal"
+          style={{
+            width: 30, height: 30, borderRadius: 10,
+            background: 'rgba(0,0,0,0.06)', border: 'none',
+            cursor: 'pointer', fontSize: 15,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >📔</button>
+
         <span style={{ width: 1, height: 18, background: 'rgba(0,0,0,0.1)' }} />
 
         {/* DEMO / LIVE 切替 */}
@@ -2397,6 +2610,26 @@ function App() {
             setShowStampCard(false)
             if (!gpsConsented && !locationPermissionAsked) setShowLocationPrompt(true)
           }}
+          onOpenJournal={spot => { setShowStampCard(false); setJournalTarget(spot) }}
+          journaledIds={journaledIds}
+        />
+      )}
+
+      {/* ジャーナル一覧 */}
+      {showJournal && (
+        <JournalViewer
+          spots={spots}
+          onOpenEditor={spot => { setShowJournal(false); setJournalTarget(spot) }}
+          onClose={() => setShowJournal(false)}
+        />
+      )}
+
+      {/* ジャーナルエディター */}
+      {journalTarget && (
+        <JournalEditor
+          spot={journalTarget}
+          onSave={() => { setJournalTarget(null); refreshJournaledIds() }}
+          onSkip={() => setJournalTarget(null)}
         />
       )}
 
