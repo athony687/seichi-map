@@ -1,21 +1,16 @@
+import path from 'path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('@vis.gl/react-google-maps') || id.includes('@googlemaps')) {
-            return 'maps'
-          }
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/scheduler')) {
-            return 'vendor'
-          }
-        },
-      },
+  resolve: {
+    // ESM版(.mjs)が循環参照でTDZを引き起こすため、UMD版を使用する
+    alias: {
+      '@vis.gl/react-google-maps': path.resolve(
+        './node_modules/@vis.gl/react-google-maps/dist/index.umd.js'
+      ),
     },
   },
 })
