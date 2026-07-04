@@ -1515,6 +1515,68 @@ function NearestStampBar({ spot, onTap }) {
   )
 }
 
+// ── ニックネーム入力画面（初回起動時） ───────────────────────────────────────
+function NicknameScreen({ onDone }) {
+  const [name, setName] = useState('')
+  const handleSubmit = () => {
+    const trimmed = name.trim()
+    const prefs = loadPrefs() || {}
+    savePrefs({ ...prefs, nickname: trimmed || null })
+    onDone(trimmed || null)
+  }
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9800,
+      background: '#fff',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: '0 28px',
+    }}>
+      <img src="/icon-192.png" alt="Animap" style={{ width: 72, height: 72, borderRadius: 18, marginBottom: 28, boxShadow: '0 8px 24px rgba(124,58,237,0.25)' }} />
+      <div style={{ fontSize: 22, fontWeight: 900, color: '#111827', marginBottom: 8, textAlign: 'center' }}>
+        What's your name?
+      </div>
+      <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 32, textAlign: 'center', lineHeight: 1.7 }}>
+        We'll use it on your stamp card.
+      </div>
+      <input
+        type="text"
+        placeholder="Your nickname…"
+        value={name}
+        onChange={e => setName(e.target.value)}
+        onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+        autoFocus
+        style={{
+          width: '100%', maxWidth: 320, boxSizing: 'border-box',
+          padding: '14px 18px', borderRadius: 16,
+          border: '2px solid #e5e7eb', outline: 'none',
+          fontSize: 16, fontWeight: 600, color: '#111827',
+          marginBottom: 14, fontFamily: 'inherit',
+          transition: 'border-color 0.2s',
+        }}
+        onFocus={e => { e.target.style.borderColor = '#7c3aed' }}
+        onBlur={e => { e.target.style.borderColor = '#e5e7eb' }}
+      />
+      <button
+        onClick={handleSubmit}
+        style={{
+          width: '100%', maxWidth: 320, padding: '15px', borderRadius: 16, border: 'none',
+          background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
+          color: '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer',
+          boxShadow: '0 4px 20px rgba(124,58,237,0.4)', marginBottom: 12,
+          letterSpacing: '0.02em',
+        }}
+      >Get Started →</button>
+      <button
+        onClick={() => handleSubmit()}
+        style={{
+          background: 'none', border: 'none', color: '#9ca3af',
+          fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
+        }}
+      >Skip</button>
+    </div>
+  )
+}
+
 // ── 位置情報・コンパス許可カード ─────────────────────────────────────────
 function LocationPermissionCard({ onAllow, onSkip }) {
   return (
@@ -1574,7 +1636,7 @@ function LocationPermissionCard({ onAllow, onSkip }) {
 }
 
 // ── スタンプカード全画面 ────────────────────────────────────────────────────
-function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose, onOpenJournal, journaledIds }) {
+function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose, onOpenJournal, journaledIds, nickname }) {
   const cardSpots = stampCardIds
     ? spots.filter(s => stampCardIds.includes(s.id))
     : []
@@ -1598,10 +1660,10 @@ function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose, onOpenJ
             color: '#c4b5fd', textTransform: 'uppercase', marginBottom: 10,
           }}>STAMP MISSION</div>
           <div style={{ color: '#fff', fontSize: 24, fontWeight: 900, lineHeight: 1.2, marginBottom: 8 }}>
-            Your Anime<br />Stamp Rally
+            {nickname ? `${nickname}'s` : 'Your'}<br />Stamp Rally
           </div>
           <div style={{ color: 'rgba(255,255,255,0.62)', fontSize: 13, lineHeight: 1.6 }}>
-            Your mission: collect every stamp nearby.
+            {nickname ? `${nickname}, collect every stamp nearby!` : 'Your mission: collect every stamp nearby.'}
           </div>
         </div>
         <button
@@ -1634,7 +1696,7 @@ function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose, onOpenJ
       {/* ステータスメッセージ */}
       <div style={{ padding: '8px 20px 16px', fontSize: 13, fontWeight: 700, color: isComplete ? '#fde68a' : 'rgba(255,255,255,0.6)' }}>
         {isComplete
-          ? '🎉 All stamps collected! You\'re a true pilgrimage champion!'
+          ? `🎉 ${nickname ? `${nickname}, all` : 'All'} stamps collected! True pilgrimage champion!`
           : stampCardIds === null
           ? 'Generating your stamp card…'
           : `${remaining} stamp${remaining !== 1 ? 's' : ''} left to collect`}
@@ -2494,6 +2556,7 @@ function App() {
   }, [gpsStatus, demoMode, gpsConsented])
 
   const [userPrefs, setUserPrefs]   = useState(() => loadPrefs())
+  const [showNicknameScreen, setShowNicknameScreen] = useState(() => !loadPrefs()?.nickname)
   const [showSurvey, setShowSurvey] = useState(() => ENABLE_ONBOARDING_SURVEY && !loadPrefs())
   const [showSettings, setShowSettings] = useState(false)
   const [mapTheme, setMapTheme] = useState(loadMapTheme)
@@ -3325,12 +3388,23 @@ function App() {
         />
       )}
 
+      {/* ニックネーム入力（初回起動時） */}
+      {showNicknameScreen && (
+        <NicknameScreen
+          onDone={name => {
+            setUserPrefs(prev => ({ ...(prev || {}), nickname: name }))
+            setShowNicknameScreen(false)
+          }}
+        />
+      )}
+
       {/* スタンプラリー：全画面カード */}
       {showStampCard && (
         <StampCardScreen
           spots={spots}
           stampCardIds={stampCardIds}
           acquiredStamps={acquiredStamps}
+          nickname={userPrefs?.nickname}
           onClose={() => {
             setShowStampCard(false)
             if (!gpsConsented && !locationPermissionAsked) setShowLocationPrompt(true)
