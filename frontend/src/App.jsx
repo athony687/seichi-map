@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { APIProvider, Map, Marker, InfoWindow, useMap } from '@vis.gl/react-google-maps'
 import { MarkerClusterer } from '@googlemaps/markerclusterer'
+import { getQuestKey, loadQuestCompletions, saveQuestCompletions } from './questAlbum.js'
 
 // ============================================================
 // 汎用紹介文（AI生成失敗時・intro_short_en 未記入時のフォールバック）
@@ -1080,22 +1081,6 @@ async function jdbGetAll() {
     r.onerror = e => rej(e.target.error)
   })
 }
-
-const QUEST_COMPLETIONS_KEY = 'seichi_quest_completions'
-const loadQuestCompletions = () => {
-  try {
-    const r = localStorage.getItem(QUEST_COMPLETIONS_KEY)
-    return r ? new Set(JSON.parse(r)) : new Set()
-  } catch {
-    return new Set()
-  }
-}
-const saveQuestCompletions = completions => {
-  try {
-    localStorage.setItem(QUEST_COMPLETIONS_KEY, JSON.stringify([...completions]))
-  } catch {}
-}
-const getQuestKey = (spotId, index) => `${spotId}:${index}`
 
 function QuestPanel({ spot }) {
   const quests = spot.quests || []
