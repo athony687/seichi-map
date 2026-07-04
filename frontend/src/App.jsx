@@ -13,8 +13,6 @@ const YOKOHAMA_STATION = { lat: 35.4658, lng: 139.6223 }
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
 const PROXIMITY_METERS = 500
 const MISSION_TRIGGER_METERS = 200  // ミッション発動半径（デモでも動くよう大きめ）
-const NEARBY_PANEL_METERS = 3000
-const NEARBY_TOAST_COOLDOWN_MS = 30000
 const THEME = '#7c3aed'
 const THEME_DARK = '#4c1d95'
 const DEMO_STEP = 0.001   // degrees per tick (≈110m)
@@ -1506,124 +1504,6 @@ function LocationPermissionCard({ onAllow, onSkip }) {
   )
 }
 
-function NearbySpotsPanel({ spots, collapsed, usingFallback, onSelectSpot }) {
-  const visibleSpots = spots.slice(0, 6)
-  const title = `Nearby Spots · ${spots.length}`
-  const referenceText = usingFallback
-    ? 'Showing spots from Yokohama Station'
-    : 'Showing spots within 3 km'
-
-  if (collapsed) {
-    return (
-      <div style={{
-        position: 'absolute', left: 12, right: 12, top: 58,
-        maxWidth: 380, margin: '0 auto', zIndex: 9,
-        background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(124,58,237,0.14)', borderRadius: 16,
-        padding: '10px 14px', boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
-        color: '#33224f', fontSize: 13, fontWeight: 800,
-      }}>
-        {title}
-        <span style={{ marginLeft: 8, color: '#9ca3af', fontWeight: 700 }}>
-          {usingFallback ? 'Yokohama Station' : 'near you'}
-        </span>
-      </div>
-    )
-  }
-
-  return (
-    <section style={{
-      position: 'absolute', left: 12, right: 12, bottom: 84,
-      maxWidth: 420, maxHeight: '42vh', margin: '0 auto', zIndex: 9,
-      background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(16px)',
-      border: '1px solid rgba(124,58,237,0.14)', borderRadius: 22,
-      boxShadow: '0 10px 34px rgba(0,0,0,0.16)', overflow: 'hidden',
-    }} aria-label="Nearby anime spots">
-      <div style={{ padding: '14px 16px 10px' }}>
-        <div style={{
-          fontSize: 10, fontWeight: 850, letterSpacing: '0.14em',
-          color: '#a78bfa', textTransform: 'uppercase', marginBottom: 4,
-        }}>
-          {title}
-        </div>
-        <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.45 }}>
-          {referenceText}
-          {usingFallback && ' · starting point, not your current location'}
-        </div>
-      </div>
-
-      {visibleSpots.length === 0 ? (
-        <div style={{ padding: '8px 16px 18px', color: '#9ca3af', fontSize: 13, lineHeight: 1.55 }}>
-          No anime spots within 3 km yet. Move the map flow or try searching by anime title.
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gap: 8, padding: '0 10px 12px', overflowY: 'auto', maxHeight: '30vh' }}>
-          {visibleSpots.map(({ spot, dist }) => {
-            const description = spot.intro_short_en && !isPlaceholder(spot.intro_short_en)
-              ? spot.intro_short_en
-              : spot.generic_intro_en || spot.scene_description || 'Tap to read the spot guide.'
-
-            return (
-              <button
-                key={spot.id}
-                type="button"
-                onClick={() => onSelectSpot(spot)}
-                style={{
-                  width: '100%', display: 'grid', gridTemplateColumns: '1fr auto',
-                  gap: 10, alignItems: 'start',
-                  padding: '11px 12px', borderRadius: 16,
-                  border: '1px solid #f0eaff', background: '#fff',
-                  textAlign: 'left', cursor: 'pointer',
-                }}
-              >
-                <span style={{ minWidth: 0 }}>
-                  <span style={{
-                    display: 'block', color: '#1f2937', fontSize: 14,
-                    fontWeight: 850, lineHeight: 1.3,
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}>{spot.spot_name_en}</span>
-                  <span style={{
-                    display: 'block', marginTop: 2, color: THEME,
-                    fontSize: 11, fontWeight: 800,
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}>{spot.anime_title_en}</span>
-                  <span style={{
-                    display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                    marginTop: 6, color: '#6b7280', fontSize: 12, lineHeight: 1.45,
-                    overflow: 'hidden',
-                  }}>{description}</span>
-                </span>
-                <span style={{
-                  flexShrink: 0, padding: '4px 8px', borderRadius: 999,
-                  background: '#f5f3ff', color: THEME, fontSize: 11, fontWeight: 850,
-                }}>
-                  {formatDistance(dist)}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      )}
-    </section>
-  )
-}
-
-function NearbyToast({ toast }) {
-  if (!toast) return null
-  return (
-    <div style={{
-      position: 'fixed', left: '50%', top: 62, transform: 'translateX(-50%)',
-      zIndex: 5000, width: 'min(360px, calc(100vw - 32px))',
-      padding: '12px 16px', borderRadius: 18,
-      background: 'rgba(31,41,55,0.94)', color: '#fff',
-      boxShadow: '0 10px 30px rgba(0,0,0,0.22)',
-      fontSize: 14, fontWeight: 800, textAlign: 'center',
-    }}>
-      {toast.message}
-    </div>
-  )
-}
-
 // ── スタンプカード全画面 ────────────────────────────────────────────────────
 function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose }) {
   const cardSpots = stampCardIds
@@ -1799,8 +1679,6 @@ function App() {
   const [selected, setSelected]         = useState(null)
   const [cardExpanded, setCardExpanded] = useState(false)
   const [nearbySpots, setNearbySpots]   = useState([])
-  const [nearbyPanelSpots, setNearbyPanelSpots] = useState([])
-  const [nearbyToast, setNearbyToast] = useState(null)
   const [selectedTourist, setSelectedTourist] = useState(null)
 
 
@@ -1811,10 +1689,6 @@ function App() {
   const [demoPos, setDemoPos]           = useState(null)   // 擬似マーカー位置
 
   const triggeredRef = useRef(new Set())
-  const nearbyPanelIdsRef = useRef(new Set())
-  const nearbyPanelInitializedRef = useRef(false)
-  const nearbyReferenceModeRef = useRef(null)
-  const lastNearbyToastAtRef = useRef(0)
   const [locateTick, setLocateTick] = useState(0)
 
   // Location permission is shown only after a location-based dashboard choice.
@@ -1909,7 +1783,6 @@ function App() {
   const [stampCardIds, setStampCardIds]     = useState(() => { const s = loadStampCard(); return s?.length > 0 ? s : null })
   const [acquiredStamps, setAcquiredStamps] = useState(() => loadStamps())
   const [showStampCard, setShowStampCard]   = useState(true)
-  const [showNearbyPanel, setShowNearbyPanel] = useState(false)
   const [activeMission, setActiveMission]   = useState(null)  // 現在表示中のミッション対象スポット
 
   useEffect(() => {
@@ -2010,10 +1883,6 @@ function App() {
   }, [])
 
   // activePos / browsingPos はファイル先頭で宣言済み
-  const usingDefaultReferencePoint =
-    !activePos ||
-    (demoMode && startPos?.lat === YOKOHAMA_STATION.lat && startPos?.lng === YOKOHAMA_STATION.lng)
-  const nearbyReferenceMode = usingDefaultReferencePoint ? 'yokohama-station' : demoMode ? 'demo' : 'live'
 
   // スタンプ未収集の中で最も近いスポット
   const nearestUnstampedSpot = useMemo(() => {
@@ -2045,62 +1914,6 @@ function App() {
     }
   }, [activePos, spots, demoMode])
 
-  useEffect(() => {
-    if (!spots.length) {
-      setNearbyPanelSpots([])
-      return
-    }
-
-    const nextNearby = spots
-      .map(spot => ({ spot, dist: haversine(browsingPos, { lat: spot.lat, lng: spot.lng }) }))
-      .filter(({ dist }) => dist <= NEARBY_PANEL_METERS)
-      .sort((a, b) => a.dist - b.dist)
-
-    setNearbyPanelSpots(nextNearby)
-
-    const nextIds = new Set(nextNearby.map(({ spot }) => spot.id))
-    if (nearbyReferenceModeRef.current !== nearbyReferenceMode) {
-      nearbyReferenceModeRef.current = nearbyReferenceMode
-      nearbyPanelIdsRef.current = nextIds
-      nearbyPanelInitializedRef.current = true
-      return
-    }
-
-    if (!nearbyPanelInitializedRef.current) {
-      nearbyPanelIdsRef.current = nextIds
-      nearbyPanelInitializedRef.current = true
-      return
-    }
-
-    const newIds = [...nextIds].filter(id => !nearbyPanelIdsRef.current.has(id))
-    nearbyPanelIdsRef.current = nextIds
-
-    if (newIds.length === 0) return
-
-    const now = Date.now()
-    if (now - lastNearbyToastAtRef.current < NEARBY_TOAST_COOLDOWN_MS) return
-
-    lastNearbyToastAtRef.current = now
-    setNearbyToast({
-      id: now,
-      message: newIds.length === 1
-        ? '🎉 A new spot is nearby!'
-        : `🎉 ${newIds.length} new spots are nearby!`,
-    })
-  }, [browsingPos.lat, browsingPos.lng, spots, nearbyReferenceMode])
-
-  useEffect(() => {
-    if (!nearbyToast) return
-    const timeoutId = setTimeout(() => setNearbyToast(null), 4000)
-    return () => clearTimeout(timeoutId)
-  }, [nearbyToast])
-
-  const resetNearbyTracking = () => {
-    nearbyPanelIdsRef.current = new Set()
-    nearbyPanelInitializedRef.current = false
-    nearbyReferenceModeRef.current = null
-    setNearbyToast(null)
-  }
 
   const closeCard = useCallback(() => {
     setSelected(null)
@@ -2113,7 +1926,6 @@ function App() {
     setStartPos(null)
     setStartPosMode(false)
     triggeredRef.current.clear()
-    resetNearbyTracking()
     setSelected(null)
     setCardExpanded(false)
   }
@@ -2432,19 +2244,6 @@ function App() {
           }}
         >⚙️</button>
 
-        {/* 周辺スポットパネル トグル */}
-        <button
-          onClick={() => setShowNearbyPanel(v => !v)}
-          title="Nearby spots"
-            style={{
-              height: 30, padding: '0 10px', borderRadius: 10,
-              border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 800,
-              background: showNearbyPanel ? '#ede9ff' : 'rgba(0,0,0,0.06)',
-              color: showNearbyPanel ? THEME : '#555',
-              letterSpacing: '0.04em',
-            }}
-          >📋 Nearby</button>
-
         <span style={{ width: 1, height: 18, background: 'rgba(0,0,0,0.1)' }} />
 
         {/* DEMO / LIVE 切替 */}
@@ -2529,18 +2328,9 @@ function App() {
           onLocate={() => setLocateTick(t => t + 1)}
         />
       )}
-      {showNearbyPanel && (
-        <NearbySpotsPanel
-          spots={nearbyPanelSpots}
-          collapsed={!!selected && cardExpanded}
-          usingFallback={usingDefaultReferencePoint}
-          onSelectSpot={handleSpotSelect}
-        />
-      )}
       {selected && cardExpanded && (
         <Card spot={selected} currentPos={browsingPos} onClose={closeCard} userPrefs={userPrefs} isFavorite={favorites.has(selected.id)} onToggleFavorite={toggleFavorite} weather={weather} defaultExpanded={true} />
       )}
-      <NearbyToast toast={nearbyToast} />
       {/* GPSローディングオーバーレイ（同意後のみ表示） */}
       {!gpsReady && !demoMode && gpsConsented && (
         <div style={{
