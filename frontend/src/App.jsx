@@ -1343,6 +1343,45 @@ function OnboardingSurvey({ onComplete }) {
   )
 }
 
+// ── 未収集スタンプ最近接バー ─────────────────────────────────────────────
+function NearestStampBar({ spot, onTap }) {
+  if (!spot) return null
+  return (
+    <div
+      onClick={onTap}
+      style={{
+        position: 'fixed', bottom: 82, left: '50%', transform: 'translateX(-50%)',
+        width: 'min(380px, calc(100vw - 24px))', zIndex: 20, cursor: 'pointer',
+        background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+        borderRadius: 20, padding: '11px 16px',
+        boxShadow: '0 4px 22px rgba(0,0,0,0.13)',
+        border: '1.5px solid rgba(124,58,237,0.18)',
+        display: 'flex', alignItems: 'center', gap: 12,
+        animation: 'slideUp 0.25s ease-out',
+      }}
+    >
+      <span style={{
+        width: 40, height: 40, borderRadius: 13, flexShrink: 0,
+        background: 'linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 20,
+      }}>🎯</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 10, fontWeight: 800, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 2 }}>
+          Next stamp · {formatDistance(spot.dist)}
+        </div>
+        <div style={{ fontSize: 14, fontWeight: 800, color: '#1f2937', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {spot.spot_name_en}
+        </div>
+        <div style={{ fontSize: 11, color: THEME, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {spot.anime_title_en}
+        </div>
+      </div>
+      <span style={{ fontSize: 18, color: '#d1d5db', flexShrink: 0, lineHeight: 1 }}>›</span>
+    </div>
+  )
+}
+
 // ── 位置情報・コンパス許可カード ─────────────────────────────────────────
 function LocationPermissionCard({ onAllow, onSkip }) {
   return (
@@ -1882,6 +1921,15 @@ function App() {
     !activePos ||
     (demoMode && startPos?.lat === YOKOHAMA_STATION.lat && startPos?.lng === YOKOHAMA_STATION.lng)
   const nearbyReferenceMode = usingDefaultReferencePoint ? 'yokohama-station' : demoMode ? 'demo' : 'live'
+
+  // スタンプ未収集の中で最も近いスポット
+  const nearestUnstampedSpot = useMemo(() => {
+    if (!stampCardIds?.length || !spots.length) return null
+    return spots
+      .filter(s => stampCardIds.includes(s.id) && !acquiredStamps.has(s.id))
+      .map(s => ({ ...s, dist: haversine(browsingPos, { lat: s.lat, lng: s.lng }) }))
+      .sort((a, b) => a.dist - b.dist)[0] ?? null
+  }, [stampCardIds, acquiredStamps, spots, browsingPos])
 
   // 近接判定（ラベル表示用。DEMOは離れたらカードも自動クローズ）
   useEffect(() => {
@@ -2427,6 +2475,14 @@ function App() {
           total={stampCardIds.length}
           collected={[...acquiredStamps].filter(id => stampCardIds.includes(id)).length}
           onTap={() => setShowStampCard(true)}
+        />
+      )}
+
+      {/* 未収集スタンプ最近接バー（カード非展開時のみ表示） */}
+      {!showStampCard && !cardExpanded && nearestUnstampedSpot && (
+        <NearestStampBar
+          spot={nearestUnstampedSpot}
+          onTap={() => handleSpotSelect(nearestUnstampedSpot)}
         />
       )}
 
