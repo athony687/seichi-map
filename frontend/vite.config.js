@@ -7,9 +7,13 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          maps: ['@vis.gl/react-google-maps', '@googlemaps/markerclusterer'],
+        manualChunks(id) {
+          if (id.includes('@vis.gl/react-google-maps') || id.includes('@googlemaps')) {
+            return 'maps'
+          }
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/scheduler')) {
+            return 'vendor'
+          }
         },
       },
     },
