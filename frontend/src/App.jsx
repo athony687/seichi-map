@@ -99,6 +99,7 @@ const STAMP_KEY          = 'seichi_stamps'
 const STAMP_CARD_KEY     = 'seichi_stamp_card'
 const STAMP_RADIUS_METERS = 10000   // 10km 以内のスポットをカード対象に
 const STAMP_CARD_SIZE    = 10       // 最大スタンプ数
+const SELECTED_ANIME_KEY = 'seichi_selected_anime'
 
 const MAP_STYLES_LIGHT = [
   { featureType: 'landscape',          elementType: 'geometry', stylers: [{ color: '#fefdf5' }] },
@@ -1198,10 +1199,12 @@ const FAVORITES_KEY = 'seichi_favorites'
 const loadFavorites = () => { try { const r = localStorage.getItem(FAVORITES_KEY); return r ? new Set(JSON.parse(r)) : new Set() } catch { return new Set() } }
 
 // ── スタンプラリー用 localStorage ─────────────────────────────────────────
-const loadStamps    = () => { try { const r = localStorage.getItem(STAMP_KEY);     return r ? new Set(JSON.parse(r)) : new Set()  } catch { return new Set() } }
-const saveStamps    = s  => { try { localStorage.setItem(STAMP_KEY,     JSON.stringify([...s])) } catch {} }
-const loadStampCard = () => { try { const r = localStorage.getItem(STAMP_CARD_KEY); return r ? JSON.parse(r) : null               } catch { return null } }
-const saveStampCard = c  => { try { localStorage.setItem(STAMP_CARD_KEY, JSON.stringify(c))    } catch {} }
+const loadStamps       = () => { try { const r = localStorage.getItem(STAMP_KEY);     return r ? new Set(JSON.parse(r)) : new Set()  } catch { return new Set() } }
+const saveStamps       = s  => { try { localStorage.setItem(STAMP_KEY,     JSON.stringify([...s])) } catch {} }
+const loadStampCard    = () => { try { const r = localStorage.getItem(STAMP_CARD_KEY); return r ? JSON.parse(r) : null               } catch { return null } }
+const saveStampCard    = c  => { try { localStorage.setItem(STAMP_CARD_KEY, JSON.stringify(c))    } catch {} }
+const loadSelectedAnime = () => { try { const r = localStorage.getItem(SELECTED_ANIME_KEY); return r ? JSON.parse(r) : null } catch { return null } }
+const saveSelectedAnime = a => { try { if (a == null) localStorage.removeItem(SELECTED_ANIME_KEY); else localStorage.setItem(SELECTED_ANIME_KEY, JSON.stringify(a)) } catch {} }
 const saveFavorites = f => localStorage.setItem(FAVORITES_KEY, JSON.stringify([...f]))
 
 function QuestPanel({ spot }) {
@@ -2244,8 +2247,113 @@ function LocationPermissionCard({ onAllow, onSkip }) {
   )
 }
 
+// ── アニメ選択画面 ──────────────────────────────────────────────────────────
+function AnimeSelectScreen({ animes, currentAnime, onSelect, onClose }) {
+  const [picked, setPicked] = useState(currentAnime ?? null)
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9500,
+      background: 'linear-gradient(160deg, #0f0a2a 0%, #1e1b4b 40%, #312e81 80%, #4c1d95 100%)',
+      display: 'flex', flexDirection: 'column', overflowY: 'auto',
+    }}>
+      {/* ヘッダー */}
+      <div style={{ padding: '24px 20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ flex: 1, paddingRight: 12 }}>
+          <div style={{
+            display: 'inline-block', background: 'rgba(167,139,250,0.25)', borderRadius: 8,
+            padding: '3px 10px', fontSize: 10, fontWeight: 800, letterSpacing: '0.18em',
+            color: '#c4b5fd', textTransform: 'uppercase', marginBottom: 10,
+          }}>CHOOSE YOUR QUEST</div>
+          <div style={{ color: '#fff', fontSize: 24, fontWeight: 900, lineHeight: 1.2, marginBottom: 8 }}>
+            Which anime<br />will you explore?
+          </div>
+          <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13, lineHeight: 1.6 }}>
+            Select a series to set your pilgrimage route.
+          </div>
+        </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            style={{
+              background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)',
+              borderRadius: 22, color: '#fff', fontSize: 12, fontWeight: 800,
+              padding: '9px 18px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+            }}
+          >✕ Close</button>
+        )}
+      </div>
+
+      {/* アニメカード一覧 */}
+      <div style={{ padding: '20px 16px 0', display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
+        {animes.map(anime => {
+          const isSelected = picked?.id === anime.id
+          return (
+            <div
+              key={anime.id}
+              onClick={() => setPicked(anime)}
+              style={{
+                borderRadius: 18, padding: '16px 18px', cursor: 'pointer',
+                background: isSelected ? `${anime.color}cc` : 'rgba(255,255,255,0.06)',
+                border: `2px solid ${isSelected ? anime.color : 'rgba(255,255,255,0.1)'}`,
+                transition: 'all 0.18s',
+                boxShadow: isSelected ? `0 4px 24px ${anime.color}55` : 'none',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: '#fff', marginBottom: 5, lineHeight: 1.3 }}>
+                    {anime.title_short_en}
+                  </div>
+                  <div style={{ fontSize: 12, color: isSelected ? 'rgba(255,255,255,0.88)' : 'rgba(255,255,255,0.5)', lineHeight: 1.55 }}>
+                    {anime.description_en}
+                  </div>
+                </div>
+                <div style={{
+                  flexShrink: 0, marginLeft: 12, marginTop: 2,
+                  width: 22, height: 22, borderRadius: '50%',
+                  border: `2px solid ${isSelected ? '#fff' : 'rgba(255,255,255,0.25)'}`,
+                  background: isSelected ? '#fff' : 'transparent',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {isSelected && <div style={{ width: 10, height: 10, borderRadius: '50%', background: anime.color }} />}
+                </div>
+              </div>
+              <div style={{
+                marginTop: 8, fontSize: 11, fontWeight: 700,
+                color: isSelected ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.3)',
+              }}>
+                {anime.spot_ids.length} pilgrimage spot{anime.spot_ids.length !== 1 ? 's' : ''}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Start Quest ボタン */}
+      <div style={{ padding: '20px 16px 36px' }}>
+        <button
+          onClick={() => picked && onSelect(picked)}
+          disabled={!picked}
+          style={{
+            width: '100%', padding: '16px', borderRadius: 16, border: 'none',
+            background: picked
+              ? `linear-gradient(135deg, ${picked.color} 0%, ${picked.color}bb 100%)`
+              : 'rgba(255,255,255,0.1)',
+            color: picked ? '#fff' : 'rgba(255,255,255,0.3)',
+            fontSize: 16, fontWeight: 900, letterSpacing: '0.04em',
+            cursor: picked ? 'pointer' : 'default',
+            boxShadow: picked ? `0 4px 24px ${picked.color}66` : 'none',
+            transition: 'all 0.2s',
+          }}
+        >Start Quest →</button>
+      </div>
+    </div>
+  )
+}
+
 // ── スタンプカード全画面 ────────────────────────────────────────────────────
-function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose, nickname }) {
+function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose, nickname, animeColor, onChangeAnime }) {
   const cardSpots = stampCardIds
     ? spots.filter(s => stampCardIds.includes(s.id))
     : []
@@ -2253,6 +2361,8 @@ function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose, nicknam
   const collected = stampCardIds ? [...acquiredStamps].filter(id => stampCardIds.includes(id)).length : 0
   const remaining = total - collected
   const isComplete = total > 0 && collected === total
+
+  const accentColor = animeColor || '#a78bfa'
 
   return (
     <div style={{
@@ -2269,9 +2379,10 @@ function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose, nicknam
             </div>
           )}
           <div style={{
-            display: 'inline-block', background: 'rgba(167,139,250,0.25)', borderRadius: 8,
+            display: 'inline-block', borderRadius: 8,
             padding: '3px 10px', fontSize: 10, fontWeight: 800, letterSpacing: '0.18em',
-            color: '#c4b5fd', textTransform: 'uppercase', marginBottom: 10,
+            color: '#fff', textTransform: 'uppercase', marginBottom: 10,
+            background: `${accentColor}55`,
           }}>STAMP MISSION</div>
           <div style={{ color: '#fff', fontSize: 24, fontWeight: 900, lineHeight: 1.2, marginBottom: 8 }}>
             {nickname ? `${nickname}'s` : 'Your'}<br />Stamp Rally
@@ -2279,6 +2390,17 @@ function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose, nicknam
           <div style={{ color: 'rgba(255,255,255,0.62)', fontSize: 13, lineHeight: 1.6 }}>
             {nickname ? `${nickname}, collect every stamp nearby!` : 'Your mission: collect every stamp nearby.'}
           </div>
+          {onChangeAnime && (
+            <button
+              onClick={onChangeAnime}
+              style={{
+                marginTop: 10, background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.18)',
+                borderRadius: 20, color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700,
+                padding: '5px 12px', cursor: 'pointer',
+              }}
+            >🎬 Change Anime</button>
+          )}
         </div>
         <button
           onClick={onClose}
@@ -2298,7 +2420,7 @@ function StampCardScreen({ spots, stampCardIds, acquiredStamps, onClose, nicknam
             width: `${total > 0 ? (collected / total) * 100 : 0}%`,
             background: isComplete
               ? 'linear-gradient(90deg, #fde68a, #fb923c)'
-              : 'linear-gradient(90deg, #a78bfa, #f472b6)',
+              : `linear-gradient(90deg, ${accentColor}, #f472b6)`,
             borderRadius: 99, transition: 'width 0.6s cubic-bezier(0.34,1.56,0.64,1)',
           }} />
         </div>
@@ -3303,6 +3425,11 @@ function App() {
   const [animateSearch, setAnimateSearch]     = useState(false)
   const searchInputRef = useRef(null)
 
+  // ── アニメ選択 state ─────────────────────────────────────────────────────
+  const [animeList, setAnimeList]           = useState([])
+  const [selectedAnime, setSelectedAnime]   = useState(() => loadSelectedAnime())
+  const [showAnimeSelect, setShowAnimeSelect] = useState(false)
+
   // ── スタンプラリー state ─────────────────────────────────────────────────
   const stampCardGeneratedRef               = useRef(false)
   const [stampCardIds, setStampCardIds]     = useState(() => { const s = loadStampCard(); return s?.length > 0 ? s : null })
@@ -3401,21 +3528,37 @@ function App() {
     [spots, searchAnime])
 
 
-  // ── スタンプカード生成（spots読み込み後に一度だけ実行） ────────────────────
-  // 10km 以内のスポットを近い順に最大 STAMP_CARD_SIZE 件。10件未満ならその数をそのまま使う
+  // ── anime_list.json 読み込み ──────────────────────────────────────────────
   useEffect(() => {
-    if (stampCardIds?.length > 0 || stampCardGeneratedRef.current || !spots.length) return
-    stampCardGeneratedRef.current = true
-    const refPos = browsingPos
-    const card = spots
-      .map(s => ({ spot: s, dist: haversine(refPos, { lat: s.lat, lng: s.lng }) }))
-      .filter(({ dist }) => dist <= STAMP_RADIUS_METERS)
-      .sort((a, b) => a.dist - b.dist)
-      .slice(0, STAMP_CARD_SIZE)
-      .map(({ spot }) => spot.id)
-    setStampCardIds(card)
-    saveStampCard(card)
-  }, [spots]) // eslint-disable-line react-hooks/exhaustive-deps
+    fetch('/anime_list.json').then(r => r.json()).then(setAnimeList).catch(() => {})
+  }, [])
+
+  // ── スタンプカード生成（selectedAnime + spots 確定後に一度だけ実行） ───────
+  useEffect(() => {
+    if (!selectedAnime || !spots.length || stampCardIds?.length > 0) return
+    const ids = selectedAnime.spot_ids.filter(id => spots.some(s => s.id === id))
+    setStampCardIds(ids)
+    saveStampCard(ids)
+  }, [spots, selectedAnime]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleAnimeQuestSelect = useCallback(anime => {
+    setSelectedAnime(anime)
+    saveSelectedAnime(anime)
+    const ids = anime.spot_ids.filter(id => spots.some(s => s.id === id))
+    setStampCardIds(ids)
+    saveStampCard(ids)
+    setShowAnimeSelect(false)
+    setShowStampCard(true)
+  }, [spots])
+
+  const handleChangeAnime = useCallback(() => {
+    setSelectedAnime(null)
+    saveSelectedAnime(null)
+    setStampCardIds(null)
+    saveStampCard(null)
+    stampCardGeneratedRef.current = false
+    setShowAnimeSelect(true)
+  }, [])
 
   // ── ミッション発動（MISSION_TRIGGER_METERS 以内に未取得スタンプスポットが来たら表示） ──
   // ミッション中は新規発動しない。完了後に再判定する。
@@ -4114,7 +4257,7 @@ function App() {
         <StampMinibar
           total={stampCardIds.length}
           collected={[...acquiredStamps].filter(id => stampCardIds.includes(id)).length}
-          onTap={() => setShowStampCard(true)}
+          onTap={() => selectedAnime ? setShowStampCard(true) : setShowAnimeSelect(true)}
         />
       )}
 
@@ -4144,18 +4287,37 @@ function App() {
           onDone={name => {
             setUserPrefs(prev => ({ ...(prev || {}), nickname: name }))
             setShowNicknameScreen(false)
-            setShowStampCard(true)
+            if (selectedAnime) {
+              setShowStampCard(true)
+            } else {
+              setShowAnimeSelect(true)
+            }
+          }}
+        />
+      )}
+
+      {/* アニメ選択画面（アニメ未選択のままスタンプを開こうとしたとき / 初回ニックネーム後） */}
+      {(showAnimeSelect || (showStampCard && !selectedAnime)) && animeList.length > 0 && (
+        <AnimeSelectScreen
+          animes={animeList}
+          currentAnime={selectedAnime}
+          onSelect={handleAnimeQuestSelect}
+          onClose={() => {
+            setShowAnimeSelect(false)
+            if (!gpsConsented && !locationPermissionAsked) setShowLocationPrompt(true)
           }}
         />
       )}
 
       {/* スタンプラリー：全画面カード */}
-      {showStampCard && (
+      {showStampCard && selectedAnime && (
         <StampCardScreen
           spots={spots}
           stampCardIds={stampCardIds}
           acquiredStamps={acquiredStamps}
           nickname={userPrefs?.nickname}
+          animeColor={selectedAnime?.color}
+          onChangeAnime={handleChangeAnime}
           onClose={() => {
             setShowStampCard(false)
             if (!gpsConsented && !locationPermissionAsked) setShowLocationPrompt(true)

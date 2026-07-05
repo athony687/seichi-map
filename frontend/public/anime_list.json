@@ -1,0 +1,47 @@
+[
+  {
+    "id": "seishun-buta",
+    "title_ja": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+    "title_en": "Rascal Does Not Dream of Bunny Girl Senpai",
+    "title_short_en": "Bunny Girl Senpai",
+    "color": "#2196f3",
+    "description_en": "A story of supernatural phenomena tied to adolescent emotions, set in Fujisawa and Kamakura.",
+    "spot_ids": ["kugenuma-bunnygirl-01", "aobuta-fujisawa-station-01", "aobuta-katase-enoshima-01", "aobuta-enoshima-koya-01"]
+  },
+  {
+    "id": "megami-cafe",
+    "title_ja": "女神のカフェテラス",
+    "title_en": "The Cafe Terrace and Its Goddesses",
+    "title_short_en": "Goddess Cafe Terrace",
+    "color": "#ff9800",
+    "description_en": "A heartwarming story set around a seaside cafe in Kamakura and Enoshima.",
+    "spot_ids": ["miura-megami-poem-01", "megami-miura-market-01"]
+  },
+  {
+    "id": "initiald",
+    "title_ja": "頭文字D",
+    "title_en": "Initial D: Fifth Stage",
+    "title_short_en": "Initial D",
+    "color": "#f44336",
+    "description_en": "A legendary street racing story set on the mountain roads of Gunma and Hakone.",
+    "spot_ids": ["hakone-initiald-01"]
+  },
+  {
+    "id": "bocchi",
+    "title_ja": "ぼっち・ざ・ろっく！",
+    "title_en": "Bocchi the Rock!",
+    "title_short_en": "Bocchi the Rock!",
+    "color": "#e91e8c",
+    "description_en": "A band coming-of-age story set in Shimokitazawa and Shinjuku.",
+    "spot_ids": ["shimokitazawa-bocchi-01", "shimokitazawa-bocchi-02", "kanazawahakkei-bocchi-01"]
+  },
+  {
+    "id": "girlsbandcry",
+    "title_ja": "ガールズバンドクライ",
+    "title_en": "Girls Band Cry",
+    "title_short_en": "Girls Band Cry",
+    "color": "#9c27b0",
+    "description_en": "A passionate band story set in Kawasaki, following girls chasing their dreams.",
+    "spot_ids": ["kawasaki-girlsbandcry-01"]
+  }
+]
