@@ -4066,11 +4066,6 @@ function App() {
           }}
         >✅ {questProgress.completedCount}/{questProgress.totalQuestCount || 0}</button>
 
-        <GpsLocateButton
-          status={gpsStatus}
-          onLocate={() => setLocateTick(t => t + 1)}
-        />
-
         <button
           onClick={openDriveMode}
           title="Drive Mode"
@@ -4082,6 +4077,11 @@ function App() {
             letterSpacing: '0.04em',
           }}
         >🏁 Drive</button>
+
+        <GpsLocateButton
+          status={gpsStatus}
+          onLocate={() => setLocateTick(t => t + 1)}
+        />
 
       </div>
 
