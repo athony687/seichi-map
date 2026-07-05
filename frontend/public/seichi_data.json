@@ -759,17 +759,31 @@
     "area": "Shimokitazawa, Setagaya, Tokyo",
     "nearest_station": "Shimokitazawa Station South Exit",
     "access_note": "下北沢駅 南口徒歩5分。住所：東京都世田谷区北沢2-2-13 藤友ビル1F",
-    "photo_url": "",
+    "photo_url": "/quest-assets/bocchi-kokera.png",
     "tags": [
-      "indoor",
+      "izakaya",
       "food",
-      "walkable"
+      "experience",
+      "paid",
+      "indoor"
     ],
     "verified": true,
     "source": "user-provided",
     "generic_intro_en": "",
     "official_url": "https://bocchi.rocks/",
-    "hours": "Check store hours"
+    "hours": "Check store hours",
+    "quest_title": "居酒屋こけらで乾杯する",
+    "quest_place": "居酒屋こけら",
+    "quest_type": "Food Quest",
+    "quests": [
+      {
+        "category": "Food",
+        "title": "Cheers at Izakaya Kokera",
+        "description": "居酒屋こけらで乾杯しよう。外観や注文した料理・ドリンクの写真を残して。",
+        "photo_prompt": "Upload a photo from Izakaya Kokera, such as the exterior, food, or a drink for cheers.",
+        "impression_prompt": "What did you toast with?"
+      }
+    ]
   },
   {
     "id": "bocchi-enoshima-escar-01",
@@ -784,17 +798,31 @@
     "area": "Enoshima, Fujisawa, Kanagawa",
     "nearest_station": "Katase-Enoshima Station",
     "access_note": "片瀬江ノ島駅出口1から徒歩約13分。住所：神奈川県藤沢市江の島2丁目3番地",
-    "photo_url": "",
+    "photo_url": "/quest-assets/bocchi-enoshima-escar.png",
     "tags": [
-      "outdoor",
-      "walkable",
+      "escalator",
+      "experience",
+      "paid",
+      "indoor",
       "photo-spot"
     ],
     "verified": true,
     "source": "user-provided",
     "generic_intro_en": "",
     "official_url": "https://bocchi.rocks/",
-    "hours": "Typically 9:00–19:30 (paid, check seasonally)"
+    "hours": "Typically 9:00–19:30 (paid, check seasonally)",
+    "quest_title": "江の島エスカーに乗る",
+    "quest_place": "江の島エスカー",
+    "quest_type": "Experience Quest",
+    "quests": [
+      {
+        "category": "Experience",
+        "title": "Ride the Enoshima Escar",
+        "description": "江の島エスカーに乗ろう。入口や乗車中の雰囲気が分かる写真を残して。",
+        "photo_prompt": "Upload a photo that clearly shows your Enoshima Escar visit.",
+        "impression_prompt": "How did the blue-lit Escar feel?"
+      }
+    ]
   },
   {
     "id": "bocchi-enoshima-shrine-01",
@@ -811,15 +839,29 @@
     "access_note": "片瀬江ノ島駅 徒歩20〜25分。住所：神奈川県藤沢市江の島2-3-8",
     "photo_url": "",
     "tags": [
-      "outdoor",
       "shrine",
-      "photo-spot"
+      "photo-spot",
+      "experience",
+      "free",
+      "outdoor"
     ],
     "verified": true,
     "source": "user-provided",
     "generic_intro_en": "",
     "official_url": "https://bocchi.rocks/",
-    "hours": "Always open (grounds); Hoandon 8:30–17:00"
+    "hours": "Always open (grounds); Hoandon 8:30–17:00",
+    "quest_title": "江島神社の朱の大鳥居でお参りする",
+    "quest_place": "江島神社 朱の大鳥居",
+    "quest_type": "Experience Quest",
+    "quests": [
+      {
+        "category": "Experience",
+        "title": "Pray at the red torii of Enoshima Shrine",
+        "description": "江島神社の朱の大鳥居でお参りしよう。鳥居や参道が分かる写真を残して。",
+        "photo_prompt": "Upload a photo that clearly shows the red torii or approach to Enoshima Shrine.",
+        "impression_prompt": "What did you wish for?"
+      }
+    ]
   },
   {
     "verified": true,
@@ -1874,6 +1916,203 @@
         "description": "海岸線のチェックポイントを、安全運転クエストとして確認する。",
         "photo_prompt": "Upload a safely stopped coastal-route photo.",
         "impression_prompt": "What did the coastal sector add to the route set?"
+      }
+    ]
+  },
+  {
+    "verified": true,
+    "generic_intro_en": "",
+    "anime_title_ja": "ぼっち・ざ・ろっく！",
+    "anime_title_en": "Bocchi the Rock!",
+    "official_url": "https://bocchi.rocks/",
+    "id": "bocchi-marufuku-kawasaki-azalea-01",
+    "spot_name_ja": "丸福珈琲店 川崎アゼリア店",
+    "spot_name_en": "Marufuku Coffee Kawasaki Azalea",
+    "scene_description": "川崎アゼリア地下街にある喫茶店。メロンクリームソーダを注文するフードクエストとして扱う。",
+    "intro_short_en": "Marufuku Coffee Kawasaki Azalea adds a cafe order quest to the Bocchi the Rock! route. The goal is simple: order the melon cream soda and save the memory with a photo.",
+    "lat": 35.530618,
+    "lng": 139.698144,
+    "area": "Kawasaki, Kanagawa",
+    "nearest_station": "Kawasaki Station",
+    "access_note": "JR川崎駅から徒歩約1分、川崎アゼリア地下街",
+    "photo_url": "",
+    "tags": [
+      "cafe",
+      "food",
+      "walkable",
+      "paid",
+      "indoor"
+    ],
+    "source": "https://marufukucoffeeten.com/store/marufukucoffee-kawasaki/",
+    "hours": "Cafe hours vary",
+    "quest_title": "メロンクリームソーダを頼め",
+    "quest_place": "丸福珈琲店 川崎アゼリア店",
+    "quest_type": "Food Quest",
+    "quests": [
+      {
+        "category": "Food",
+        "title": "Order the melon cream soda",
+        "description": "すばるが注文していたメロンクリームソーダを注文し、写真を撮ろう。",
+        "photo_prompt": "Upload a photo of the melon cream soda you ordered at Marufuku Coffee.",
+        "impression_prompt": "How did the melon cream soda taste?"
+      }
+    ]
+  },
+  {
+    "verified": true,
+    "generic_intro_en": "",
+    "anime_title_ja": "ぼっち・ざ・ろっく！",
+    "anime_title_en": "Bocchi the Rock!",
+    "official_url": "https://bocchi.rocks/",
+    "id": "bocchi-nakamise-shopping-street-01",
+    "spot_name_ja": "川崎駅前仲見世通り",
+    "spot_name_en": "Nakamise Shopping Street",
+    "scene_description": "川崎駅東口側の飲食店が多い商店街。夜のネオンの中で写真を撮るフォトクエストとして扱う。",
+    "intro_short_en": "Nakamise Shopping Street brings the Kawasaki night-neon mood into the Bocchi the Rock! route. A photo among the lights makes a strong city album entry.",
+    "lat": 35.5299,
+    "lng": 139.7001,
+    "area": "Kawasaki, Kanagawa",
+    "nearest_station": "Kawasaki Station",
+    "access_note": "JR川崎駅東口から徒歩約2〜4分",
+    "photo_url": "",
+    "tags": [
+      "shopping-street",
+      "photo-spot",
+      "night-view",
+      "walkable",
+      "free",
+      "outdoor"
+    ],
+    "source": "https://www.kawasaki-nakamise.jp/access/",
+    "hours": "Always open; shop hours vary",
+    "quest_title": "ネオンの中で一枚",
+    "quest_place": "川崎駅前仲見世通り",
+    "quest_type": "Photo Quest",
+    "quests": [
+      {
+        "category": "Photo",
+        "title": "Take a photo among the night neon",
+        "description": "夜のネオンの中で写真を撮ろう。作中の雰囲気そのままの一枚を。",
+        "photo_prompt": "Upload a photo taken among the night neon on Nakamise Shopping Street.",
+        "impression_prompt": "What did the neon atmosphere feel like?"
+      }
+    ]
+  },
+  {
+    "verified": true,
+    "generic_intro_en": "",
+    "anime_title_ja": "ぼっち・ざ・ろっく！",
+    "anime_title_en": "Bocchi the Rock!",
+    "official_url": "https://bocchi.rocks/",
+    "id": "bocchi-tamagawa-miharashi-park-01",
+    "spot_name_ja": "多摩川見晴らし公園",
+    "spot_name_en": "Tamagawa Miharashi Park",
+    "scene_description": "多摩川沿いの見晴らしがよい公園。ギターまたはエアギターで景色と一緒に記録するアクションクエスト。",
+    "intro_short_en": "Tamagawa Miharashi Park gives the Bocchi route an open riverside stage. The quest invites visitors to play guitar, or air guitar, with the view behind them.",
+    "lat": 35.537768,
+    "lng": 139.699603,
+    "area": "Saiwai, Kawasaki",
+    "nearest_station": "Keikyu Kawasaki Station",
+    "access_note": "京急川崎駅から徒歩約10分、JR川崎駅から徒歩約12分",
+    "photo_url": "",
+    "tags": [
+      "park",
+      "riverside",
+      "action",
+      "photo-spot",
+      "free",
+      "outdoor"
+    ],
+    "source": "https://www.nightview.info/detail/tamagawa_park/",
+    "hours": "Always open",
+    "quest_title": "ギターを鳴らせ",
+    "quest_place": "多摩川見晴らし公園",
+    "quest_type": "Action Quest",
+    "quests": [
+      {
+        "category": "Action",
+        "title": "Play guitar (or air guitar)",
+        "description": "ギターを演奏（またはエアギター）してみよう。景色をバックに1曲。",
+        "photo_prompt": "Upload a photo of your guitar or air-guitar moment at Tamagawa Miharashi Park.",
+        "impression_prompt": "What song would fit this view?"
+      }
+    ]
+  },
+  {
+    "verified": true,
+    "generic_intro_en": "",
+    "anime_title_ja": "ぼっち・ざ・ろっく！",
+    "anime_title_en": "Bocchi the Rock!",
+    "official_url": "https://bocchi.rocks/",
+    "id": "bocchi-yakou-yu-bathhouse-01",
+    "spot_name_ja": "矢向湯",
+    "spot_name_en": "Yakou-yu Bathhouse",
+    "scene_description": "横浜市鶴見区矢向にある銭湯。入浴してリフレッシュする体験クエストとして扱う。",
+    "intro_short_en": "Yakou-yu Bathhouse adds a local refresh stop to the Bocchi route. The quest is about experiencing a neighborhood sento and recording the visit respectfully.",
+    "lat": 35.5378,
+    "lng": 139.6807,
+    "area": "Tsurumi, Yokohama",
+    "nearest_station": "Yakou Station",
+    "access_note": "JR南武線 矢向駅から徒歩約5分",
+    "photo_url": "",
+    "tags": [
+      "bathhouse",
+      "experience",
+      "paid",
+      "indoor"
+    ],
+    "source": "https://k-o-i.jp/koten/yakouyu/",
+    "hours": "15:00-22:00; irregular holidays",
+    "quest_title": "銭湯でリフレッシュ",
+    "quest_place": "矢向湯",
+    "quest_type": "Experience Quest",
+    "quests": [
+      {
+        "category": "Experience",
+        "title": "Take a bath and refresh",
+        "description": "銭湯に入ってリフレッシュしよう。地元の銭湯文化も味わって。",
+        "photo_prompt": "Upload a respectful exterior or after-bath memory photo from Yakou-yu. Do not photograph bathing areas.",
+        "impression_prompt": "How refreshed did you feel?"
+      }
+    ]
+  },
+  {
+    "verified": true,
+    "generic_intro_en": "",
+    "anime_title_ja": "ぼっち・ざ・ろっく！",
+    "anime_title_en": "Bocchi the Rock!",
+    "official_url": "https://bocchi.rocks/",
+    "id": "bocchi-minamikawara-nakayoshi-maru-01",
+    "spot_name_ja": "南河原公園 なかよし丸",
+    "spot_name_en": "Minamikawara Park \"Nakayoshi-maru\"",
+    "scene_description": "南河原公園にある船型遊具なかよし丸。遊具でひと休みする体験クエストとして扱う。",
+    "intro_short_en": "Minamikawara Park’s Nakayoshi-maru ship playground adds a playful rest stop to the Bocchi route. It is a small local-memory quest built around the park’s landmark play structure.",
+    "lat": 35.536945,
+    "lng": 139.688956,
+    "area": "Saiwai, Kawasaki",
+    "nearest_station": "Yakou Station",
+    "access_note": "JR矢向駅から徒歩約12分、または川崎駅西口からバス",
+    "photo_url": "",
+    "tags": [
+      "park",
+      "playground",
+      "experience",
+      "photo-spot",
+      "free",
+      "outdoor"
+    ],
+    "source": "https://www.city.kawasaki.jp/530/page/0000018631.html",
+    "hours": "Always open",
+    "quest_title": "船の遊具でひと休み",
+    "quest_place": "南河原公園 なかよし丸",
+    "quest_type": "Experience Quest",
+    "quests": [
+      {
+        "category": "Experience",
+        "title": "Relax on the ship playground \"Nakayoshi-maru\"",
+        "description": "船の遊具（なかよし丸）でゆったり過ごそう。子供の頃を思い出しながら。",
+        "photo_prompt": "Upload a photo that clearly shows the Nakayoshi-maru ship playground.",
+        "impression_prompt": "What did this park remind you of?"
       }
     ]
   }

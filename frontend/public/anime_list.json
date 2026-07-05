@@ -64,7 +64,19 @@
     "title_short_en": "Bocchi the Rock!",
     "color": "#e91e8c",
     "description_en": "A band coming-of-age story set in Shimokitazawa and Shinjuku.",
-    "spot_ids": ["shimokitazawa-bocchi-01", "shimokitazawa-bocchi-02", "kanazawahakkei-bocchi-01", "bocchi-kokera-01", "bocchi-enoshima-escar-01", "bocchi-enoshima-shrine-01"]
+    "spot_ids": [
+      "shimokitazawa-bocchi-01",
+      "shimokitazawa-bocchi-02",
+      "kanazawahakkei-bocchi-01",
+      "bocchi-kokera-01",
+      "bocchi-enoshima-escar-01",
+      "bocchi-enoshima-shrine-01",
+      "bocchi-marufuku-kawasaki-azalea-01",
+      "bocchi-nakamise-shopping-street-01",
+      "bocchi-tamagawa-miharashi-park-01",
+      "bocchi-yakou-yu-bathhouse-01",
+      "bocchi-minamikawara-nakayoshi-maru-01"
+    ]
   },
   {
     "id": "girlsbandcry",
@@ -73,6 +85,11 @@
     "title_short_en": "Girls Band Cry",
     "color": "#9c27b0",
     "description_en": "A passionate band story set in Kawasaki, following girls chasing their dreams.",
-    "spot_ids": ["kawasaki-girlsbandcry-01", "gbc-lazona-kawasaki-01", "gbc-picasso-ginryugai-01", "gbc-yoshinoya-kawasaki-01"]
+    "spot_ids": [
+      "kawasaki-girlsbandcry-01",
+      "gbc-lazona-kawasaki-01",
+      "gbc-picasso-ginryugai-01",
+      "gbc-yoshinoya-kawasaki-01"
+    ]
   }
 ]
