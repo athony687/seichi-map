@@ -45,7 +45,17 @@
     "title_short_en": "Initial D",
     "color": "#f44336",
     "description_en": "A legendary street racing story set on the mountain roads of Gunma and Hakone.",
-    "spot_ids": ["hakone-initiald-01"]
+    "spot_ids": [
+      "hakone-initiald-01",
+      "initiald-turnpike-01",
+      "initiald-yabitsu-01",
+      "initiald-ashinoko-gt-01",
+      "initiald-nagao-01",
+      "initiald-manazuru-01",
+      "initiald-odawara-pikes-peak-01",
+      "initiald-tsubaki-line-01",
+      "initiald-seaside-double-lane-01"
+    ]
   },
   {
     "id": "bocchi",

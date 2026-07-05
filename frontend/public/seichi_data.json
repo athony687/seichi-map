@@ -1543,5 +1543,317 @@
         "impression_prompt": "How did this final Miura stop feel?"
       }
     ]
+  },
+  {
+    "verified": false,
+    "source": "user-provided route image",
+    "generic_intro_en": "",
+    "id": "initiald-turnpike-01",
+    "spot_name_ja": "箱根ターンパイク",
+    "spot_name_en": "Hakone Turnpike",
+    "anime_title_ja": "頭文字D Fifth Stage",
+    "anime_title_en": "Initial D: Fifth Stage",
+    "scene_description": "小田原料金所からスカイラウンジ方面へ伸びる有料道路。Drive Modeでは速度ではなく、滑らかな走行と安全なチェックポイント通過を扱う。",
+    "intro_short_en": "Hakone Turnpike gives the Initial D route set a wider, faster-looking mountain road, but the app keeps it framed as a respectful safe-drive quest. The route card highlights checkpoints such as the tollgate, bridge sector, steep grade sign, and Sky Lounge side.",
+    "lat": 35.2183,
+    "lng": 139.0264,
+    "area": "Hakone / Odawara, Kanagawa",
+    "nearest_station": "Odawara Station",
+    "access_note": "小田原方面から車でアクセス。有料道路・公道のため安全第一",
+    "photo_url": "/quest-assets/initiald-turnpike.jpg",
+    "tags": [
+      "driving-route",
+      "scenic",
+      "paid",
+      "caution-active-road",
+      "outdoor"
+    ],
+    "official_url": "",
+    "hours": "Check road hours and conditions",
+    "quest_title": "Turnpike Safe Drive Quest",
+    "quest_place": "箱根ターンパイク",
+    "quest_type": "Drive Mode",
+    "quests": [
+      {
+        "category": "Drive",
+        "title": "ターンパイクを安全ルートとして開く",
+        "description": "Drive Modeでルート、チェックポイント、安全スコアを確認する。",
+        "photo_prompt": "Upload a photo taken only after safely stopping near the route.",
+        "impression_prompt": "Which Turnpike sector stood out?"
+      }
+    ]
+  },
+  {
+    "verified": false,
+    "source": "user-provided route image",
+    "generic_intro_en": "",
+    "id": "initiald-yabitsu-01",
+    "spot_name_ja": "ヤビツ峠",
+    "spot_name_en": "Yabitsu Pass",
+    "anime_title_ja": "頭文字D Fifth Stage",
+    "anime_title_en": "Initial D: Fifth Stage",
+    "scene_description": "秦野・宮ヶ瀬方面を結ぶ狭い峠道。Drive Modeでは車線減少やブラインド区間を意識した安全運転クエストとして扱う。",
+    "intro_short_en": "Yabitsu Pass adds a narrow, technical touge route to the Initial D collection. Its quest copy emphasizes patience, clean checkpoint logging, and respect for local traffic instead of speed.",
+    "lat": 35.4212,
+    "lng": 139.2122,
+    "area": "Hadano / Kiyokawa, Kanagawa",
+    "nearest_station": "Hadano Station",
+    "access_note": "秦野駅方面からバスまたは車でアクセス。道幅が狭いため安全第一",
+    "photo_url": "/quest-assets/initiald-yabitsu.jpg",
+    "tags": [
+      "driving-route",
+      "narrow-road",
+      "free",
+      "caution-active-road",
+      "outdoor"
+    ],
+    "official_url": "",
+    "hours": "Always open, subject to road conditions",
+    "quest_title": "Yabitsu Safe Drive Quest",
+    "quest_place": "ヤビツ峠",
+    "quest_type": "Drive Mode",
+    "quests": [
+      {
+        "category": "Drive",
+        "title": "ヤビツ峠を安全ルートとして開く",
+        "description": "狭い公道として、慎重な走行とチェックポイント確認を重視する。",
+        "photo_prompt": "Upload a safe stopped photo near a viewpoint or legal parking area.",
+        "impression_prompt": "What safety point did you pay attention to?"
+      }
+    ]
+  },
+  {
+    "verified": false,
+    "source": "user-provided route image",
+    "generic_intro_en": "",
+    "id": "initiald-ashinoko-gt-01",
+    "spot_name_ja": "芦ノ湖GT",
+    "spot_name_en": "Lake Ashi GT",
+    "anime_title_ja": "頭文字D Fifth Stage",
+    "anime_title_en": "Initial D: Fifth Stage",
+    "scene_description": "芦ノ湖周辺を複数セクターで回るドライブルート。湖畔観光地のため、Drive Modeでは安全な観光ルートとして扱う。",
+    "intro_short_en": "Lake Ashi GT turns the Initial D side of the app into a multi-sector lake route. The quest treats the roads around Ashinoko as a scenic pilgrimage loop with checkpoints instead of a race course.",
+    "lat": 35.2188,
+    "lng": 139.0485,
+    "area": "Lake Ashi, Hakone",
+    "nearest_station": "Hakone-Yumoto Station",
+    "access_note": "箱根湯本駅からバスまたは車で芦ノ湖方面へアクセス",
+    "photo_url": "/quest-assets/initiald-ashinoko-gt.jpg",
+    "tags": [
+      "driving-route",
+      "lake",
+      "scenic",
+      "caution-active-road",
+      "outdoor"
+    ],
+    "official_url": "",
+    "hours": "Always open, subject to road conditions",
+    "quest_title": "Lake Ashi GT Safe Drive Quest",
+    "quest_place": "芦ノ湖GT",
+    "quest_type": "Drive Mode",
+    "quests": [
+      {
+        "category": "Drive",
+        "title": "芦ノ湖GTを安全ルートとして開く",
+        "description": "芦ノ湖周辺のセクターを、観光地として安全に確認する。",
+        "photo_prompt": "Upload a safe stopped photo with Lake Ashi or a route landmark.",
+        "impression_prompt": "Which lake sector felt most memorable?"
+      }
+    ]
+  },
+  {
+    "verified": false,
+    "source": "user-provided route image",
+    "generic_intro_en": "",
+    "id": "initiald-nagao-01",
+    "spot_name_ja": "長尾峠",
+    "spot_name_en": "Nagao Pass",
+    "anime_title_ja": "頭文字D Fifth Stage",
+    "anime_title_en": "Initial D: Fifth Stage",
+    "scene_description": "富士見茶屋方面へ続く長尾峠の山道。Drive Modeではヘアピンや側溝区間を安全に記録する。",
+    "intro_short_en": "Nagao Pass adds a Fuji-view touge flavor to the Initial D route set. It is represented as a cautious mountain pass quest with compact checkpoints and a strong safety framing.",
+    "lat": 35.2633,
+    "lng": 138.9754,
+    "area": "Hakone / Gotemba border",
+    "nearest_station": "Gora Station",
+    "access_note": "箱根方面または御殿場方面から車でアクセス。道幅と見通しに注意",
+    "photo_url": "/quest-assets/initiald-nagao.jpg",
+    "tags": [
+      "driving-route",
+      "mountain-pass",
+      "free",
+      "caution-active-road",
+      "outdoor"
+    ],
+    "official_url": "",
+    "hours": "Always open, subject to road conditions",
+    "quest_title": "Nagao Pass Safe Drive Quest",
+    "quest_place": "長尾峠",
+    "quest_type": "Drive Mode",
+    "quests": [
+      {
+        "category": "Drive",
+        "title": "長尾峠を安全ルートとして開く",
+        "description": "峠道のチェックポイントを、安全な走行記録として扱う。",
+        "photo_prompt": "Upload a photo taken only from a safe stopped location.",
+        "impression_prompt": "What made this pass feel different?"
+      }
+    ]
+  },
+  {
+    "verified": false,
+    "source": "user-provided route image",
+    "generic_intro_en": "",
+    "id": "initiald-manazuru-01",
+    "spot_name_ja": "真鶴道路・真鶴半島",
+    "spot_name_en": "Manazuru Peninsula",
+    "anime_title_ja": "頭文字D Fifth Stage",
+    "anime_title_en": "Initial D: Fifth Stage",
+    "scene_description": "真鶴道路料金所から半島方面へ回る海沿いルート。Drive Modeでは町中と海岸線を安全に巡るクエストとして扱う。",
+    "intro_short_en": "Manazuru Peninsula brings a coastal loop into the Initial D collection. The route balances town roads, seaside corners, and safe stopped-photo checkpoints.",
+    "lat": 35.1441,
+    "lng": 139.1548,
+    "area": "Manazuru, Kanagawa",
+    "nearest_station": "JR Manazuru Station",
+    "access_note": "JR真鶴駅周辺または真鶴道路方面からアクセス。交通量と歩行者に注意",
+    "photo_url": "/quest-assets/initiald-manazuru.jpg",
+    "tags": [
+      "driving-route",
+      "coastal",
+      "scenic",
+      "caution-active-road",
+      "outdoor"
+    ],
+    "official_url": "",
+    "hours": "Always open, subject to road conditions",
+    "quest_title": "Manazuru Safe Drive Quest",
+    "quest_place": "真鶴道路・真鶴半島",
+    "quest_type": "Drive Mode",
+    "quests": [
+      {
+        "category": "Drive",
+        "title": "真鶴ルートを安全に開く",
+        "description": "海沿いと町中のルートを、安全なチェックポイント制で記録する。",
+        "photo_prompt": "Upload a safe stopped photo near Manazuru or the coastal route.",
+        "impression_prompt": "How did the seaside route feel?"
+      }
+    ]
+  },
+  {
+    "verified": false,
+    "source": "user-provided route image",
+    "generic_intro_en": "",
+    "id": "initiald-odawara-pikes-peak-01",
+    "spot_name_ja": "小田原パイクスピーク",
+    "spot_name_en": "Odawara Pikes Peak",
+    "anime_title_ja": "頭文字D Fifth Stage",
+    "anime_title_en": "Initial D: Fifth Stage",
+    "scene_description": "小田原側からターンパイク、芦ノ湖方面へつながる長い複合ルート。Drive Modeでは複数セクターの安全ログとして扱う。",
+    "intro_short_en": "Odawara Pikes Peak is the long-form route entry for the Initial D route set. It connects Turnpike-like climbing, lake-side sectors, and a wider checkpoint story for presentation demos.",
+    "lat": 35.2299,
+    "lng": 139.1075,
+    "area": "Odawara / Hakone, Kanagawa",
+    "nearest_station": "Odawara Station",
+    "access_note": "小田原駅方面から車でアクセス。複数道路を通るため事前に交通情報を確認",
+    "photo_url": "/quest-assets/initiald-odawara-pikes-peak.jpg",
+    "tags": [
+      "driving-route",
+      "long-route",
+      "scenic",
+      "caution-active-road",
+      "outdoor"
+    ],
+    "official_url": "",
+    "hours": "Check road hours and conditions",
+    "quest_title": "Odawara Pikes Peak Safe Drive Quest",
+    "quest_place": "小田原パイクスピーク",
+    "quest_type": "Drive Mode",
+    "quests": [
+      {
+        "category": "Drive",
+        "title": "小田原パイクスピークを安全に開く",
+        "description": "長いルートを、速度ではなくセクター確認と安全スコアで見る。",
+        "photo_prompt": "Upload a safe stopped photo from a legal stopping point on the route.",
+        "impression_prompt": "Which sector connected the route best?"
+      }
+    ]
+  },
+  {
+    "verified": false,
+    "source": "user-provided route image",
+    "generic_intro_en": "",
+    "id": "initiald-tsubaki-line-01",
+    "spot_name_ja": "椿ライン",
+    "spot_name_en": "Tsubaki Line",
+    "anime_title_ja": "頭文字D Fifth Stage",
+    "anime_title_en": "Initial D: Fifth Stage",
+    "scene_description": "湯河原から大観山方面へ伸びるヘアピンの多い山道。Drive Modeでは急カーブを安全スコアの対象として扱う。",
+    "intro_short_en": "Tsubaki Line adds one of the most recognizable Hakone-area mountain roads to Drive Mode. The route is framed around smoothness, corner stability, and safe checkpoints.",
+    "lat": 35.1903,
+    "lng": 139.0431,
+    "area": "Yugawara / Hakone, Kanagawa",
+    "nearest_station": "Yugawara Station",
+    "access_note": "湯河原駅方面から車でアクセス。カーブが多いため安全第一",
+    "photo_url": "/quest-assets/initiald-tsubaki-line.jpg",
+    "tags": [
+      "driving-route",
+      "hairpins",
+      "mountain-road",
+      "caution-active-road",
+      "outdoor"
+    ],
+    "official_url": "",
+    "hours": "Always open, subject to road conditions",
+    "quest_title": "Tsubaki Line Safe Drive Quest",
+    "quest_place": "椿ライン",
+    "quest_type": "Drive Mode",
+    "quests": [
+      {
+        "category": "Drive",
+        "title": "椿ラインを安全ルートとして開く",
+        "description": "ヘアピン区間を、スムーズさと安全な通過で記録する。",
+        "photo_prompt": "Upload a safe stopped photo near the route, never while driving.",
+        "impression_prompt": "Which checkpoint felt like the route's signature?"
+      }
+    ]
+  },
+  {
+    "verified": false,
+    "source": "user-provided route image",
+    "generic_intro_en": "",
+    "id": "initiald-seaside-double-lane-01",
+    "spot_name_ja": "シーサイドダブルレーン",
+    "spot_name_en": "Seaside Double Lane",
+    "anime_title_ja": "頭文字D / MFゴースト",
+    "anime_title_en": "Initial D: Fifth Stage",
+    "scene_description": "熱海ビーチラインから真鶴方面へ伸びる海沿いルート。MFG第四戦の画像資料をもとに、海岸線の安全ドライブクエストとして追加する。",
+    "intro_short_en": "Seaside Double Lane gives the route collection a bright coastal sector inspired by the Atami Beach Line and Manazuru side. Drive Mode keeps the focus on calm route logging, not racing.",
+    "lat": 35.1246,
+    "lng": 139.1015,
+    "area": "Atami / Manazuru coast",
+    "nearest_station": "Atami Station",
+    "access_note": "熱海駅・真鶴方面から車でアクセス。有料道路区間と交通状況を確認",
+    "photo_url": "/quest-assets/initiald-seaside-double-lane.jpg",
+    "tags": [
+      "driving-route",
+      "coastal",
+      "paid",
+      "caution-active-road",
+      "outdoor"
+    ],
+    "official_url": "",
+    "hours": "Check road hours and conditions",
+    "quest_title": "Seaside Double Lane Safe Drive Quest",
+    "quest_place": "シーサイドダブルレーン",
+    "quest_type": "Drive Mode",
+    "quests": [
+      {
+        "category": "Drive",
+        "title": "海沿いルートを安全に開く",
+        "description": "海岸線のチェックポイントを、安全運転クエストとして確認する。",
+        "photo_prompt": "Upload a safely stopped coastal-route photo.",
+        "impression_prompt": "What did the coastal sector add to the route set?"
+      }
+    ]
   }
 ]

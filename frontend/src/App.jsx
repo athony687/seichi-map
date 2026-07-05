@@ -30,7 +30,6 @@ const THEME = '#7c3aed'
 const THEME_DARK = '#4c1d95'
 const LOCATION_CONSENTED_KEY = 'seichi_location_consented'
 const ENABLE_ONBOARDING_SURVEY = false
-const INITIAL_D_DRIVE_SPOT_ID = 'hakone-initiald-01'
 const DRIVE_CHECKPOINT_RADIUS_METERS = 180
 const DRIVE_SESSIONS_KEY = 'seichi_drive_sessions'
 const DRIVE_ACCELERATION_ALPHA = 0.25
@@ -39,43 +38,242 @@ const DRIVE_SPEED_KALMAN_MEASUREMENT_NOISE = 6
 const DRIVE_HARD_ACCELERATION_G = 0.55
 const DRIVE_HARD_TURN_DEG_PER_SEC = 24
 
-const HAKONE_DRIVE_ROUTE = {
-  id: 'hakone-old-road-drive',
-  spotId: INITIAL_D_DRIVE_SPOT_ID,
-  title: 'Hakone Old Road Safe Drive',
-  subtitle: 'Sacred place as a road, not a pin.',
-  tags: ['GPS + DeviceMotion', 'Kalman Speed', 'Safety Score', 'Demo Drive'],
-  safetyNote: 'This mode scores smoothness, safe pacing, and respect. It is not a speed challenge.',
-  routePoints: [
-    { lat: 35.2327, lng: 139.1047 },
-    { lat: 35.2269, lng: 139.0964 },
-    { lat: 35.2225, lng: 139.0865 },
-    { lat: 35.2182, lng: 139.0782 },
-    { lat: 35.2146, lng: 139.0717 },
-    { lat: 35.2114, lng: 139.0648 },
-    { lat: 35.2091, lng: 139.0587 },
-    { lat: 35.2057, lng: 139.0488 },
-    { lat: 35.2027, lng: 139.0336 },
-  ],
-  checkpoints: [
-    { id: 'start', label: 'Start Gate', lat: 35.2327, lng: 139.1047 },
-    { id: 'lower-curves', label: 'Lower Curve Sector', lat: 35.2225, lng: 139.0865 },
-    { id: 'nanamagari', label: 'Nanamagari Core', lat: 35.2146, lng: 139.0717 },
-    { id: 'rest', label: 'Scenic Cooldown', lat: 35.2091, lng: 139.0587 },
-    { id: 'goal', label: 'Goal Gate', lat: 35.2027, lng: 139.0336 },
-  ],
-  demoDrivePoints: [
-    { timestamp: 0, lat: 35.2327, lng: 139.1047, speedKmh: 18, acceleration: 0.12 },
-    { timestamp: 900, lat: 35.2269, lng: 139.0964, speedKmh: 24, acceleration: 0.24 },
-    { timestamp: 1800, lat: 35.2225, lng: 139.0865, speedKmh: 28, acceleration: 0.31 },
-    { timestamp: 2700, lat: 35.2182, lng: 139.0782, speedKmh: 26, acceleration: -0.28 },
-    { timestamp: 3600, lat: 35.2146, lng: 139.0717, speedKmh: 22, acceleration: -0.36 },
-    { timestamp: 4500, lat: 35.2114, lng: 139.0648, speedKmh: 24, acceleration: 0.18 },
-    { timestamp: 5400, lat: 35.2091, lng: 139.0587, speedKmh: 20, acceleration: -0.16 },
-    { timestamp: 6300, lat: 35.2057, lng: 139.0488, speedKmh: 27, acceleration: 0.27 },
-    { timestamp: 7200, lat: 35.2027, lng: 139.0336, speedKmh: 25, acceleration: -0.12 },
-  ],
-}
+const createDemoDrivePoints = (routePoints, speeds = []) =>
+  routePoints.map((point, index) => ({
+    timestamp: index * 900,
+    ...point,
+    speedKmh: speeds[index] ?? 22 + (index % 4) * 3,
+    acceleration: index % 3 === 0 ? 0.16 : index % 3 === 1 ? -0.2 : 0.08,
+  }))
+
+const DRIVE_ROUTES = [
+  {
+    id: 'hakone-old-road-drive',
+    spotId: 'hakone-initiald-01',
+    title: 'Hakone Old Road Safe Drive',
+    subtitle: 'Nanamagari / Hakone Old Road',
+    tags: ['GPS + DeviceMotion', 'Kalman Speed', 'Safety Score', 'Demo Drive'],
+    safetyNote: 'This mode scores smoothness, safe pacing, and respect. It is not a speed challenge.',
+    routePoints: [
+      { lat: 35.2327, lng: 139.1047 },
+      { lat: 35.2269, lng: 139.0964 },
+      { lat: 35.2225, lng: 139.0865 },
+      { lat: 35.2182, lng: 139.0782 },
+      { lat: 35.2146, lng: 139.0717 },
+      { lat: 35.2114, lng: 139.0648 },
+      { lat: 35.2091, lng: 139.0587 },
+      { lat: 35.2057, lng: 139.0488 },
+      { lat: 35.2027, lng: 139.0336 },
+    ],
+    checkpoints: [
+      { id: 'start', label: 'Start Gate', lat: 35.2327, lng: 139.1047 },
+      { id: 'lower-curves', label: 'Lower Curve Sector', lat: 35.2225, lng: 139.0865 },
+      { id: 'nanamagari', label: 'Nanamagari Core', lat: 35.2146, lng: 139.0717 },
+      { id: 'rest', label: 'Scenic Cooldown', lat: 35.2091, lng: 139.0587 },
+      { id: 'goal', label: 'Goal Gate', lat: 35.2027, lng: 139.0336 },
+    ],
+  },
+  {
+    id: 'turnpike-drive',
+    spotId: 'initiald-turnpike-01',
+    title: 'Hakone Turnpike Safe Drive',
+    subtitle: 'Odawara tollgate to Sky Lounge',
+    tags: ['Wide Road', 'Uphill', 'Safety Score', 'Demo Drive'],
+    safetyNote: 'Turnpike is a public toll road. Keep the route respectful and never treat Drive Mode as a race.',
+    routePoints: [
+      { lat: 35.2467, lng: 139.1353 },
+      { lat: 35.2396, lng: 139.1188 },
+      { lat: 35.2312, lng: 139.0997 },
+      { lat: 35.2228, lng: 139.0796 },
+      { lat: 35.2159, lng: 139.0588 },
+      { lat: 35.2147, lng: 139.0396 },
+      { lat: 35.2183, lng: 139.0264 },
+    ],
+    checkpoints: [
+      { id: 'tollgate', label: 'Tollgate', lat: 35.2467, lng: 139.1353 },
+      { id: 'emergency-bay', label: 'Emergency Bay', lat: 35.2396, lng: 139.1188 },
+      { id: 'bridge', label: 'Bridge Sector', lat: 35.2312, lng: 139.0997 },
+      { id: 'steep-grade', label: 'Steep Grade Sign', lat: 35.2159, lng: 139.0588 },
+      { id: 'sky-lounge', label: 'Sky Lounge', lat: 35.2183, lng: 139.0264 },
+    ],
+  },
+  {
+    id: 'yabitsu-pass-drive',
+    spotId: 'initiald-yabitsu-01',
+    title: 'Yabitsu Pass Safe Drive',
+    subtitle: 'Route 70 mountain sector',
+    tags: ['Narrow Road', 'Touge', 'Safety Score', 'Demo Drive'],
+    safetyNote: 'Yabitsu has narrow lanes and mixed local traffic. Drive Mode rewards patience and clean checkpoint logging.',
+    routePoints: [
+      { lat: 35.4324, lng: 139.2195 },
+      { lat: 35.4286, lng: 139.2149 },
+      { lat: 35.4212, lng: 139.2122 },
+      { lat: 35.4146, lng: 139.2166 },
+      { lat: 35.4085, lng: 139.2212 },
+      { lat: 35.4018, lng: 139.2266 },
+      { lat: 35.3963, lng: 139.2314 },
+      { lat: 35.3905, lng: 139.2369 },
+    ],
+    checkpoints: [
+      { id: 'shop', label: 'Pass Shop', lat: 35.4324, lng: 139.2195 },
+      { id: 'double-guardrail', label: 'Double Guardrail', lat: 35.4212, lng: 139.2122 },
+      { id: 'lane-narrows', label: 'Lane Narrows', lat: 35.4085, lng: 139.2212 },
+      { id: 'shrine', label: 'Asama Shrine Side', lat: 35.3905, lng: 139.2369 },
+    ],
+  },
+  {
+    id: 'ashinoko-gt-drive',
+    spotId: 'initiald-ashinoko-gt-01',
+    title: 'Lake Ashi GT Safe Drive',
+    subtitle: 'Three-sector Ashinoko loop',
+    tags: ['Lake Route', 'Multi Sector', 'Safety Score', 'Demo Drive'],
+    safetyNote: 'This is a sightseeing lake road, not a closed course. Stop only in legal places and respect local visitors.',
+    routePoints: [
+      { lat: 35.1932, lng: 139.0245 },
+      { lat: 35.2133, lng: 139.0165 },
+      { lat: 35.2358, lng: 138.9974 },
+      { lat: 35.2471, lng: 139.0168 },
+      { lat: 35.2372, lng: 139.0441 },
+      { lat: 35.2188, lng: 139.0485 },
+      { lat: 35.2055, lng: 139.0397 },
+      { lat: 35.1932, lng: 139.0245 },
+    ],
+    checkpoints: [
+      { id: 'hakone-pass', label: 'Hakone Pass Tollgate', lat: 35.1932, lng: 139.0245 },
+      { id: 'skyline', label: 'Ashinoko Skyline', lat: 35.2133, lng: 139.0165 },
+      { id: 'lake-tollgate', label: 'Lake Tollgate', lat: 35.2358, lng: 138.9974 },
+      { id: 'motohakone', label: 'Moto-Hakone', lat: 35.2188, lng: 139.0485 },
+      { id: 'goal', label: 'Loop Goal', lat: 35.1932, lng: 139.0245 },
+    ],
+  },
+  {
+    id: 'nagao-pass-drive',
+    spotId: 'initiald-nagao-01',
+    title: 'Nagao Pass Safe Drive',
+    subtitle: 'Nagao Touge / Fuji-view sector',
+    tags: ['Pass Road', 'Hairpins', 'Safety Score', 'Demo Drive'],
+    safetyNote: 'Nagao Pass is narrow and scenic. Drive Mode treats it as a careful sightseeing route.',
+    routePoints: [
+      { lat: 35.2856, lng: 138.9818 },
+      { lat: 35.2802, lng: 138.9771 },
+      { lat: 35.2718, lng: 138.9748 },
+      { lat: 35.2633, lng: 138.9754 },
+      { lat: 35.2555, lng: 138.9806 },
+      { lat: 35.2494, lng: 138.9874 },
+      { lat: 35.2448, lng: 138.9952 },
+    ],
+    checkpoints: [
+      { id: 'upper', label: 'Upper Gate', lat: 35.2856, lng: 138.9818 },
+      { id: 'fuji-zone', label: 'Fuji View Zone', lat: 35.2718, lng: 138.9748 },
+      { id: 'side-ditch', label: 'Side Ditch Sector', lat: 35.2555, lng: 138.9806 },
+      { id: 'tea-house', label: 'Fuji Tea House Side', lat: 35.2448, lng: 138.9952 },
+    ],
+  },
+  {
+    id: 'manazuru-peninsula-drive',
+    spotId: 'initiald-manazuru-01',
+    title: 'Manazuru Peninsula Safe Drive',
+    subtitle: 'Round 3 coastal peninsula route',
+    tags: ['Coastal', 'Penalty Loop', 'Safety Score', 'Demo Drive'],
+    safetyNote: 'The peninsula road includes town traffic and coastal visitors. Drive Mode only rewards safe route memories.',
+    routePoints: [
+      { lat: 35.1562, lng: 139.1466 },
+      { lat: 35.1511, lng: 139.1433 },
+      { lat: 35.1471, lng: 139.1345 },
+      { lat: 35.1439, lng: 139.1286 },
+      { lat: 35.1397, lng: 139.1359 },
+      { lat: 35.1373, lng: 139.1464 },
+      { lat: 35.1441, lng: 139.1548 },
+      { lat: 35.1514, lng: 139.1512 },
+    ],
+    checkpoints: [
+      { id: 'tollgate', label: 'Manazuru Tollgate', lat: 35.1562, lng: 139.1466 },
+      { id: 'station', label: 'JR Manazuru', lat: 35.1511, lng: 139.1433 },
+      { id: 'orange', label: 'Orange Sector', lat: 35.1439, lng: 139.1286 },
+      { id: 'coast', label: 'Coastal Hairpins', lat: 35.1373, lng: 139.1464 },
+      { id: 'goal', label: 'Town Goal', lat: 35.1514, lng: 139.1512 },
+    ],
+  },
+  {
+    id: 'odawara-pikes-peak-drive',
+    spotId: 'initiald-odawara-pikes-peak-01',
+    title: 'Odawara Pikes Peak Safe Drive',
+    subtitle: 'Turnpike to Lake Ashi sectors',
+    tags: ['Long Route', 'Three Sector', 'Safety Score', 'Demo Drive'],
+    safetyNote: 'This long route crosses multiple public roads. Use Drive Mode as a planning and respect layer only.',
+    routePoints: [
+      { lat: 35.2491, lng: 139.1461 },
+      { lat: 35.2299, lng: 139.1075 },
+      { lat: 35.2128, lng: 139.0619 },
+      { lat: 35.1924, lng: 139.0252 },
+      { lat: 35.2101, lng: 139.0112 },
+      { lat: 35.2327, lng: 138.9975 },
+      { lat: 35.2474, lng: 139.0168 },
+      { lat: 35.2605, lng: 139.0454 },
+    ],
+    checkpoints: [
+      { id: 'start', label: 'Start Gate', lat: 35.2491, lng: 139.1461 },
+      { id: 'turnpike', label: 'Turnpike Sector', lat: 35.2299, lng: 139.1075 },
+      { id: 'sky-lounge', label: 'Sky Lounge', lat: 35.2128, lng: 139.0619 },
+      { id: 'ashino', label: 'Lake Ashi Sector', lat: 35.2327, lng: 138.9975 },
+      { id: 'goal', label: 'Goal Gate', lat: 35.2605, lng: 139.0454 },
+    ],
+  },
+  {
+    id: 'tsubaki-line-drive',
+    spotId: 'initiald-tsubaki-line-01',
+    title: 'Tsubaki Line Safe Drive',
+    subtitle: 'Yugawara to Daikanzan',
+    tags: ['Mountain Road', 'Hairpins', 'Safety Score', 'Demo Drive'],
+    safetyNote: 'Tsubaki Line has tight corners and sightseeing traffic. Smoothness matters more than speed.',
+    routePoints: [
+      { lat: 35.1531, lng: 139.0776 },
+      { lat: 35.1612, lng: 139.0699 },
+      { lat: 35.1708, lng: 139.0625 },
+      { lat: 35.1807, lng: 139.0525 },
+      { lat: 35.1903, lng: 139.0431 },
+      { lat: 35.1984, lng: 139.0352 },
+      { lat: 35.2117, lng: 139.0272 },
+      { lat: 35.2192, lng: 139.0191 },
+    ],
+    checkpoints: [
+      { id: 'yugawara', label: 'Yugawara Side', lat: 35.1531, lng: 139.0776 },
+      { id: 'first-hairpin', label: 'First Hairpin', lat: 35.1708, lng: 139.0625 },
+      { id: 'split', label: 'Split Sector', lat: 35.1903, lng: 139.0431 },
+      { id: 'radar', label: 'Radar Side', lat: 35.2117, lng: 139.0272 },
+      { id: 'daikanzan', label: 'Daikanzan', lat: 35.2192, lng: 139.0191 },
+    ],
+  },
+  {
+    id: 'seaside-double-lane-drive',
+    spotId: 'initiald-seaside-double-lane-01',
+    title: 'Seaside Double Lane Safe Drive',
+    subtitle: 'Atami Beach Line to Manazuru gate',
+    tags: ['Coastal', 'MFG Round 4', 'Safety Score', 'Demo Drive'],
+    safetyNote: 'This coastal route shares space with daily drivers and tourists. Drive Mode is for calm route logging.',
+    routePoints: [
+      { lat: 35.0916, lng: 139.0758 },
+      { lat: 35.0996, lng: 139.0815 },
+      { lat: 35.1111, lng: 139.0898 },
+      { lat: 35.1246, lng: 139.1015 },
+      { lat: 35.1387, lng: 139.1179 },
+      { lat: 35.1535, lng: 139.1309 },
+    ],
+    checkpoints: [
+      { id: 'atami', label: 'Atami Beach Line', lat: 35.0916, lng: 139.0758 },
+      { id: 'bridge', label: 'Bridge', lat: 35.0996, lng: 139.0815 },
+      { id: 'tunnel', label: 'Coastal Sector', lat: 35.1246, lng: 139.1015 },
+      { id: 'gate', label: 'Manazuru Tollgate', lat: 35.1535, lng: 139.1309 },
+    ],
+  },
+].map(route => ({
+  ...route,
+  demoDrivePoints: route.demoDrivePoints || createDemoDrivePoints(route.routePoints),
+}))
+
+const DEFAULT_DRIVE_ROUTE = DRIVE_ROUTES[0]
+const DRIVE_ROUTES_BY_SPOT_ID = Object.fromEntries(DRIVE_ROUTES.map(route => [route.spotId, route]))
+const getDriveRouteForSpot = spot => spot ? DRIVE_ROUTES_BY_SPOT_ID[spot.id] : null
 
 function loadDriveSessions() {
   try {
@@ -427,6 +625,7 @@ function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavori
   const [loading, setLoading] = useState(!introCache[spot.id])
   const [aiOk, setAiOk]     = useState(!!introCache[spot.id])
   const [expanded, setExpanded] = useState(defaultExpanded ?? false)
+  const driveRoute = getDriveRouteForSpot(spot)
 
   const distText = currentPos
     ? formatDistance(haversine(currentPos, { lat: spot.lat, lng: spot.lng }))
@@ -631,7 +830,7 @@ function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavori
             </div>
           </div>
           <QuestPanel spot={spot} />
-          {spot.id === INITIAL_D_DRIVE_SPOT_ID && (
+          {driveRoute && (
             <section style={{
               margin: '0 18px 14px',
               padding: 12,
@@ -644,14 +843,14 @@ function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavori
                 Drive Mode
               </div>
               <div style={{ fontSize: 15, fontWeight: 900, marginTop: 4 }}>
-                Hakone Touge Quest
+                {driveRoute.title}
               </div>
               <div style={{ fontSize: 12, color: '#d1d5db', lineHeight: 1.55, marginTop: 5 }}>
                 Treat this seichi as a route. Replay or try a safe GPS + DeviceMotion drive score.
               </div>
               <button
                 type="button"
-                onClick={e => { e.stopPropagation(); onOpenDriveMode?.() }}
+                onClick={e => { e.stopPropagation(); onOpenDriveMode?.(driveRoute.spotId) }}
                 style={{
                   marginTop: 10,
                   width: '100%',
@@ -2782,7 +2981,7 @@ function QuestHomePanel({
               <button
                 type="button"
                 onClick={() => {
-                  if (questSet.spot.id === INITIAL_D_DRIVE_SPOT_ID) onOpenDriveMode()
+                  if (getDriveRouteForSpot(questSet.spot)) onOpenDriveMode(questSet.spot.id)
                   else onStartQuest(questSet.spot)
                 }}
                 style={{
@@ -2797,7 +2996,7 @@ function QuestHomePanel({
                   cursor: 'pointer',
                 }}
               >
-                {questSet.spot.id === INITIAL_D_DRIVE_SPOT_ID ? 'Drive' : 'Start'}
+                {getDriveRouteForSpot(questSet.spot) ? 'Drive' : 'Start'}
               </button>
             </div>
 
@@ -3167,11 +3366,16 @@ function App() {
   const driveLastPointRef = useRef(null)
 
   const [driveModeOpen, setDriveModeOpen] = useState(false)
+  const [activeDriveRouteId, setActiveDriveRouteId] = useState(DEFAULT_DRIVE_ROUTE.id)
   const [driveMode, setDriveMode] = useState('idle')
   const [drivePoints, setDrivePoints] = useState([])
   const [driveActivePoint, setDriveActivePoint] = useState(null)
   const [driveStatusMessage, setDriveStatusMessage] = useState('')
   const [driveSessions, setDriveSessions] = useState(() => loadDriveSessions())
+  const activeDriveRoute = useMemo(
+    () => DRIVE_ROUTES.find(route => route.id === activeDriveRouteId) || DEFAULT_DRIVE_ROUTE,
+    [activeDriveRouteId],
+  )
 
   // Location permission is shown only after a location-based dashboard choice.
   // This keeps browser permission requests tied to an explicit user intent.
@@ -3318,16 +3522,19 @@ function App() {
   }, [])
 
   const driveCompletedCheckpoints = useMemo(
-    () => getCompletedCheckpointIds(drivePoints, HAKONE_DRIVE_ROUTE),
-    [drivePoints],
+    () => getCompletedCheckpointIds(drivePoints, activeDriveRoute),
+    [activeDriveRoute, drivePoints],
   )
 
   const driveScore = useMemo(
-    () => calculateDriveScore(drivePoints, driveCompletedCheckpoints, HAKONE_DRIVE_ROUTE.checkpoints.length),
-    [drivePoints, driveCompletedCheckpoints],
+    () => calculateDriveScore(drivePoints, driveCompletedCheckpoints, activeDriveRoute.checkpoints.length),
+    [activeDriveRoute, drivePoints, driveCompletedCheckpoints],
   )
 
-  const openDriveMode = useCallback(() => {
+  const openDriveMode = useCallback((spotId) => {
+    const route = DRIVE_ROUTES_BY_SPOT_ID[spotId] || activeDriveRoute || DEFAULT_DRIVE_ROUTE
+    setActiveDriveRouteId(route.id)
+    resetDriveReadings()
     setDriveModeOpen(true)
     setQuestHomeOpen(false)
     setQuestAlbumOpen(false)
@@ -3335,8 +3542,8 @@ function App() {
     setCardExpanded(false)
     setSelectedTourist(null)
     setDriveStatusMessage(prev => prev || 'Drive Mode ready. Use Demo Drive for presentation or Try Real Drive on location.')
-    setSelected(prev => prev || spots.find(spot => spot.id === INITIAL_D_DRIVE_SPOT_ID) || null)
-  }, [spots])
+    setSelected(spots.find(spot => spot.id === route.spotId) || null)
+  }, [activeDriveRoute, resetDriveReadings, spots])
 
   const stopDrive = useCallback(() => {
     clearDriveRuntime()
@@ -3355,8 +3562,8 @@ function App() {
     if (!drivePoints.length) return
     const session = {
       id: `drive-${Date.now()}`,
-      routeId: HAKONE_DRIVE_ROUTE.id,
-      routeTitle: HAKONE_DRIVE_ROUTE.title,
+      routeId: activeDriveRoute.id,
+      routeTitle: activeDriveRoute.title,
       mode: driveMode,
       completedAt: new Date().toISOString(),
       pointCount: drivePoints.length,
@@ -3369,7 +3576,7 @@ function App() {
       return next
     })
     setDriveStatusMessage('Drive result saved. It will remain available as your best score.')
-  }, [driveCompletedCheckpoints, driveMode, drivePoints.length, driveScore])
+  }, [activeDriveRoute, driveCompletedCheckpoints, driveMode, drivePoints.length, driveScore])
 
   const startDemoDrive = useCallback(() => {
     clearDriveRuntime()
@@ -3380,7 +3587,7 @@ function App() {
 
     let index = 0
     const playNextPoint = () => {
-      const point = HAKONE_DRIVE_ROUTE.demoDrivePoints[index]
+      const point = activeDriveRoute.demoDrivePoints[index]
       if (!point) {
         clearDriveRuntime()
         setDriveMode('complete')
@@ -3393,7 +3600,7 @@ function App() {
 
     playNextPoint()
     driveDemoTimerRef.current = setInterval(playNextPoint, 700)
-  }, [appendDrivePoint, clearDriveRuntime, resetDriveReadings])
+  }, [activeDriveRoute, appendDrivePoint, clearDriveRuntime, resetDriveReadings])
 
   const startRealDrive = useCallback(async () => {
     clearDriveRuntime()
@@ -3835,7 +4042,7 @@ function App() {
             </InfoWindow>
           )}
           <DriveRouteOverlay
-            route={driveModeOpen ? HAKONE_DRIVE_ROUTE : null}
+            route={driveModeOpen ? activeDriveRoute : null}
             activePoint={driveActivePoint}
             completedCheckpointIds={driveCompletedCheckpoints}
           />
@@ -4068,7 +4275,7 @@ function App() {
         >✅ {questProgress.completedCount}/{questProgress.totalQuestCount || 0}</button>
 
         <button
-          onClick={openDriveMode}
+          onClick={() => openDriveMode(selected?.id)}
           title="Drive Mode"
           style={{
             height: 30, padding: '0 10px', borderRadius: 10,
@@ -4101,7 +4308,7 @@ function App() {
       )}
       {driveModeOpen && (
         <DriveModePanel
-          route={HAKONE_DRIVE_ROUTE}
+          route={activeDriveRoute}
           mode={driveMode}
           statusMessage={driveStatusMessage}
           points={drivePoints}
