@@ -1954,20 +1954,28 @@ function OnboardingSurvey({ onComplete }) {
   )
 }
 
-// ── ミッション定義（後で差し替え可能） ───────────────────────────────────
-// spot を受け取り { title, description, hint } を返す。
-// 本物のミッション内容・判定ロジックはここだけ変更すれば差し込める。
-function getMission(spot) {
-  return {
-    title: '📸 フォトミッション',
-    description: `この場所で写真を撮ろう！\n"${spot.spot_name_en}" に来た証拠を残そう。`,
-    hint: 'Tip: アニメのシーンと同じアングルを探してみよう',
-  }
-}
-
 // ── ミッション画面 ────────────────────────────────────────────────────────
-function MissionScreen({ spot, onComplete }) {
-  const mission = getMission(spot)
+function MissionScreen({ spot, questAlbum, onQuestPhotoUpload, uploadingQuestKey, onComplete }) {
+  const fileRef = useRef(null)
+
+  const quests = spot.quests || []
+  const completions = new Set(questAlbum?.completions || [])
+
+  // スポットにクエストがあるか確認し、未完了の最初のクエストを取得
+  const firstIncompleteIndex = quests.findIndex((_, i) => !completions.has(getQuestKey(spot.id, i)))
+  const hasQuests = quests.length > 0
+  const isQuestDone = !hasQuests || firstIncompleteIndex === -1
+  const questIndex = firstIncompleteIndex >= 0 ? firstIncompleteIndex : 0
+  const quest = quests[questIndex]
+  const questKey = getQuestKey(spot.id, questIndex)
+  const isUploading = uploadingQuestKey === questKey
+
+  const handleFile = e => {
+    const file = e.target.files?.[0]
+    if (!file || !quest) return
+    onQuestPhotoUpload(spot, quest, questIndex, file, '')
+  }
+
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9600,
@@ -1998,36 +2006,61 @@ function MissionScreen({ spot, onComplete }) {
           {spot.spot_name_en}
         </div>
 
-        {/* ミッション内容（差し替えポイント） */}
-        <div style={{
-          background: 'rgba(255,255,255,0.08)', borderRadius: 14,
-          padding: '14px 16px', marginBottom: 8,
-        }}>
-          <div style={{ color: '#a78bfa', fontSize: 13, fontWeight: 800, marginBottom: 8 }}>
-            {mission.title}
-          </div>
-          <div style={{ color: 'rgba(255,255,255,0.88)', fontSize: 14, lineHeight: 1.65, whiteSpace: 'pre-line' }}>
-            {mission.description}
-          </div>
-        </div>
-
-        {mission.hint && (
-          <div style={{ color: 'rgba(255,255,255,0.38)', fontSize: 11, marginBottom: 22, paddingLeft: 2 }}>
-            {mission.hint}
-          </div>
+        {/* クエスト：写真アップロード */}
+        {hasQuests && !isQuestDone && quest && (
+          <>
+            <div style={{
+              background: 'rgba(255,255,255,0.08)', borderRadius: 14,
+              padding: '14px 16px', marginBottom: 14,
+            }}>
+              <div style={{ color: '#a78bfa', fontSize: 13, fontWeight: 800, marginBottom: 6 }}>
+                📸 {quest.title || 'Photo Quest'}
+              </div>
+              <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13, lineHeight: 1.6 }}>
+                {quest.photo_prompt || quest.photoPrompt || 'Take a photo at this location to unlock the stamp.'}
+              </div>
+            </div>
+            <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handleFile} style={{ display: 'none' }} />
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={isUploading}
+              style={{
+                width: '100%', padding: '14px', borderRadius: 14, border: 'none',
+                background: isUploading ? 'rgba(255,255,255,0.12)' : 'rgba(167,139,250,0.3)',
+                color: isUploading ? 'rgba(255,255,255,0.4)' : '#c4b5fd',
+                fontSize: 14, fontWeight: 800, cursor: isUploading ? 'default' : 'pointer',
+                marginBottom: 10,
+              }}
+            >{isUploading ? 'Saving photo…' : '📷 Upload Photo'}</button>
+          </>
         )}
 
-        {/* 完了ボタン（ここが完了判定のトリガー。後でロジックを差し込む） */}
+        {/* クエスト完了済みバナー */}
+        {hasQuests && isQuestDone && (
+          <div style={{
+            background: 'rgba(74,222,128,0.15)', border: '1px solid rgba(74,222,128,0.3)',
+            borderRadius: 12, padding: '10px 14px', marginBottom: 14,
+            color: '#4ade80', fontSize: 13, fontWeight: 700,
+          }}>✅ Quest photo uploaded!</div>
+        )}
+
+        {/* 完了ボタン：クエストがない or クエスト完了済みのときだけ有効 */}
         <button
           onClick={onComplete}
+          disabled={!isQuestDone}
           style={{
             width: '100%', padding: '16px', borderRadius: 16, border: 'none',
-            background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
-            color: '#fff', fontSize: 16, fontWeight: 900, cursor: 'pointer',
-            boxShadow: '0 4px 20px rgba(124,58,237,0.5)',
+            background: isQuestDone
+              ? 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)'
+              : 'rgba(255,255,255,0.1)',
+            color: isQuestDone ? '#fff' : 'rgba(255,255,255,0.3)',
+            fontSize: 16, fontWeight: 900,
+            cursor: isQuestDone ? 'pointer' : 'default',
+            boxShadow: isQuestDone ? '0 4px 20px rgba(124,58,237,0.5)' : 'none',
             letterSpacing: '0.04em',
+            transition: 'all 0.2s',
           }}
-        >✅ ミッション完了！</button>
+        >✅ Get Stamp!</button>
       </div>
     </div>
   )
@@ -4081,6 +4114,9 @@ function App() {
       {activeMission && !showStampCard && (
         <MissionScreen
           spot={activeMission}
+          questAlbum={questAlbum}
+          onQuestPhotoUpload={handleQuestPhotoUpload}
+          uploadingQuestKey={uploadingQuestKey}
           onComplete={handleMissionComplete}
         />
       )}
