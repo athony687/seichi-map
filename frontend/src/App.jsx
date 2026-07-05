@@ -1955,13 +1955,12 @@ function OnboardingSurvey({ onComplete }) {
 }
 
 // ── ミッション画面 ────────────────────────────────────────────────────────
-function MissionScreen({ spot, questAlbum, onQuestPhotoUpload, uploadingQuestKey, onComplete }) {
+function MissionScreen({ spot, questAlbum, onQuestPhotoUpload, uploadingQuestKey, onComplete, onDismiss }) {
   const fileRef = useRef(null)
 
   const quests = spot.quests || []
   const completions = new Set(questAlbum?.completions || [])
 
-  // スポットにクエストがあるか確認し、未完了の最初のクエストを取得
   const firstIncompleteIndex = quests.findIndex((_, i) => !completions.has(getQuestKey(spot.id, i)))
   const hasQuests = quests.length > 0
   const isQuestDone = !hasQuests || firstIncompleteIndex === -1
@@ -1977,26 +1976,42 @@ function MissionScreen({ spot, questAlbum, onQuestPhotoUpload, uploadingQuestKey
   }
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 9600,
-      background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(10px)',
-      display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-      padding: '0 12px 32px',
-      animation: 'slideUp 0.28s cubic-bezier(0.34,1.56,0.64,1)',
-    }}>
-      <div style={{
-        width: 'min(440px, 100%)',
-        background: 'linear-gradient(160deg, #1e1b4b 0%, #312e81 100%)',
-        borderRadius: 24, padding: '24px 20px 20px',
-        boxShadow: '0 -4px 40px rgba(0,0,0,0.5)',
-        border: '1.5px solid rgba(167,139,250,0.35)',
-      }}>
-        {/* バッジ */}
-        <div style={{
-          display: 'inline-block', background: 'rgba(167,139,250,0.25)',
-          borderRadius: 8, padding: '3px 10px', fontSize: 10, fontWeight: 800,
-          letterSpacing: '0.18em', color: '#c4b5fd', textTransform: 'uppercase', marginBottom: 12,
-        }}>MISSION</div>
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 9600,
+        background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(10px)',
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+        padding: '0 12px 32px',
+        animation: 'slideUp 0.28s cubic-bezier(0.34,1.56,0.64,1)',
+      }}
+      onClick={onDismiss}
+    >
+      <div
+        style={{
+          width: 'min(440px, 100%)',
+          background: 'linear-gradient(160deg, #1e1b4b 0%, #312e81 100%)',
+          borderRadius: 24, padding: '24px 20px 20px',
+          boxShadow: '0 -4px 40px rgba(0,0,0,0.5)',
+          border: '1.5px solid rgba(167,139,250,0.35)',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* ヘッダー行 */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div style={{
+            display: 'inline-block', background: 'rgba(167,139,250,0.25)',
+            borderRadius: 8, padding: '3px 10px', fontSize: 10, fontWeight: 800,
+            letterSpacing: '0.18em', color: '#c4b5fd', textTransform: 'uppercase',
+          }}>MISSION</div>
+          <button
+            onClick={onDismiss}
+            style={{
+              background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)',
+              borderRadius: 20, color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: 700,
+              padding: '5px 12px', cursor: 'pointer',
+            }}
+          >Later</button>
+        </div>
 
         {/* スポット情報 */}
         <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 700, marginBottom: 2 }}>
@@ -3422,7 +3437,6 @@ function App() {
   // ── ミッション完了 → スタンプ付与 ─────────────────────────────────────
   const handleMissionComplete = useCallback(() => {
     if (!activeMission) return
-    const completedSpot = activeMission
     setAcquiredStamps(prev => {
       const next = new Set([...prev, activeMission.id])
       saveStamps(next)
@@ -3430,6 +3444,10 @@ function App() {
     })
     setActiveMission(null)
   }, [activeMission])
+
+  const handleMissionDismiss = useCallback(() => {
+    setActiveMission(null)
+  }, [])
 
   // データ読み込み
   useEffect(() => {
@@ -4118,6 +4136,7 @@ function App() {
           onQuestPhotoUpload={handleQuestPhotoUpload}
           uploadingQuestKey={uploadingQuestKey}
           onComplete={handleMissionComplete}
+          onDismiss={handleMissionDismiss}
         />
       )}
 
