@@ -173,7 +173,19 @@
     "source": "user-provided",
     "generic_intro_en": "",
     "official_url": "https://girlsbandcry.com/",
-    "hours": "Check mall hours"
+    "hours": "Check mall hours",
+    "quest_title": "4階から見下ろせ",
+    "quest_place": "ラゾーナ川崎プラザ 4階広場",
+    "quest_type": "Photo Quest",
+    "quests": [
+      {
+        "category": "Photo",
+        "title": "4階から見下ろす",
+        "description": "ラゾーナ川崎プラザの4階から広場を見下ろして写真を撮ろう。作中のあのシーンを再現。",
+        "photo_prompt": "Upload a photo looking down at the plaza from the 4th floor of Lazona Kawasaki.",
+        "impression_prompt": "What did the view from above feel like?"
+      }
+    ]
   },
   {
     "id": "gbc-picasso-ginryugai-01",
@@ -198,7 +210,19 @@
     "source": "user-provided",
     "generic_intro_en": "",
     "official_url": "https://girlsbandcry.com/",
-    "hours": "Always open"
+    "hours": "Always open",
+    "quest_title": "路地で2人隠れろ",
+    "quest_place": "ピカソ 川崎銀柳街店付近の店の狭間",
+    "quest_type": "Photo Quest",
+    "quests": [
+      {
+        "category": "Photo",
+        "title": "2人で隠れる",
+        "description": "ピカソ付近の路地の隙間に2人で身を隠すように入り込んで写真を撮ろう。",
+        "photo_prompt": "Upload a photo of two people hiding in the alley near Picasso Ginryugai.",
+        "impression_prompt": "What did it feel like squeezing into the alley?"
+      }
+    ]
   },
   {
     "id": "gbc-yoshinoya-kawasaki-01",
@@ -223,7 +247,52 @@
     "source": "user-provided",
     "generic_intro_en": "",
     "official_url": "https://girlsbandcry.com/",
-    "hours": "Check store hours"
+    "hours": "Check store hours",
+    "quest_title": "牛丼を食べろ",
+    "quest_place": "吉野家 川崎西口店",
+    "quest_type": "Food Quest",
+    "quests": [
+      {
+        "category": "Food",
+        "title": "牛丼を食べる",
+        "description": "吉野家 川崎西口店で牛丼を注文して食べよう。作中のリアルな川崎の日常を体験。",
+        "photo_prompt": "Upload a photo of your gyudon at Yoshinoya Kawasaki West Exit.",
+        "impression_prompt": "How did the gyudon taste? Did it feel like the scene?"
+      }
+    ]
+  },
+  {
+    "id": "gbc-jeans-mate-kawasaki-01",
+    "spot_name_ja": "ジーンズメイト川崎駅前店",
+    "spot_name_en": "Jeans Mate Kawasaki Station Front",
+    "anime_title_ja": "ガールズバンドクライ",
+    "anime_title_en": "Girls Band Cry",
+    "scene_description": "川崎駅前に位置するジーンズメイト。作中に登場する川崎の街並みシーンのモデルとなった店舗。",
+    "intro_short_en": "The Jeans Mate store in front of Kawasaki Station, featured in Girls Band Cry. A familiar landmark for fans of the series set in the real streets of Kawasaki.",
+    "lat": 35.5312,
+    "lng": 139.6985,
+    "area": "Kawasaki Station, Kawasaki, Kanagawa",
+    "nearest_station": "Kawasaki Station",
+    "access_note": "川崎駅前すぐ",
+    "photo_url": "",
+    "tags": ["outdoor", "walkable", "photo-spot"],
+    "verified": false,
+    "source": "user-provided",
+    "generic_intro_en": "",
+    "official_url": "https://girlsbandcry.com/",
+    "hours": "Check store hours",
+    "quest_title": "親指を立てろ",
+    "quest_place": "ジーンズメイト川崎駅前店",
+    "quest_type": "Photo Quest",
+    "quests": [
+      {
+        "category": "Photo",
+        "title": "親指をたてる",
+        "description": "ジーンズメイト川崎駅前店の前で親指を立てたポーズで写真を撮ろう。",
+        "photo_prompt": "Upload a photo of you giving a thumbs up in front of Jeans Mate Kawasaki Station.",
+        "impression_prompt": "What did this Kawasaki street spot feel like?"
+      }
+    ]
   },
   {
     "id": "ida-afterrain-01",
