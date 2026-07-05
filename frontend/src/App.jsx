@@ -1606,6 +1606,42 @@ function formatDriveDuration(seconds) {
   return `${minutes}:${String(rest).padStart(2, '0')}`
 }
 
+function createDrivingLog(route, points, completedCheckpointIds, score, mode) {
+  const firstPoint = points[0]
+  const lastPoint = points[points.length - 1]
+  const durationSeconds = firstPoint && lastPoint
+    ? Math.max(0, (lastPoint.timestamp - firstPoint.timestamp) / 1000)
+    : 0
+  const maxSpeedKmh = points.reduce((max, point) => Math.max(max, Number(point.speedKmh) || 0), 0)
+  const eventCount = points.filter(point => point.event).length
+  const sampledPoints = points
+    .filter((_, index) => index % Math.max(1, Math.ceil(points.length / 80)) === 0)
+    .map(point => ({
+      timestamp: point.timestamp,
+      lat: point.lat,
+      lng: point.lng,
+      speedKmh: Number(point.speedKmh || 0).toFixed(1),
+      rawSpeedKmh: Number(point.rawSpeedKmh || 0).toFixed(1),
+      turnRateDegPerSec: Math.round(Math.abs(point.turnRateDegPerSec || 0)),
+      eventType: point.event?.type || null,
+    }))
+
+  return {
+    routeId: route.id,
+    routeTitle: route.title,
+    mode,
+    recordedAt: new Date().toISOString(),
+    pointCount: points.length,
+    durationSeconds,
+    maxSpeedKmh,
+    eventCount,
+    completedCheckpointIds: [...completedCheckpointIds],
+    checkpointTotal: route.checkpoints.length,
+    score,
+    sampledPoints,
+  }
+}
+
 function getCompletedCheckpointIds(points, route) {
   const completed = new Set()
   points.forEach(point => {
@@ -2126,7 +2162,7 @@ function DriveModePanel({
             marginTop: 10,
           }}
         >
-          Save Drive Result
+          Save Driving Log
         </button>
         {bestSession && (
           <div style={{ marginTop: 7, fontSize: 10, color: '#fde68a', lineHeight: 1.45, fontWeight: 800 }}>
@@ -3079,6 +3115,7 @@ function QuestHomePanel({
                 const questKey = getQuestKey(questSet.spot.id, questIndex)
                 const isDone = albumEntries.some(entry => entry.questKey === questKey)
                 const isUploading = uploadingQuestKey === questKey
+                const driveRoute = getDriveRouteForSpot(questSet.spot)
                 return (
                   <div key={questKey} style={{
                     borderRadius: 14,
@@ -3095,12 +3132,32 @@ function QuestHomePanel({
                           {quest.title}
                         </div>
                         <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.45, marginTop: 4 }}>
-                          {quest.photoPrompt}
+                          {driveRoute ? 'Open Drive Mode and save a Driving Log to clear this quest.' : quest.photoPrompt}
                         </div>
                       </div>
-                      <span style={{ fontSize: 20 }}>{isDone ? '✅' : '📸'}</span>
+                      <span style={{ fontSize: 20 }}>{isDone ? '✅' : driveRoute ? '🏁' : '📸'}</span>
                     </div>
-                    {!isDone && (
+                    {!isDone && driveRoute && (
+                      <button
+                        type="button"
+                        onClick={() => onOpenDriveMode(questSet.spot.id)}
+                        style={{
+                          width: '100%',
+                          border: 'none',
+                          borderRadius: 12,
+                          background: '#111827',
+                          color: '#fff',
+                          padding: '9px 10px',
+                          fontSize: 12,
+                          fontWeight: 900,
+                          cursor: 'pointer',
+                          marginTop: 9,
+                        }}
+                      >
+                        Record Driving Log
+                      </button>
+                    )}
+                    {!isDone && !driveRoute && (
                       <div style={{ display: 'grid', gap: 7, marginTop: 9 }}>
                         <input
                           type="text"
@@ -3152,6 +3209,7 @@ function QuestHomePanel({
 function AlbumEntryCard({ entry, onEditImpression, onReplacePhoto, onDelete, onShare }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(entry.impression || '')
+  const drivingLog = entry.drivingLog
 
   useEffect(() => {
     setDraft(entry.impression || '')
@@ -3185,6 +3243,31 @@ function AlbumEntryCard({ entry, onEditImpression, onReplacePhoto, onDelete, onS
         <div style={{ fontSize: 12, color: '#64748b', marginTop: 3 }}>
           {entry.spotName} · {formatCompletionTime(entry.completedAt)}
         </div>
+
+        {drivingLog && (
+          <div style={{
+            marginTop: 10,
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 7,
+          }}>
+            {[
+              ['Final Score', `${formatDriveScore(drivingLog.score?.finalScore)} / 100`],
+              ['Checkpoints', `${drivingLog.completedCheckpointIds?.length || 0}/${drivingLog.checkpointTotal || 0}`],
+              ['Samples', `${drivingLog.pointCount || 0}`],
+              ['Duration', formatDriveDuration(drivingLog.durationSeconds)],
+            ].map(([label, value]) => (
+              <div key={label} style={{ borderRadius: 12, background: '#0f172a', padding: 9 }}>
+                <div style={{ fontSize: 9, color: '#94a3b8', fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  {label}
+                </div>
+                <div style={{ fontSize: 14, color: '#f8fafc', fontWeight: 950, marginTop: 2 }}>
+                  {value}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {editing ? (
           <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
@@ -3222,15 +3305,17 @@ function AlbumEntryCard({ entry, onEditImpression, onReplacePhoto, onDelete, onS
           <button type="button" onClick={() => setEditing(true)} style={{ border: 'none', borderRadius: 10, background: '#f5f3ff', color: THEME_DARK, padding: 9, fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>
             Edit Comment
           </button>
-          <label style={{ textAlign: 'center', border: 'none', borderRadius: 10, background: '#eef2ff', color: '#3730a3', padding: 9, fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>
-            Change Photo
-            <input
-              type="file"
-              accept="image/*"
-              onChange={e => onReplacePhoto(entry.id, e.target.files?.[0])}
-              style={{ display: 'none' }}
-            />
-          </label>
+          {!drivingLog && (
+            <label style={{ textAlign: 'center', border: 'none', borderRadius: 10, background: '#eef2ff', color: '#3730a3', padding: 9, fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>
+              Change Photo
+              <input
+                type="file"
+                accept="image/*"
+                onChange={e => onReplacePhoto(entry.id, e.target.files?.[0])}
+                style={{ display: 'none' }}
+              />
+            </label>
+          )}
           <button type="button" onClick={() => onShare(entry)} style={{ border: 'none', borderRadius: 10, background: '#111827', color: '#fff', padding: 9, fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>
             Share Card
           </button>
@@ -3387,6 +3472,32 @@ async function generateShareCard(entry) {
       sy = (image.height - sh) / 2
     }
     ctx.drawImage(image, sx, sy, sw, sh, target.x, target.y, target.width, target.height)
+  } else if (entry.drivingLog) {
+    ctx.fillStyle = '#0f172a'
+    ctx.fillRect(84, 84, 912, 700)
+    ctx.fillStyle = '#fbbf24'
+    ctx.font = '800 42px system-ui, sans-serif'
+    ctx.fillText('Driving Log', 132, 170)
+    ctx.fillStyle = '#f8fafc'
+    ctx.font = '900 92px system-ui, sans-serif'
+    ctx.fillText(`${formatDriveScore(entry.drivingLog.score?.finalScore)}`, 132, 300)
+    ctx.font = '700 30px system-ui, sans-serif'
+    ctx.fillText('/ 100 Safety Score', 392, 294)
+    const rows = [
+      ['Route', entry.drivingLog.routeTitle || entry.spotName],
+      ['Checkpoints', `${entry.drivingLog.completedCheckpointIds?.length || 0}/${entry.drivingLog.checkpointTotal || 0}`],
+      ['Samples', `${entry.drivingLog.pointCount || 0}`],
+      ['Duration', formatDriveDuration(entry.drivingLog.durationSeconds)],
+    ]
+    rows.forEach(([label, value], index) => {
+      const y = 410 + index * 74
+      ctx.fillStyle = '#94a3b8'
+      ctx.font = '700 24px system-ui, sans-serif'
+      ctx.fillText(label, 132, y)
+      ctx.fillStyle = '#f8fafc'
+      ctx.font = '800 32px system-ui, sans-serif'
+      ctx.fillText(value, 330, y)
+    })
   }
 
   ctx.fillStyle = '#4c1d95'
@@ -3632,14 +3743,16 @@ function App() {
     setDriveStatusMessage('')
   }, [clearDriveRuntime])
 
-  const saveDriveResult = useCallback(() => {
+  const saveDriveResult = useCallback(async () => {
     if (!drivePoints.length) return
+    const completedAt = new Date().toISOString()
+    const drivingLog = createDrivingLog(activeDriveRoute, drivePoints, driveCompletedCheckpoints, driveScore, driveMode)
     const session = {
       id: `drive-${Date.now()}`,
       routeId: activeDriveRoute.id,
       routeTitle: activeDriveRoute.title,
       mode: driveMode,
-      completedAt: new Date().toISOString(),
+      completedAt,
       pointCount: drivePoints.length,
       completedCheckpointIds: [...driveCompletedCheckpoints],
       score: driveScore,
@@ -3649,8 +3762,29 @@ function App() {
       saveDriveSessions(next)
       return next
     })
-    setDriveStatusMessage('Drive result saved. It will remain available as your best score.')
-  }, [activeDriveRoute, driveCompletedCheckpoints, driveMode, drivePoints.length, driveScore])
+    const spot = spots.find(item => item.id === activeDriveRoute.spotId)
+    if (spot) {
+      const nextAlbum = await addAlbumEntry({
+        questKey: getQuestKey(spot.id, 0),
+        spotId: spot.id,
+        questIndex: 0,
+        animeTitle: spot.anime_title_en,
+        spotName: spot.spot_name_en,
+        questTitle: `${activeDriveRoute.title} Driving Log`,
+        area: spot.area || '',
+        lat: spot.lat,
+        lng: spot.lng,
+        completedAt,
+        questType: 'Driving Log',
+        drivingLog,
+        impression: `Driving Log saved: ${formatDriveScore(driveScore.finalScore)} / 100, ${driveCompletedCheckpoints.size}/${activeDriveRoute.checkpoints.length} checkpoints.`,
+      })
+      setQuestAlbum(nextAlbum)
+      setSelectedAlbumEntry(nextAlbum.entries.find(entry => entry.questKey === getQuestKey(spot.id, 0)) || null)
+      setAlbumMapMode(true)
+    }
+    setDriveStatusMessage('Driving Log saved to your Quest Album. This Initial D quest is now clear.')
+  }, [activeDriveRoute, driveCompletedCheckpoints, driveMode, drivePoints, driveScore, spots])
 
   const startDemoDrive = useCallback(() => {
     clearDriveRuntime()

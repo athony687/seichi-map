@@ -157,6 +157,8 @@ export function createAlbumEntry(input) {
     lng: input.lng,
     completedAt,
     albumPhoto: input.albumPhoto,
+    questType: input.questType || input.quest_type || 'Photo',
+    drivingLog: input.drivingLog,
     impression: input.impression || '',
     questStamp,
   }
