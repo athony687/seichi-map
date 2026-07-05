@@ -1606,6 +1606,51 @@ function formatDriveDuration(seconds) {
   return `${minutes}:${String(rest).padStart(2, '0')}`
 }
 
+function getCheckpointPassages(points, route) {
+  const passages = {}
+  points.forEach(point => {
+    route.checkpoints.forEach((checkpoint, checkpointIndex) => {
+      if (passages[checkpoint.id]) return
+      if (haversine(point, checkpoint) <= DRIVE_CHECKPOINT_RADIUS_METERS) {
+        passages[checkpoint.id] = {
+          checkpointId: checkpoint.id,
+          checkpointIndex,
+          label: checkpoint.label,
+          timestamp: point.timestamp,
+          lat: point.lat,
+          lng: point.lng,
+        }
+      }
+    })
+  })
+  return passages
+}
+
+function getSectorTimes(points, route) {
+  const passages = getCheckpointPassages(points, route)
+  return route.checkpoints.slice(1).map((checkpoint, index) => {
+    const fromCheckpoint = route.checkpoints[index]
+    const fromPassage = passages[fromCheckpoint.id]
+    const toPassage = passages[checkpoint.id]
+    const durationSeconds = fromPassage && toPassage
+      ? Math.max(0, (toPassage.timestamp - fromPassage.timestamp) / 1000)
+      : null
+
+    return {
+      id: `${fromCheckpoint.id}-${checkpoint.id}`,
+      fromCheckpointId: fromCheckpoint.id,
+      toCheckpointId: checkpoint.id,
+      fromLabel: fromCheckpoint.label,
+      toLabel: checkpoint.label,
+      sectorIndex: index + 1,
+      startTimestamp: fromPassage?.timestamp || null,
+      endTimestamp: toPassage?.timestamp || null,
+      durationSeconds,
+      completed: durationSeconds != null,
+    }
+  })
+}
+
 function createDrivingLog(route, points, completedCheckpointIds, score, mode) {
   const firstPoint = points[0]
   const lastPoint = points[points.length - 1]
@@ -1637,6 +1682,8 @@ function createDrivingLog(route, points, completedCheckpointIds, score, mode) {
     eventCount,
     completedCheckpointIds: [...completedCheckpointIds],
     checkpointTotal: route.checkpoints.length,
+    checkpointPassages: Object.values(getCheckpointPassages(points, route)),
+    sectorTimes: getSectorTimes(points, route),
     score,
     sampledPoints,
   }
@@ -1754,6 +1801,7 @@ function DriveModePanel({
   const syncRate = route.checkpoints.length
     ? completedCheckpointIds.size / route.checkpoints.length
     : 0
+  const sectorTimes = getSectorTimes(points, route)
   const sensorActive = !!activePoint
   const eventActive = recentEvents.length > 0
   const turnRate = Math.abs(Number(activePoint?.turnRateDegPerSec) || 0)
@@ -1939,7 +1987,7 @@ function DriveModePanel({
             {[
               ['Checkpoints', `${score.completedCount}/${score.checkpointTotal}`],
               ['Avg km/h', Math.round(score.avgSpeed || 0)],
-              ['Time', formatDriveDuration(score.durationSeconds)],
+              ['Total Time', formatDriveDuration(score.durationSeconds)],
               ['Events', score.eventCount || 0],
             ].map(([label, value]) => (
               <div key={label} style={{ borderRadius: 10, background: '#111827', padding: '7px 8px' }}>
@@ -2088,6 +2136,36 @@ function DriveModePanel({
               </div>
             )
           })}
+        </div>
+
+        <div style={{ marginBottom: 10, padding: 9, borderRadius: 12, background: '#111827', border: '1px solid #334155' }}>
+          <div style={{ fontSize: 9, color: '#94a3b8', fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>
+            Sector Times
+          </div>
+          <div style={{ display: 'grid', gap: 5 }}>
+            {sectorTimes.map(sector => (
+              <div key={sector.id} style={{
+                display: 'grid',
+                gridTemplateColumns: '48px 1fr auto',
+                alignItems: 'center',
+                gap: 7,
+                padding: '6px 7px',
+                borderRadius: 10,
+                background: sector.completed ? '#12231d' : '#0f172a',
+                border: `1px solid ${sector.completed ? 'rgba(34,197,94,0.36)' : 'rgba(51,65,85,0.9)'}`,
+              }}>
+                <span style={{ color: sector.completed ? '#86efac' : '#94a3b8', fontSize: 10, fontWeight: 950 }}>
+                  S{sector.sectorIndex}
+                </span>
+                <span style={{ minWidth: 0, color: '#e2e8f0', fontSize: 10, fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {`${sector.fromLabel} -> ${sector.toLabel}`}
+                </span>
+                <span style={{ color: sector.completed ? '#fbbf24' : '#64748b', fontSize: 11, fontWeight: 950 }}>
+                  {sector.completed ? formatDriveDuration(sector.durationSeconds) : 'WAIT'}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
@@ -3245,28 +3323,52 @@ function AlbumEntryCard({ entry, onEditImpression, onReplacePhoto, onDelete, onS
         </div>
 
         {drivingLog && (
-          <div style={{
-            marginTop: 10,
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 7,
-          }}>
-            {[
-              ['Final Score', `${formatDriveScore(drivingLog.score?.finalScore)} / 100`],
-              ['Checkpoints', `${drivingLog.completedCheckpointIds?.length || 0}/${drivingLog.checkpointTotal || 0}`],
-              ['Samples', `${drivingLog.pointCount || 0}`],
-              ['Duration', formatDriveDuration(drivingLog.durationSeconds)],
-            ].map(([label, value]) => (
-              <div key={label} style={{ borderRadius: 12, background: '#0f172a', padding: 9 }}>
-                <div style={{ fontSize: 9, color: '#94a3b8', fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                  {label}
+          <>
+            <div style={{
+              marginTop: 10,
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: 7,
+            }}>
+              {[
+                ['Final Score', `${formatDriveScore(drivingLog.score?.finalScore)} / 100`],
+                ['Checkpoints', `${drivingLog.completedCheckpointIds?.length || 0}/${drivingLog.checkpointTotal || 0}`],
+                ['Samples', `${drivingLog.pointCount || 0}`],
+                ['Total Time', formatDriveDuration(drivingLog.durationSeconds)],
+              ].map(([label, value]) => (
+                <div key={label} style={{ borderRadius: 12, background: '#0f172a', padding: 9 }}>
+                  <div style={{ fontSize: 9, color: '#94a3b8', fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                    {label}
+                  </div>
+                  <div style={{ fontSize: 14, color: '#f8fafc', fontWeight: 950, marginTop: 2 }}>
+                    {value}
+                  </div>
                 </div>
-                <div style={{ fontSize: 14, color: '#f8fafc', fontWeight: 950, marginTop: 2 }}>
-                  {value}
+              ))}
+            </div>
+            {Array.isArray(drivingLog.sectorTimes) && drivingLog.sectorTimes.length > 0 && (
+              <div style={{ marginTop: 9, borderRadius: 12, background: '#f8fafc', border: '1px solid #e5e7eb', padding: 9 }}>
+                <div style={{ fontSize: 9, color: '#64748b', fontWeight: 950, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+                  Sector Times
+                </div>
+                <div style={{ display: 'grid', gap: 5 }}>
+                  {drivingLog.sectorTimes.map(sector => (
+                    <div key={sector.id} style={{ display: 'grid', gridTemplateColumns: '34px 1fr auto', gap: 7, alignItems: 'center' }}>
+                      <span style={{ color: sector.completed ? '#15803d' : '#94a3b8', fontSize: 10, fontWeight: 950 }}>
+                        S{sector.sectorIndex}
+                      </span>
+                      <span style={{ minWidth: 0, color: '#334155', fontSize: 11, fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {`${sector.fromLabel} -> ${sector.toLabel}`}
+                      </span>
+                      <span style={{ color: sector.completed ? '#111827' : '#94a3b8', fontSize: 11, fontWeight: 950 }}>
+                        {sector.completed ? formatDriveDuration(sector.durationSeconds) : 'WAIT'}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
 
         {editing ? (
@@ -3487,7 +3589,7 @@ async function generateShareCard(entry) {
       ['Route', entry.drivingLog.routeTitle || entry.spotName],
       ['Checkpoints', `${entry.drivingLog.completedCheckpointIds?.length || 0}/${entry.drivingLog.checkpointTotal || 0}`],
       ['Samples', `${entry.drivingLog.pointCount || 0}`],
-      ['Duration', formatDriveDuration(entry.drivingLog.durationSeconds)],
+      ['Total Time', formatDriveDuration(entry.drivingLog.durationSeconds)],
     ]
     rows.forEach(([label, value], index) => {
       const y = 410 + index * 74
@@ -3498,6 +3600,20 @@ async function generateShareCard(entry) {
       ctx.font = '800 32px system-ui, sans-serif'
       ctx.fillText(value, 330, y)
     })
+    if (Array.isArray(entry.drivingLog.sectorTimes)) {
+      ctx.fillStyle = '#fbbf24'
+      ctx.font = '800 24px system-ui, sans-serif'
+      ctx.fillText('Sector Times', 132, 650)
+      entry.drivingLog.sectorTimes.slice(0, 3).forEach((sector, index) => {
+        const y = 688 + index * 32
+        ctx.fillStyle = '#cbd5e1'
+        ctx.font = '700 22px system-ui, sans-serif'
+        ctx.fillText(`S${sector.sectorIndex}`, 132, y)
+        ctx.fillStyle = '#f8fafc'
+        ctx.font = '800 22px system-ui, sans-serif'
+        ctx.fillText(sector.completed ? formatDriveDuration(sector.durationSeconds) : 'WAIT', 202, y)
+      })
+    }
   }
 
   ctx.fillStyle = '#4c1d95'
