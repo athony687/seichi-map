@@ -24,64 +24,26 @@ client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 _intro_cache: dict[str, str] = {}
 
 
-class UserPrefs(BaseModel):
-    nickname: str = ""
-    familiarity: str = ""   # Newcomer / Casual fan / Big fan
-    mood: str = ""          # Emotional / Exciting / Heartwarming / Romance
-    travelStyle: str = ""   # Taking photos / Relaxed walking / Visiting many spots
-
-
 class SpotRequest(BaseModel):
     id: str
     spot_name_en: str
     anime_title_en: str
     scene_description: str
     area: str
-    prefs: UserPrefs = UserPrefs()
 
 
 def _build_prompt(spot: SpotRequest) -> str:
-    p = spot.prefs
-    prompt = (
-        f"You are a friendly travel guide for anime fans visiting Japan. "
-        f"Write exactly 2 short sentences in English introducing this anime pilgrimage spot to foreign tourists. "
-        f"Be enthusiastic but concise. No headings, no bullet points, plain text only.\n\n"
+    return (
+        f"You are a guide writing for dedicated anime fans on a pilgrimage in Japan. "
+        f"Write exactly 2 sentences in English introducing this location. "
+        f"Assume the reader has watched and loves the anime — feel free to reference "
+        f"specific scenes, characters, or key moments from the show. "
+        f"No headings, no bullet points, plain text only.\n\n"
         f"Spot: {spot.spot_name_en}\n"
         f"Anime: {spot.anime_title_en}\n"
         f"Scene: {spot.scene_description}\n"
         f"Area: {spot.area}"
     )
-    instructions = []
-    if p.nickname:
-        instructions.append(f"You MUST start the text by addressing the reader as '{p.nickname}' (e.g. 'Hey {p.nickname},' or 'For you, {p.nickname},') — this is required every time.")
-    if p.familiarity == "Newcomer":
-        instructions.append("The reader is new to anime — explain simply without assuming prior knowledge.")
-    elif p.familiarity == "Casual fan":
-        instructions.append("The reader is a casual fan — be friendly and reference the show naturally.")
-    elif p.familiarity == "Big fan":
-        instructions.append("The reader is a big fan — go deeper, mention specific scenes or characters if relevant.")
-    if p.mood == "Emotional":
-        instructions.append("Emphasize the emotional and touching moments connected to this spot.")
-    elif p.mood == "Exciting":
-        instructions.append("Emphasize the exciting and dynamic aspects.")
-    elif p.mood == "Heartwarming":
-        instructions.append("Emphasize the warm, cozy, and uplifting atmosphere.")
-    elif p.mood == "Romance":
-        instructions.append("Emphasize the romantic or scenic beauty of the spot.")
-    if p.travelStyle == "Taking photos":
-        instructions.append("Suggest what makes this spot great for memorable photos.")
-    elif p.travelStyle == "Relaxed walking":
-        instructions.append("Suggest how to enjoy this spot at a leisurely pace.")
-    elif p.travelStyle == "Visiting many spots":
-        instructions.append("Keep it brief and highlight what is uniquely worth stopping for.")
-    if instructions:
-        prompt += "\n\nPersonalization:\n" + "\n".join(f"- {i}" for i in instructions)
-        prompt += "\n\nIMPORTANT: Keep all proper nouns (anime titles, character names, place names) in their original form."
-    return prompt
-
-
-def _has_prefs(p: UserPrefs) -> bool:
-    return bool(p.nickname or p.familiarity or p.mood or p.travelStyle)
 
 
 def _generate(spot: SpotRequest) -> str:
@@ -100,10 +62,7 @@ def health():
 
 @app.post("/generate-intro-stream")
 def generate_intro_stream(spot: SpotRequest):
-    personalized = _has_prefs(spot.prefs)
-
-    # キャッシュヒット時は単一チャンクで即返す
-    if not personalized and spot.id in _intro_cache:
+    if spot.id in _intro_cache:
         cached = _intro_cache[spot.id]
         def _cached():
             yield f"data: {json.dumps({'text': cached})}\n\n"
@@ -122,7 +81,7 @@ def generate_intro_stream(spot: SpotRequest):
                 for text in stream.text_stream:
                     full_text += text
                     yield f"data: {json.dumps({'text': text})}\n\n"
-            if not personalized and full_text:
+            if full_text:
                 _intro_cache[spot.id] = full_text
         except Exception as e:
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
@@ -134,13 +93,11 @@ def generate_intro_stream(spot: SpotRequest):
 
 @app.post("/generate-intro")
 def generate_intro(spot: SpotRequest):
-    personalized = _has_prefs(spot.prefs)
-    if not personalized and spot.id in _intro_cache:
+    if spot.id in _intro_cache:
         return {"intro": _intro_cache[spot.id], "cached": True}
     try:
         text = _generate(spot)
-        if not personalized:
-            _intro_cache[spot.id] = text
+        _intro_cache[spot.id] = text
         return {"intro": text, "cached": False}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

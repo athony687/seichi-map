@@ -533,8 +533,7 @@ function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavori
     : null
 
   useEffect(() => {
-    const hasPersonalization = !!(userPrefs?.nickname || userPrefs?.familiarity || userPrefs?.mood || userPrefs?.travelStyle)
-    if (!hasPersonalization && introCache[spot.id]) {
+    if (introCache[spot.id]) {
       setIntro(introCache[spot.id]); setLoading(false); setAiOk(true); return
     }
     setIntro(''); setLoading(true); setAiOk(false)
@@ -551,7 +550,6 @@ function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavori
             id: spot.id, spot_name_en: spot.spot_name_en,
             anime_title_en: spot.anime_title_en,
             scene_description: spot.scene_description, area: spot.area,
-            prefs: userPrefs || {},
           }),
           signal: controller.signal,
         })
@@ -564,7 +562,7 @@ function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavori
           for (const line of decoder.decode(value, { stream: true }).split('\n')) {
             if (!line.startsWith('data: ')) continue
             const data = line.slice(6).trim()
-            if (data === '[DONE]') { setAiOk(true); if (!hasPersonalization) introCache[spot.id] = fullText; return }
+            if (data === '[DONE]') { setAiOk(true); introCache[spot.id] = fullText; return }
             try {
               const { text, error } = JSON.parse(data)
               if (error) throw new Error(error)
@@ -969,9 +967,6 @@ function GpsLocateButton({ status, onLocate }) {
 function SettingsScreen({ userPrefs, weather, weatherIsAuto, onWeatherChange, mapTheme, onMapThemeChange, onSave, onReset, onClose }) {
   const p = userPrefs || {}
   const [nickname,     setNickname]    = useState(p.nickname    || '')
-  const [familiarity,  setFamiliarity] = useState(p.familiarity || '')
-  const [mood,         setMood]        = useState(p.mood        || '')
-  const [travelStyle,  setTravelStyle] = useState(p.travelStyle || '')
   const [confirmReset, setConfirmReset] = useState(false)
   const [openSection,  setOpenSection] = useState(null)
 
@@ -1059,30 +1054,7 @@ function SettingsScreen({ userPrefs, weather, weatherIsAuto, onWeatherChange, ma
                 onFocus={e => e.target.style.borderColor = THEME}
                 onBlur={e => e.target.style.borderColor = '#e5e7eb'}
               />
-              <div style={{ fontSize: 10, color: '#bbb', marginTop: 5 }}>Used to personalise your spot introductions.</div>
             </>
-          )}
-          {row('familiarity', 'Anime familiarity', familiarity || 'Not set',
-            <div style={{ paddingTop: 8 }}>
-              {chip(familiarity, 'Newcomer',   '🌱', 'Newcomer',   setFamiliarity)}
-              {chip(familiarity, 'Casual fan', '😊', 'Casual fan', setFamiliarity)}
-              {chip(familiarity, 'Big fan',    '⭐', 'Big fan',    setFamiliarity)}
-            </div>
-          )}
-          {row('mood', 'Favorite mood', mood || 'Not set',
-            <div style={{ paddingTop: 8 }}>
-              {chip(mood, 'Emotional',    '😢', 'Emotional',    setMood)}
-              {chip(mood, 'Exciting',     '⚡', 'Exciting',     setMood)}
-              {chip(mood, 'Heartwarming', '🌸', 'Heartwarming', setMood)}
-              {chip(mood, 'Romance',      '💕', 'Romance',      setMood)}
-            </div>
-          )}
-          {row('travelStyle', 'Travel style', travelStyle || 'Not set',
-            <div style={{ paddingTop: 8 }}>
-              {chip(travelStyle, 'Taking photos',       '📸', 'Taking photos',       setTravelStyle)}
-              {chip(travelStyle, 'Relaxed walking',     '🚶', 'Relaxed walking',     setTravelStyle)}
-              {chip(travelStyle, 'Visiting many spots', '🗺️', 'Visiting many spots', setTravelStyle)}
-            </div>
           , true)}
         </div>
 
@@ -1147,7 +1119,7 @@ function SettingsScreen({ userPrefs, weather, weatherIsAuto, onWeatherChange, ma
 
         {/* 保存ボタン */}
         <button
-          onClick={() => onSave({ nickname: nickname.trim(), familiarity, mood, travelStyle })}
+          onClick={() => onSave({ nickname: nickname.trim() })}
           style={{
             width: '100%', padding: '12px', borderRadius: 12,
             background: THEME, color: '#fff', border: 'none',
@@ -1210,8 +1182,20 @@ function SettingsScreen({ userPrefs, weather, weatherIsAuto, onWeatherChange, ma
 
 // ── アンケート（localStorage） ────────────────────────────────────────────
 const SURVEY_KEY = 'seichi_prefs'
-const loadPrefs  = () => { try { const r = localStorage.getItem(SURVEY_KEY); return r ? JSON.parse(r) : null } catch { return null } }
-const savePrefs  = p  => localStorage.setItem(SURVEY_KEY, JSON.stringify(p))
+const loadPrefs  = () => {
+  try {
+    const r = localStorage.getItem(SURVEY_KEY)
+    if (!r) return null
+    const p = JSON.parse(r)
+    // familiarity / mood / travelStyle は削除済み
+    const { familiarity: _f, mood: _m, travelStyle: _t, ...rest } = p
+    return rest
+  } catch { return null }
+}
+const savePrefs  = p  => {
+  const { familiarity: _f, mood: _m, travelStyle: _t, ...rest } = p
+  localStorage.setItem(SURVEY_KEY, JSON.stringify(rest))
+}
 
 const MAP_THEME_KEY = 'seichi_map_theme'
 const loadMapTheme = () => { try { return localStorage.getItem(MAP_THEME_KEY) || 'light' } catch { return 'light' } }
