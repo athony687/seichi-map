@@ -27,9 +27,6 @@ const PROXIMITY_METERS = 500
 const MISSION_TRIGGER_METERS = 500  // ミッション発動半径（デモでも動くよう大きめ）
 const THEME = '#7c3aed'
 const THEME_DARK = '#4c1d95'
-const DEMO_STEP = 0.001   // degrees per tick (≈110m)
-const DEMO_TICK_MS = 600  // marker position update interval
-const ARRIVE_DEG = 0.001  // ≈110m, spot "arrived"
 const LOCATION_CONSENTED_KEY = 'seichi_location_consented'
 const ENABLE_ONBOARDING_SURVEY = false
 const INITIAL_D_DRIVE_SPOT_ID = 'hakone-initiald-01'
@@ -322,105 +319,7 @@ function ClusteredSpotMarkers({ spots, selectedId, onSelect, highlightAnime, fav
 }
 
 // ── デモ自由移動エンジン＋カメラ制御 ────────────────────────────────────
-function DemoEngine({ spots, startPos, playing, onPosChange, selectedId }) {
-  const map = useMap()
-  const posRef      = useRef(null)
-  const targetRef   = useRef(null)
-  const visitedRef  = useRef(new Set())
-  const wobbleRef   = useRef(0)
-  const pauseUntilRef = useRef(0)
-  const selectedRef = useRef(selectedId)
-  const startPosRef = useRef(startPos)
 
-  useEffect(() => { selectedRef.current = selectedId }, [selectedId])
-
-  // startPos が変わったらリセット
-  useEffect(() => {
-    startPosRef.current = startPos
-    posRef.current = startPos || null
-    targetRef.current = null
-    visitedRef.current = new Set()
-    wobbleRef.current = 0
-    if (startPos) onPosChange({ ...startPos })
-  }, [startPos])
-
-  // 移動ループ
-  useEffect(() => {
-    if (!playing) return
-
-    const tick = setInterval(() => {
-      const sp  = startPosRef.current
-      const pos = posRef.current
-      if (!sp || !pos) return
-
-      // 次のターゲットを選ぶ
-      if (!targetRef.current) {
-        const eligible = spots.filter(s =>
-          haversine(sp, { lat: s.lat, lng: s.lng }) <= 40000 &&
-          !visitedRef.current.has(s.id)
-        )
-        if (!eligible.length) { visitedRef.current = new Set(); return }
-        // 近い順に選ぶ（揺らぎのため上位3件からランダム）
-        eligible.sort((a, b) =>
-          haversine(pos, { lat: a.lat, lng: a.lng }) - haversine(pos, { lat: b.lat, lng: b.lng })
-        )
-        targetRef.current = eligible[Math.floor(Math.random() * Math.min(3, eligible.length))]
-      }
-
-      const { lat: tLat, lng: tLng, id } = targetRef.current
-      const dLat = tLat - pos.lat
-      const dLng = tLng - pos.lng
-      const dist  = Math.sqrt(dLat * dLat + dLng * dLng)
-
-      if (dist < ARRIVE_DEG) {
-        visitedRef.current.add(id)
-        targetRef.current = null
-        pauseUntilRef.current = Date.now() + 5000
-        return
-      }
-
-      // スポット到達後の待機中はその場で止まる
-      if (Date.now() < pauseUntilRef.current) return
-
-      // 向きにゆるい揺らぎ
-      wobbleRef.current = wobbleRef.current * 0.85 + (Math.random() - 0.5) * 0.3
-      const ang = Math.atan2(dLng, dLat) + wobbleRef.current
-      const newPos = {
-        lat: pos.lat + Math.cos(ang) * DEMO_STEP,
-        lng: pos.lng + Math.sin(ang) * DEMO_STEP,
-      }
-      posRef.current = newPos
-      onPosChange({ ...newPos })
-    }, DEMO_TICK_MS)
-
-    return () => clearInterval(tick)
-  }, [playing, spots, map])
-
-  // カメラ: rAF で毎フレームposRefを読んでsetCenter（マーカーtickと独立）
-  useEffect(() => {
-    if (!map || !playing) return
-    let rafId
-    const follow = () => {
-      if (!selectedRef.current && posRef.current) map.setCenter(posRef.current)
-      rafId = requestAnimationFrame(follow)
-    }
-    rafId = requestAnimationFrame(follow)
-    return () => cancelAnimationFrame(rafId)
-  }, [map, playing])
-
-  // カード開閉でカメラ切替
-  useEffect(() => {
-    if (!map) return
-    if (selectedId) {
-      const spot = spots.find(s => s.id === selectedId)
-      if (spot) { map.panTo({ lat: spot.lat, lng: spot.lng }); map.setZoom(15) }
-    } else if (posRef.current) {
-      map.panTo(posRef.current)
-    }
-  }, [selectedId, map])
-
-  return null
-}
 
 // ── ライブモードのカメラ制御 ─────────────────────────────────────────────
 function LiveCamera({ livePos, selected, locateTick }) {
@@ -3262,13 +3161,6 @@ function App() {
   const [selectedTourist, setSelectedTourist] = useState(null)
 
 
-  const [demoMode, setDemoMode]         = useState(false)
-  const [playing, setPlaying]           = useState(false)
-  const [startPos, setStartPos]         = useState(null)   // デモ中心点
-  const [startPosMode, setStartPosMode] = useState(false)  // 位置指定待ち
-  const [demoPos, setDemoPos]           = useState(null)   // 擬似マーカー位置
-
-  const triggeredRef = useRef(new Set())
   const [locateTick, setLocateTick] = useState(0)
   const driveDemoTimerRef = useRef(null)
   const driveGeoWatchRef = useRef(null)
@@ -3292,16 +3184,13 @@ function App() {
     () => { try { return !!localStorage.getItem(LOCATION_CONSENTED_KEY) } catch { return false } }
   )
 
-  const { pos: livePos, status: gpsStatus } = useLiveGPS(!demoMode && gpsConsented)
+  const { pos: livePos, status: gpsStatus } = useLiveGPS(gpsConsented)
   const { heading, requestPermission } = useDeviceHeading()
 
-  // activePos / browsingPos を先に宣言して、以降のすべての useEffect deps で TDZ にならないようにする
-  const activePos = demoMode ? demoPos : livePos
+  const activePos = livePos
   const browsingPos = activePos || YOKOHAMA_STATION
-  const usingDefaultReferencePoint =
-    !activePos ||
-    (demoMode && startPos?.lat === YOKOHAMA_STATION.lat && startPos?.lng === YOKOHAMA_STATION.lng)
-  const nearbyReferenceMode = usingDefaultReferencePoint ? 'yokohama-station' : demoMode ? 'demo' : 'live'
+  const usingDefaultReferencePoint = !activePos
+  const nearbyReferenceMode = usingDefaultReferencePoint ? 'yokohama-station' : 'live'
 
   const handleLocationAllow = useCallback(async () => {
     try { localStorage.setItem(LOCATION_CONSENTED_KEY, 'true') } catch {}
@@ -3319,10 +3208,6 @@ function App() {
   const handleLocationSkip = useCallback(() => {
     setLocationPermissionAsked(true)
     setShowLocationPrompt(false)
-    setDemoMode(true)
-    setStartPos(YOKOHAMA_STATION)
-    setDemoPos(YOKOHAMA_STATION)
-    setPlaying(false)
   }, [])
 
   useEffect(() => {
@@ -3337,12 +3222,12 @@ function App() {
 
   const [gpsReady, setGpsReady] = useState(false)
   useEffect(() => {
-    if (demoMode || !gpsConsented) { setGpsReady(true); return }
+    if (!gpsConsented) { setGpsReady(true); return }
     if (gpsStatus === 'ok' || gpsStatus === 'error') { setGpsReady(true); return }
     setGpsReady(false)
     const t = setTimeout(() => setGpsReady(true), 8000)
     return () => clearTimeout(t)
-  }, [gpsStatus, demoMode, gpsConsented])
+  }, [gpsStatus, gpsConsented])
 
   const [userPrefs, setUserPrefs]   = useState(() => loadPrefs())
   const [showNicknameScreen, setShowNicknameScreen] = useState(() => !loadPrefs()?.nickname)
@@ -3350,7 +3235,7 @@ function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [mapTheme, setMapTheme] = useState(loadMapTheme)
   const [weatherOverride, setWeatherOverride] = useState(null)
-  const wxPos = demoMode ? startPos : livePos
+  const wxPos = livePos
   const autoWeather = useAutoWeather(wxPos, weatherOverride !== null)
   const weather = weatherOverride ?? autoWeather ?? 'sunny'
 
@@ -3802,42 +3687,18 @@ function App() {
       .sort((a, b) => a.dist - b.dist)[0] ?? null
   }, [stampCardIds, acquiredStamps, spots, browsingPos])
 
-  // 近接判定（ラベル表示用。DEMOは離れたらカードも自動クローズ）
+  // 近接判定（ラベル表示用）
   useEffect(() => {
     if (!activePos || !spots.length) return
-
-    // 範囲内スポットをすべて nearbySpots に
-    const nearby = spots.filter(
+    setNearbySpots(spots.filter(
       s => haversine(activePos, { lat: s.lat, lng: s.lng }) < PROXIMITY_METERS
-    )
-    setNearbySpots(nearby)
-
-    // DEMO: 選択中スポットが範囲外に出たら自動クローズ
-    if (demoMode) {
-      setSelected(prev => {
-        if (prev && haversine(activePos, { lat: prev.lat, lng: prev.lng }) > PROXIMITY_METERS) {
-          return null
-        }
-        return prev
-      })
-    }
-  }, [activePos, spots, demoMode])
-
+    ))
+  }, [activePos, spots])
 
   const closeCard = useCallback(() => {
     setSelected(null)
     setCardExpanded(false)
   }, [])
-
-  const handleReset = () => {
-    setPlaying(false)
-    setDemoPos(null)
-    setStartPos(null)
-    setStartPosMode(false)
-    triggeredRef.current.clear()
-    setSelected(null)
-    setCardExpanded(false)
-  }
 
   const handleSpotSelect = useCallback((spot) => {
     setSelected(spot)
@@ -3859,22 +3720,9 @@ function App() {
     setShowSuggestions(false)
   }
 
-  const handleMapClick = (e) => {
-    const ll = e.detail?.latLng
-    if (startPosMode) {
-      if (!ll) return
-      const lat = typeof ll.lat === 'function' ? ll.lat() : ll.lat
-      const lng = typeof ll.lng === 'function' ? ll.lng() : ll.lng
-      setStartPos({ lat, lng })
-      setStartPosMode(false)
-      setDemoPos({ lat, lng })
-      triggeredRef.current.clear()
-      setSelected(null)
-    } else {
-      // 地図タップで観光スポットポップアップを閉じる
-      // 聖地カードは ✕ ボタンでのみ閉じる（パン後の遅延クリックでの誤閉じ防止）
-      setSelectedTourist(null)
-    }
+  const handleMapClick = () => {
+    // 地図タップで観光スポットポップアップを閉じる
+    setSelectedTourist(null)
   }
 
   return (
@@ -3895,18 +3743,7 @@ function App() {
           styles={mapTheme === 'dark' ? MAP_STYLES_DARK : MAP_STYLES_LIGHT}
           onClick={handleMapClick}
         >
-          {demoMode && startPos && (
-            <DemoEngine
-              spots={spots}
-              startPos={startPos}
-              playing={playing}
-              onPosChange={setDemoPos}
-              selectedId={selected?.id ?? null}
-            />
-          )}
-          {!demoMode && (
-            <LiveCamera livePos={livePos} selected={selected} locateTick={locateTick} />
-          )}
+          <LiveCamera livePos={livePos} selected={selected} locateTick={locateTick} />
           <SearchCamera spots={spots} searchAnime={searchAnime} />
 
           {/* 観光スポットピン */}
@@ -3925,7 +3762,7 @@ function App() {
           <ClusteredSpotMarkers
             spots={spots}
             selectedId={selected?.id}
-            onSelect={demoMode ? null : handleSpotSelect}
+            onSelect={handleSpotSelect}
             highlightAnime={searchAnime}
             favorites={favorites}
           />
@@ -4033,7 +3870,7 @@ function App() {
               zIndex={999}
               icon={{
                 path: window.google.maps.SymbolPath.CIRCLE,
-                fillColor: demoMode ? THEME : '#1d6ef5',
+                fillColor: '#1d6ef5',
                 fillOpacity: 1, strokeColor: '#fff', strokeWeight: 3, scale: 10,
               }}
             />
@@ -4041,7 +3878,7 @@ function App() {
 
           {/* 方向コーン（LIVEモードかつ方位取得済みのとき） */}
           {/* 方向扇形（LIVEモードかつ方位取得済みのとき） */}
-          {!demoMode && livePos && heading != null && window.google?.maps && (
+          {livePos && heading != null && window.google?.maps && (
             <Marker
               position={livePos}
               zIndex={998}
@@ -4245,90 +4082,12 @@ function App() {
           }}
         >🏁 Drive</button>
 
-        <span style={{ width: 1, height: 18, background: 'rgba(0,0,0,0.1)' }} />
-
-        {/* DEMO / LIVE 切替 */}
-        <button
-          onClick={() => { setDemoMode(m => !m); handleReset() }}
-          style={{
-            fontSize: 10, fontWeight: 800, padding: '5px 11px', borderRadius: 10,
-            border: 'none', cursor: 'pointer', letterSpacing: '0.07em',
-            background: demoMode ? THEME : 'rgba(0,0,0,0.07)',
-            color: demoMode ? '#fff' : '#555',
-            boxShadow: demoMode ? `0 2px 8px rgba(124,58,237,0.35)` : 'none',
-            transition: 'all 0.18s',
-          }}
-        >{demoMode ? 'LIVE' : 'DEMO'}</button>
-
-        {demoMode && (<>
-          <span style={{ width: 1, height: 18, background: 'rgba(0,0,0,0.1)' }} />
-          {/* 開始位置指定 */}
-          <button
-            onClick={() => setStartPosMode(m => !m)}
-            style={{
-              fontSize: 10, fontWeight: 800, padding: '5px 10px', borderRadius: 10,
-              border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', letterSpacing: '0.04em',
-              background: startPosMode ? '#f59e0b' : startPos ? '#ede9ff' : THEME,
-              color: startPosMode ? '#fff' : startPos ? THEME : '#fff',
-              boxShadow: startPos && !startPosMode ? 'none' : `0 2px 8px rgba(124,58,237,0.3)`,
-              transition: 'all 0.18s',
-            }}
-          >{startPosMode ? '📍 Tap map…' : startPos ? '📍 Change' : '📍 Set Start'}</button>
-
-          {/* 再生 / 一時停止 */}
-          <button
-            onClick={() => setPlaying(p => !p)}
-            disabled={!startPos}
-            style={{
-              width: 30, height: 30, borderRadius: 10,
-              background: startPos ? (playing ? '#fef3c7' : 'rgba(0,0,0,0.06)') : 'rgba(0,0,0,0.04)',
-              border: 'none', cursor: startPos ? 'pointer' : 'default',
-              fontSize: 16, opacity: startPos ? 1 : 0.35,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'all 0.15s',
-            }}
-          >{playing ? '⏸' : '▶️'}</button>
-        </>)}
       </div>
 
-      {/* 初回ガイド：Set Start を促す吹き出し */}
-      {demoMode && !startPos && !startPosMode && (
-        <div style={{
-          position: 'absolute', bottom: 82, left: 12,
-          background: THEME, borderRadius: 12, padding: '7px 12px',
-          color: '#fff', fontWeight: 700, fontSize: 13, zIndex: 10, whiteSpace: 'nowrap',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-        }}>
-          👆 Tap "📍 Set Start" to begin!
-          {/* 下向き三角（吹き出しの矢印） */}
-          <div style={{
-            position: 'absolute', bottom: -7, left: 20,
-            width: 0, height: 0,
-            borderLeft: '7px solid transparent',
-            borderRight: '7px solid transparent',
-            borderTop: `7px solid ${THEME}`,
-          }} />
-        </div>
-      )}
-
-      {/* 位置指定中のオーバーレイヒント */}
-      {startPosMode && (
-        <div style={{
-          position: 'absolute', bottom: 82, left: 12,
-          background: 'rgba(245,158,11,0.95)', borderRadius: 16, padding: '8px 18px',
-          color: '#fff', fontWeight: 700, fontSize: 13, zIndex: 10, whiteSpace: 'nowrap',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-        }}>
-          📍 Tap map to set start
-        </div>
-      )}
-
-      {!demoMode && (
-        <GpsLocateButton
-          status={gpsStatus}
-          onLocate={() => setLocateTick(t => t + 1)}
-        />
-      )}
+      <GpsLocateButton
+        status={gpsStatus}
+        onLocate={() => setLocateTick(t => t + 1)}
+      />
       {selected && cardExpanded && (
         <Card
           spot={selected}
@@ -4402,7 +4161,7 @@ function App() {
         onClose={() => setShareCardDataUrl(null)}
       />
       {/* GPSローディングオーバーレイ（同意後のみ表示） */}
-      {!gpsReady && !demoMode && gpsConsented && (
+      {!gpsReady && gpsConsented && (
         <div style={{
           position: 'fixed', inset: 0, background: '#fff',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -4418,7 +4177,7 @@ function App() {
       )}
 
       {/* 位置情報・コンパス許可カード（Near me 選択後のみ） */}
-      {!demoMode && showLocationPrompt && !locationPermissionAsked && (
+      {showLocationPrompt && !locationPermissionAsked && (
         <LocationPermissionCard onAllow={handleLocationAllow} onSkip={handleLocationSkip} />
       )}
 
