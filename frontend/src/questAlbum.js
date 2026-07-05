@@ -45,10 +45,11 @@ export function normalizeQuestAlbum(value) {
 // ── IndexedDB ─────────────────────────────────────────────────────────────
 const QA_DB_NAME = 'seichi_quest_album'
 const QA_DB_STORE = 'data'
+let memoryAlbum = createEmptyQuestAlbum()
 
 function openQADB() {
   return new Promise((res, rej) => {
-    const r = indexedDB.open(QA_DB_NAME, 1)
+    const r = globalThis.indexedDB.open(QA_DB_NAME, 1)
     r.onupgradeneeded = e => e.target.result.createObjectStore(QA_DB_STORE)
     r.onsuccess = e => res(e.target.result)
     r.onerror = e => rej(e.target.error)
@@ -56,6 +57,7 @@ function openQADB() {
 }
 
 async function qadbLoad() {
+  if (!globalThis.indexedDB) return normalizeQuestAlbum(memoryAlbum)
   const db = await openQADB()
   return new Promise((res, rej) => {
     const tx = db.transaction(QA_DB_STORE, 'readonly')
@@ -67,6 +69,10 @@ async function qadbLoad() {
 
 async function qadbSave(album) {
   const normalized = normalizeQuestAlbum(album)
+  if (!globalThis.indexedDB) {
+    memoryAlbum = normalized
+    return normalized
+  }
   const db = await openQADB()
   return new Promise((res, rej) => {
     const tx = db.transaction(QA_DB_STORE, 'readwrite')

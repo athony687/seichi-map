@@ -75,19 +75,22 @@
     "hours": "Sky Garden 10:00–21:00 (Fri & Sat until 22:00) · Daily"
   },
   {
+    "verified": true,
+    "source": "",
+    "generic_intro_en": "",
     "id": "hakone-initiald-01",
     "spot_name_ja": "箱根旧道七曲り",
-    "spot_name_en": "Hakone Old Road (Nanamagari switchbacks)",
+    "spot_name_en": "Hakone Old Road Nanamagari",
     "anime_title_ja": "頭文字D Fifth Stage",
     "anime_title_en": "Initial D: Fifth Stage",
-    "scene_description": "カーレースアニメで、後期においてこの場所が登場する。神奈川の強豪チームとの戦いが描かれる舞台である。",
-    "intro_short_en": "This winding mountain road through Hakone is well known to 'Initial D' fans for its tight hairpin turns, which feature in the series' later racing arcs. The switchbacks climb through forest with occasional valley views. It's still an active public road, so visitors exploring on foot or by car should take care.",
-    "lat": 35.20908162204149,
-    "lng": 139.05874985427562,
+    "scene_description": "箱根のヘアピンが続く山道。ドライブ体験は安全運転スコアとして扱う。",
+    "intro_short_en": "Hakone Old Road Nanamagari is the clearest touge quest for the Initial D side of the app. The goal is not speed: the app frames it as a safe-drive route with checkpoints, smoothness, and respect.",
+    "lat": 35.2091,
+    "lng": 139.0587,
     "area": "Hakone, Kanagawa",
     "nearest_station": "Hakone-Yumoto Station",
-    "access_note": "箱根湯本駅からバスでアクセス、七曲り付近で下車",
-    "photo_url": "",
+    "access_note": "箱根湯本駅からバスまたは車でアクセス。公道のため安全第一",
+    "photo_url": "/quest-assets/initiald-nanamagari.jpg",
     "tags": [
       "driving-route",
       "scenic",
@@ -95,11 +98,34 @@
       "caution-active-road",
       "outdoor"
     ],
-    "verified": true,
-    "source": "",
-    "generic_intro_en": "",
     "official_url": "",
-    "hours": "Always open"
+    "hours": "Always open",
+    "quest_title": "Touge Safe Drive Quest",
+    "quest_place": "箱根旧道 七曲り",
+    "quest_type": "Drive Mode",
+    "quests": [
+      {
+        "category": "Drive",
+        "title": "Drive Modeを開く",
+        "description": "速度ではなく、スムーズさとチェックポイント通過でスコア化する。",
+        "photo_prompt": "Upload a safe roadside or route-start photo. Do not upload while driving.",
+        "impression_prompt": "Which sector did you try?"
+      },
+      {
+        "category": "Safety",
+        "title": "安全に停車できる場所で記録する",
+        "description": "公道なので走行中の撮影は禁止。停車できる場所で記録する。",
+        "photo_prompt": "Upload a photo taken only after safely stopping.",
+        "impression_prompt": "What safety rule did you follow?"
+      },
+      {
+        "category": "Score",
+        "title": "Demo Driveで説明する",
+        "description": "発表ではDemo Driveを押すだけでルートとスコアが見える。",
+        "photo_prompt": "Upload a screenshot or photo that represents the touge quest.",
+        "impression_prompt": "What score story would you explain?"
+      }
+    ]
   },
   {
     "id": "route134-yowapeda-01",
@@ -349,50 +375,55 @@
     "hours": "Always open"
   },
   {
+    "verified": true,
+    "source": "https://plus.rurubu.jp/article/318636317",
+    "generic_intro_en": "",
     "id": "miura-megami-poem-01",
     "spot_name_ja": "コーヒーハウスぽえむ 三浦海岸駅前店",
     "spot_name_en": "Coffee House Poem Miura Kaigan",
     "anime_title_ja": "女神のカフェテラス",
     "anime_title_en": "The Cafe Terrace and Its Goddesses",
-    "scene_description": "作中の喫茶店Familiaのモデルとして知られる、三浦海岸駅近くの喫茶店。三浦海岸巡礼の食体験スポットとして訪れやすい。",
-    "intro_short_en": "Coffee House Poem near Miura Kaigan Station is known among fans as the model for Familia in The Cafe Terrace and Its Goddesses. It turns the pilgrimage into a relaxed cafe stop with coffee, light meals, and a real sense of the local setting.",
+    "scene_description": "作中の喫茶店Familiaのモデルとして知られるカフェ。三浦海岸駅から近く訪れやすい。",
+    "intro_short_en": "Coffee House Poem near Miura Kaigan Station is the core cafe stop for The Cafe Terrace and Its Goddesses. It makes the route easy to explain: visit the model cafe, enjoy coffee, and save the memory.",
     "lat": 35.1886,
     "lng": 139.6535,
     "area": "Miura Coast, Kanagawa",
     "nearest_station": "Miura Kaigan Station",
-    "access_note": "京急 三浦海岸駅から徒歩すぐ。営業状況を確認して訪問",
-    "photo_url": "",
+    "access_note": "京急 三浦海岸駅から徒歩すぐ",
+    "photo_url": "/quest-assets/megami-poem.jpg",
     "tags": [
       "cafe",
       "story-food",
       "walkable",
       "food",
-      "souvenir",
       "indoor"
     ],
-    "verified": true,
-    "source": "https://plus.rurubu.jp/article/318636317",
-    "generic_intro_en": "",
     "official_url": "https://goddess-cafe.com/",
-    "hours": "Cafe hours vary · Check before visiting",
+    "hours": "Cafe hours vary",
     "quest_title": "Familia Model Cafe Quest",
-    "quest_place": "コーヒーハウスぽえむ 三浦海岸駅前店",
+    "quest_place": "コーヒーハウスぽえむ",
     "quest_type": "Story Food",
     "quests": [
       {
         "category": "Visit",
         "title": "Familiaのモデル店を訪れる",
-        "description": "作中の喫茶店Familiaの雰囲気を感じられるカフェを訪れる。"
+        "description": "外観や入口の雰囲気を確認する。",
+        "photo_prompt": "Upload a photo that captures the Familia model cafe feeling.",
+        "impression_prompt": "What detail felt most like the anime?"
       },
       {
         "category": "Eat",
-        "title": "コーヒーやトーストサンドを楽しむ",
-        "description": "カフェ巡礼として、コーヒーや軽食を楽しむ。"
+        "title": "コーヒーや軽食を楽しむ",
+        "description": "カフェ巡礼として実際に注文する。",
+        "photo_prompt": "Upload a photo of your cafe order.",
+        "impression_prompt": "What did you order?"
       },
       {
-        "category": "Buy",
-        "title": "ドリップバッグなどのお土産を探す",
-        "description": "旅の記憶として持ち帰れるカフェ系のお土産を探す。"
+        "category": "Album",
+        "title": "カフェ巡礼を一枚にまとめる",
+        "description": "モデル地としての記憶をアルバムに残す。",
+        "photo_prompt": "Upload your best cafe pilgrimage photo.",
+        "impression_prompt": "Give this cafe stop a title."
       }
     ]
   },
@@ -751,5 +782,217 @@
     "generic_intro_en": "",
     "official_url": "https://bocchi.rocks/",
     "hours": "Always open"
+  },
+  {
+    "verified": true,
+    "source": "",
+    "generic_intro_en": "",
+    "id": "aobuta-fujisawa-station-01",
+    "spot_name_ja": "藤沢駅",
+    "spot_name_en": "Fujisawa Station",
+    "anime_title_ja": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+    "anime_title_en": "Rascal Does Not Dream of Bunny Girl Senpai",
+    "scene_description": "湘南エリア巡礼の玄関口。作中の生活圏を歩き始める起点として扱う。",
+    "intro_short_en": "Fujisawa Station works as the starting gate for a Shonan Bunny Girl Senpai route. From here, visitors can connect the everyday city scenes with Enoshima, Katase, and the coastal stops that define the series.",
+    "lat": 35.3389,
+    "lng": 139.4875,
+    "area": "Fujisawa, Kanagawa",
+    "nearest_station": "JR / Odakyu / Enoden Fujisawa Station",
+    "access_note": "藤沢駅からスタート",
+    "photo_url": "/quest-assets/aobuta-bentenbashi-anime.jpg",
+    "tags": [
+      "walkable",
+      "station",
+      "photo-spot",
+      "free",
+      "outdoor"
+    ],
+    "official_url": "https://aobuta.com/",
+    "hours": "Always open",
+    "quest_title": "Shonan Memory Route",
+    "quest_place": "藤沢駅から江ノ島方面へ",
+    "quest_type": "Photo Route",
+    "quests": [
+      {
+        "category": "Start",
+        "title": "藤沢駅から巡礼を始める",
+        "description": "駅前でルート開始の写真を撮る。",
+        "photo_prompt": "Upload a photo that shows your Bunny Girl Senpai route starting from Fujisawa.",
+        "impression_prompt": "What mood does this starting point give you?"
+      },
+      {
+        "category": "Move",
+        "title": "江ノ電・小田急で海側へ向かう",
+        "description": "藤沢から江ノ島・片瀬方面へ移動する。",
+        "photo_prompt": "Upload a transit or street photo that connects Fujisawa to the coast.",
+        "impression_prompt": "Write the next stop you chose."
+      },
+      {
+        "category": "Album",
+        "title": "湘南巡礼の一枚を残す",
+        "description": "この日の巡礼テーマが分かる写真を保存する。",
+        "photo_prompt": "Upload one photo that feels like your Shonan pilgrimage cover.",
+        "impression_prompt": "Name this route in one phrase."
+      }
+    ]
+  },
+  {
+    "verified": true,
+    "source": "",
+    "generic_intro_en": "",
+    "id": "aobuta-katase-enoshima-01",
+    "spot_name_ja": "片瀬江ノ島駅",
+    "spot_name_en": "Katase-Enoshima Station",
+    "anime_title_ja": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+    "anime_title_en": "Rascal Does Not Dream of Bunny Girl Senpai",
+    "scene_description": "江ノ島方面の印象的な駅舎。湘南らしい景色へ入る入口として使える。",
+    "intro_short_en": "Katase-Enoshima Station is a strong visual gateway into the coastal side of the Bunny Girl Senpai pilgrimage. Its distinctive station building makes the route instantly recognizable.",
+    "lat": 35.3089,
+    "lng": 139.4824,
+    "area": "Katase, Fujisawa",
+    "nearest_station": "Katase-Enoshima Station",
+    "access_note": "小田急 片瀬江ノ島駅すぐ",
+    "photo_url": "/quest-assets/aobuta-enosui.jpg",
+    "tags": [
+      "walkable",
+      "station",
+      "photo-spot",
+      "free",
+      "outdoor"
+    ],
+    "official_url": "https://aobuta.com/",
+    "hours": "Always open",
+    "quest_title": "Enoshima Gateway Quest",
+    "quest_place": "片瀬江ノ島駅 / 弁天橋",
+    "quest_type": "Photo Route",
+    "quests": [
+      {
+        "category": "Visit",
+        "title": "片瀬江ノ島駅を撮る",
+        "description": "江ノ島エリア巡礼の入口として駅舎を記録する。",
+        "photo_prompt": "Upload a photo of Katase-Enoshima Station or the first view after leaving it.",
+        "impression_prompt": "What makes this feel like Enoshima?"
+      },
+      {
+        "category": "Walk",
+        "title": "弁天橋方面へ歩く",
+        "description": "島へ向かう導線を実際に歩く。",
+        "photo_prompt": "Upload a walking-route photo toward Benten Bridge.",
+        "impression_prompt": "Describe the weather or light."
+      },
+      {
+        "category": "Memory",
+        "title": "海の見える一枚を残す",
+        "description": "湘南らしい海や空の写真をアルバム化する。",
+        "photo_prompt": "Upload one coastal photo that captures the route.",
+        "impression_prompt": "What did the coast sound like?"
+      }
+    ]
+  },
+  {
+    "verified": true,
+    "source": "",
+    "generic_intro_en": "",
+    "id": "aobuta-enoshima-koya-01",
+    "spot_name_ja": "江ノ島小屋",
+    "spot_name_en": "Enoshima Koya",
+    "anime_title_ja": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+    "anime_title_en": "Rascal Does Not Dream of Bunny Girl Senpai",
+    "scene_description": "江ノ島周辺の食体験スポット。しらす丼など湘南グルメのクエストに使える。",
+    "intro_short_en": "Enoshima Koya turns the pilgrimage into a food quest. It is close to the water and works well as the place where the route becomes a real trip, not only a location checklist.",
+    "lat": 35.3065,
+    "lng": 139.4816,
+    "area": "Katase, Fujisawa",
+    "nearest_station": "Katase-Enoshima Station",
+    "access_note": "片瀬江ノ島駅から徒歩圏内",
+    "photo_url": "/quest-assets/aobuta-dennys-omelette.jpg",
+    "tags": [
+      "food",
+      "story-food",
+      "walkable",
+      "paid",
+      "indoor"
+    ],
+    "official_url": "https://aobuta.com/",
+    "hours": "Restaurant hours vary",
+    "quest_title": "Shonan Food Quest",
+    "quest_place": "江ノ島小屋周辺",
+    "quest_type": "Story Food",
+    "quests": [
+      {
+        "category": "Eat",
+        "title": "湘南らしい食事をする",
+        "description": "しらす丼など、江ノ島周辺らしい料理を楽しむ。",
+        "photo_prompt": "Upload a photo of your Shonan food stop.",
+        "impression_prompt": "What did you order?"
+      },
+      {
+        "category": "Visit",
+        "title": "店の外観や周辺を記録する",
+        "description": "食事だけでなく、場所の雰囲気も残す。",
+        "photo_prompt": "Upload a photo of the restaurant exterior or nearby street.",
+        "impression_prompt": "How crowded was it?"
+      },
+      {
+        "category": "Share",
+        "title": "食べた記憶をアルバム化する",
+        "description": "巡礼の中の食体験として保存する。",
+        "photo_prompt": "Upload the food memory you want to keep.",
+        "impression_prompt": "Give this meal a short title."
+      }
+    ]
+  },
+  {
+    "verified": true,
+    "source": "",
+    "generic_intro_en": "",
+    "id": "megami-miura-market-01",
+    "spot_name_ja": "三浦やさい直売所",
+    "spot_name_en": "Miura Vegetable Market",
+    "anime_title_ja": "女神のカフェテラス",
+    "anime_title_en": "The Cafe Terrace and Its Goddesses",
+    "scene_description": "三浦らしい生活感を足せるローカルスポット。カフェ巡礼に買う・歩く体験を追加する。",
+    "intro_short_en": "The Miura vegetable market adds a local-life quest to the cafe route. It helps the app move beyond pins by asking visitors to buy or photograph something that belongs to the neighborhood.",
+    "lat": 35.1882,
+    "lng": 139.6542,
+    "area": "Miura Coast, Kanagawa",
+    "nearest_station": "Miura Kaigan Station",
+    "access_note": "三浦海岸駅周辺を徒歩で回遊",
+    "photo_url": "/quest-assets/megami-miura-market.jpg",
+    "tags": [
+      "market",
+      "souvenir",
+      "walkable",
+      "food",
+      "outdoor"
+    ],
+    "official_url": "https://goddess-cafe.com/",
+    "hours": "Store hours vary",
+    "quest_title": "Miura Local Market Quest",
+    "quest_place": "三浦海岸駅周辺",
+    "quest_type": "Buy Local",
+    "quests": [
+      {
+        "category": "Buy",
+        "title": "三浦らしいものを探す",
+        "description": "野菜や地元らしい商品を見つける。",
+        "photo_prompt": "Upload a photo of something local you found in Miura.",
+        "impression_prompt": "What caught your eye?"
+      },
+      {
+        "category": "Walk",
+        "title": "駅前から海側へ歩く",
+        "description": "カフェと街の距離感を体験する。",
+        "photo_prompt": "Upload a street photo from the Miura cafe route.",
+        "impression_prompt": "What kind of town did it feel like?"
+      },
+      {
+        "category": "Memory",
+        "title": "カフェ以外の三浦を残す",
+        "description": "作品の舞台を支える地域の雰囲気を保存する。",
+        "photo_prompt": "Upload a non-cafe Miura memory.",
+        "impression_prompt": "What did this add to the route?"
+      }
+    ]
   }
 ]

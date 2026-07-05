@@ -32,6 +32,64 @@ const DEMO_TICK_MS = 600  // marker position update interval
 const ARRIVE_DEG = 0.001  // ≈110m, spot "arrived"
 const LOCATION_CONSENTED_KEY = 'seichi_location_consented'
 const ENABLE_ONBOARDING_SURVEY = false
+const INITIAL_D_DRIVE_SPOT_ID = 'hakone-initiald-01'
+const DRIVE_CHECKPOINT_RADIUS_METERS = 180
+const DRIVE_SESSIONS_KEY = 'seichi_drive_sessions'
+
+const HAKONE_DRIVE_ROUTE = {
+  id: 'hakone-old-road-drive',
+  spotId: INITIAL_D_DRIVE_SPOT_ID,
+  title: 'Hakone Old Road Safe Drive',
+  subtitle: 'Sacred place as a road, not a pin.',
+  tags: ['GPS + DeviceMotion', 'Safety Score', 'Demo Drive'],
+  safetyNote: 'This mode scores smoothness, safe pacing, and respect. It is not a speed challenge.',
+  routePoints: [
+    { lat: 35.2327, lng: 139.1047 },
+    { lat: 35.2269, lng: 139.0964 },
+    { lat: 35.2225, lng: 139.0865 },
+    { lat: 35.2182, lng: 139.0782 },
+    { lat: 35.2146, lng: 139.0717 },
+    { lat: 35.2114, lng: 139.0648 },
+    { lat: 35.2091, lng: 139.0587 },
+    { lat: 35.2057, lng: 139.0488 },
+    { lat: 35.2027, lng: 139.0336 },
+  ],
+  checkpoints: [
+    { id: 'start', label: 'Start Gate', lat: 35.2327, lng: 139.1047 },
+    { id: 'lower-curves', label: 'Lower Curve Sector', lat: 35.2225, lng: 139.0865 },
+    { id: 'nanamagari', label: 'Nanamagari Core', lat: 35.2146, lng: 139.0717 },
+    { id: 'rest', label: 'Scenic Cooldown', lat: 35.2091, lng: 139.0587 },
+    { id: 'goal', label: 'Goal Gate', lat: 35.2027, lng: 139.0336 },
+  ],
+  demoDrivePoints: [
+    { timestamp: 0, lat: 35.2327, lng: 139.1047, speedKmh: 18, acceleration: 0.12 },
+    { timestamp: 900, lat: 35.2269, lng: 139.0964, speedKmh: 24, acceleration: 0.24 },
+    { timestamp: 1800, lat: 35.2225, lng: 139.0865, speedKmh: 28, acceleration: 0.31 },
+    { timestamp: 2700, lat: 35.2182, lng: 139.0782, speedKmh: 26, acceleration: -0.28 },
+    { timestamp: 3600, lat: 35.2146, lng: 139.0717, speedKmh: 22, acceleration: -0.36 },
+    { timestamp: 4500, lat: 35.2114, lng: 139.0648, speedKmh: 24, acceleration: 0.18 },
+    { timestamp: 5400, lat: 35.2091, lng: 139.0587, speedKmh: 20, acceleration: -0.16 },
+    { timestamp: 6300, lat: 35.2057, lng: 139.0488, speedKmh: 27, acceleration: 0.27 },
+    { timestamp: 7200, lat: 35.2027, lng: 139.0336, speedKmh: 25, acceleration: -0.12 },
+  ],
+}
+
+function loadDriveSessions() {
+  try {
+    const raw = localStorage.getItem(DRIVE_SESSIONS_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+function saveDriveSessions(sessions) {
+  try {
+    localStorage.setItem(DRIVE_SESSIONS_KEY, JSON.stringify(sessions))
+  } catch {
+    return undefined
+  }
+}
 
 // ── スタンプラリー設定 ──────────────────────────────────────────────────────
 const STAMP_KEY          = 'seichi_stamps'
@@ -402,7 +460,7 @@ function ProximityLabel({ spot, onTap }) {
 }
 
 // ── スポットカード（距離表示付き）────────────────────────────────────────
-function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavorite, weather, defaultExpanded }) {
+function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavorite, weather, defaultExpanded, onOpenDriveMode }) {
   const staticIntro = spot.generic_intro_en || (!isPlaceholder(spot.intro_short_en) ? spot.intro_short_en : GENERIC_INTRO)
   const [intro, setIntro]   = useState(introCache[spot.id] || staticIntro)
   const [loading, setLoading] = useState(!introCache[spot.id])
@@ -616,6 +674,44 @@ function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavori
             </div>
           </div>
           <QuestPanel spot={spot} />
+          {spot.id === INITIAL_D_DRIVE_SPOT_ID && (
+            <section style={{
+              margin: '0 18px 14px',
+              padding: 12,
+              borderRadius: 16,
+              background: '#111827',
+              border: '1px solid #374151',
+              color: '#fff',
+            }}>
+              <div style={{ fontSize: 10, fontWeight: 850, color: '#fbbf24', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+                Drive Mode
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 900, marginTop: 4 }}>
+                Hakone Touge Quest
+              </div>
+              <div style={{ fontSize: 12, color: '#d1d5db', lineHeight: 1.55, marginTop: 5 }}>
+                Treat this seichi as a route. Replay or try a safe GPS + DeviceMotion drive score.
+              </div>
+              <button
+                type="button"
+                onClick={e => { e.stopPropagation(); onOpenDriveMode?.() }}
+                style={{
+                  marginTop: 10,
+                  width: '100%',
+                  padding: '9px 12px',
+                  borderRadius: 12,
+                  border: 'none',
+                  background: '#f59e0b',
+                  color: '#111827',
+                  fontSize: 12,
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                }}
+              >
+                Open Drive Mode
+              </button>
+            </section>
+          )}
         </div>
       )}
     </div>
@@ -1213,6 +1309,432 @@ function QuestPanel({ spot }) {
   )
 }
 
+function clampScore(value) {
+  if (!Number.isFinite(value)) return 0
+  return Math.max(0, Math.min(100, value))
+}
+
+function calculateDriveScore(points, completedCheckpointIds, checkpointTotal) {
+  if (!points.length) {
+    return {
+      smoothness: 0,
+      cornerStability: 0,
+      safetyPace: 0,
+      checkpointScore: 0,
+      respectScore: 100,
+      finalScore: 0,
+      avgSpeed: 0,
+      maxSpeed: 0,
+      durationSeconds: 0,
+      completedCount: 0,
+      checkpointTotal,
+    }
+  }
+
+  const speeds = points.map(p => Number(p.speedKmh) || 0)
+  const accelerations = points.map(p => Math.abs(Number(p.acceleration) || 0))
+  const avgAcceleration = accelerations.reduce((sum, value) => sum + value, 0) / accelerations.length
+  const maxAcceleration = Math.max(...accelerations, 0)
+  const avgSpeed = speeds.reduce((sum, value) => sum + value, 0) / speeds.length
+  const maxSpeed = Math.max(...speeds, 0)
+  const overPaceCount = speeds.filter(speed => speed > 45).length
+  const speedVariance = speeds.reduce((sum, speed) => sum + Math.abs(speed - avgSpeed), 0) / speeds.length
+  const checkpointScore = checkpointTotal > 0 ? (completedCheckpointIds.size / checkpointTotal) * 100 : 0
+  const timestamps = points.map(p => Number(p.timestamp)).filter(Number.isFinite)
+  const durationSeconds = timestamps.length >= 2
+    ? Math.max(0, (Math.max(...timestamps) - Math.min(...timestamps)) / 1000)
+    : 0
+
+  const smoothness = clampScore(100 - avgAcceleration * 95 - speedVariance * 0.7)
+  const cornerStability = clampScore(100 - maxAcceleration * 70 - speedVariance * 0.35)
+  const safetyPace = clampScore(100 - overPaceCount * 18 - Math.max(0, avgSpeed - 35) * 1.2)
+  const respectScore = clampScore(96 - overPaceCount * 6)
+  const finalScore =
+    smoothness * 0.30 +
+    cornerStability * 0.25 +
+    safetyPace * 0.20 +
+    checkpointScore * 0.15 +
+    respectScore * 0.10
+
+  return {
+    smoothness,
+    cornerStability,
+    safetyPace,
+    checkpointScore,
+    respectScore,
+    finalScore,
+    avgSpeed,
+    maxSpeed,
+    durationSeconds,
+    completedCount: completedCheckpointIds.size,
+    checkpointTotal,
+  }
+}
+
+function formatDriveScore(value) {
+  return Number(value || 0).toFixed(2)
+}
+
+function formatDriveDuration(seconds) {
+  const total = Math.max(0, Math.round(seconds || 0))
+  const minutes = Math.floor(total / 60)
+  const rest = total % 60
+  return `${minutes}:${String(rest).padStart(2, '0')}`
+}
+
+function getCompletedCheckpointIds(points, route) {
+  const completed = new Set()
+  points.forEach(point => {
+    route.checkpoints.forEach(checkpoint => {
+      if (haversine(point, checkpoint) <= DRIVE_CHECKPOINT_RADIUS_METERS) {
+        completed.add(checkpoint.id)
+      }
+    })
+  })
+  return completed
+}
+
+function DriveRouteOverlay({ route, activePoint, completedCheckpointIds }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (!map || !route || !window.google?.maps) return
+    const bounds = new window.google.maps.LatLngBounds()
+    route.routePoints.forEach(point => bounds.extend(point))
+    map.fitBounds(bounds, 64)
+
+    const polyline = new window.google.maps.Polyline({
+      path: route.routePoints,
+      geodesic: true,
+      strokeColor: '#f59e0b',
+      strokeOpacity: 0.95,
+      strokeWeight: 5,
+      zIndex: 80,
+    })
+    polyline.setMap(map)
+    return () => polyline.setMap(null)
+  }, [map, route])
+
+  if (!route) return null
+
+  return (
+    <>
+      {route.checkpoints.map((checkpoint, index) => {
+        const completed = completedCheckpointIds.has(checkpoint.id)
+        return (
+          <Marker
+            key={checkpoint.id}
+            position={{ lat: checkpoint.lat, lng: checkpoint.lng }}
+            title={checkpoint.label}
+            label={{ text: String(index + 1), color: '#111827', fontWeight: '900' }}
+            zIndex={150}
+            icon={window.google?.maps ? {
+              path: window.google.maps.SymbolPath.CIRCLE,
+              fillColor: completed ? '#22c55e' : '#fbbf24',
+              fillOpacity: 1,
+              strokeColor: '#111827',
+              strokeWeight: 2,
+              scale: completed ? 11 : 9,
+            } : undefined}
+          />
+        )
+      })}
+      {activePoint && window.google?.maps && (
+        <Marker
+          position={{ lat: activePoint.lat, lng: activePoint.lng }}
+          title="Drive marker"
+          label={{ text: 'D', color: '#fff', fontWeight: '900' }}
+          zIndex={220}
+          icon={{
+            path: window.google.maps.SymbolPath.CIRCLE,
+            fillColor: '#ef4444',
+            fillOpacity: 1,
+            strokeColor: '#fff',
+            strokeWeight: 3,
+            scale: 12,
+          }}
+        />
+      )}
+    </>
+  )
+}
+
+function DriveModePanel({
+  route,
+  mode,
+  statusMessage,
+  points,
+  activePoint,
+  score,
+  completedCheckpointIds,
+  savedSessions,
+  onDemoDrive,
+  onRealDrive,
+  onStop,
+  onSaveResult,
+  onClose,
+}) {
+  const running = mode === 'demo' || mode === 'real'
+  const canSave = points.length > 0 && !running
+  const bestSession = savedSessions
+    .filter(session => session.routeId === route.id)
+    .sort((a, b) => (b.score?.finalScore || 0) - (a.score?.finalScore || 0))[0]
+  const metrics = [
+    ['Smoothness Index', score.smoothness],
+    ['Corner Stability Index', score.cornerStability],
+    ['Safe Pace Index', score.safetyPace],
+    ['Pilgrimage Sync Rate', score.checkpointScore],
+    ['Respect Protocol', score.respectScore],
+  ]
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 58,
+      left: 12,
+      right: 12,
+      bottom: 82,
+      maxWidth: 430,
+      margin: '0 auto',
+      zIndex: 2500,
+      background: '#0f172a',
+      color: '#fff',
+      borderRadius: 18,
+      border: '1px solid rgba(251,191,36,0.55)',
+      boxShadow: '0 12px 38px rgba(0,0,0,0.32)',
+      overflowY: 'auto',
+      overscrollBehavior: 'contain',
+    }}>
+      <div style={{ padding: '13px 44px 12px 16px', background: 'linear-gradient(135deg, #111827, #1f2937)' }}>
+        <div style={{ fontSize: 10, fontWeight: 900, color: '#fbbf24', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+          Drive Mode
+        </div>
+        <div style={{ fontSize: 18, fontWeight: 900, lineHeight: 1.2, marginTop: 3 }}>
+          {route.title}
+        </div>
+        <div style={{ fontSize: 12, color: '#d1d5db', marginTop: 4 }}>
+          {route.subtitle}
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: 10,
+            right: 12,
+            width: 28,
+            height: 28,
+            borderRadius: '50%',
+            border: 'none',
+            background: 'rgba(255,255,255,0.12)',
+            color: '#fff',
+            cursor: 'pointer',
+          }}
+        >
+          x
+        </button>
+      </div>
+
+      <div style={{ padding: 14 }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+          {route.tags.map(tag => (
+            <span key={tag} style={{
+              padding: '3px 8px',
+              borderRadius: 999,
+              background: '#1f2937',
+              color: '#fde68a',
+              fontSize: 10,
+              fontWeight: 850,
+            }}>
+              {tag}
+            </span>
+          ))}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+          <button
+            type="button"
+            onClick={onDemoDrive}
+            disabled={running}
+            style={{
+              padding: '9px 10px',
+              borderRadius: 12,
+              border: 'none',
+              background: running ? '#4b5563' : '#f59e0b',
+              color: running ? '#d1d5db' : '#111827',
+              fontSize: 12,
+              fontWeight: 900,
+              cursor: running ? 'default' : 'pointer',
+            }}
+          >
+            Demo Drive
+          </button>
+          <button
+            type="button"
+            onClick={onRealDrive}
+            disabled={running}
+            style={{
+              padding: '9px 10px',
+              borderRadius: 12,
+              border: '1px solid #38bdf8',
+              background: running ? '#1f2937' : '#082f49',
+              color: '#e0f2fe',
+              fontSize: 12,
+              fontWeight: 900,
+              cursor: running ? 'default' : 'pointer',
+            }}
+          >
+            Try Real Drive
+          </button>
+        </div>
+
+        {running && (
+          <button
+            type="button"
+            onClick={onStop}
+            style={{
+              width: '100%',
+              padding: '8px 10px',
+              borderRadius: 12,
+              border: '1px solid #64748b',
+              background: '#111827',
+              color: '#cbd5e1',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+              marginBottom: 10,
+            }}
+          >
+            Stop Drive
+          </button>
+        )}
+
+        <div style={{
+          padding: '10px 12px',
+          borderRadius: 14,
+          background: '#020617',
+          border: '1px solid #1e293b',
+          marginBottom: 10,
+        }}>
+          <div style={{ fontSize: 10, color: '#94a3b8', fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+            Final Touge Drive Score
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
+            <span style={{ fontSize: 34, fontWeight: 950, color: '#fbbf24', lineHeight: 1 }}>
+              {formatDriveScore(score.finalScore)}
+            </span>
+            <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 800 }}>/ 100.00</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginTop: 10 }}>
+            {[
+              ['Checkpoints', `${score.completedCount}/${score.checkpointTotal}`],
+              ['Avg km/h', Math.round(score.avgSpeed || 0)],
+              ['Time', formatDriveDuration(score.durationSeconds)],
+            ].map(([label, value]) => (
+              <div key={label} style={{ borderRadius: 10, background: '#111827', padding: '7px 8px' }}>
+                <div style={{ fontSize: 9, color: '#94a3b8', fontWeight: 850 }}>{label}</div>
+                <div style={{ fontSize: 15, color: '#f8fafc', fontWeight: 950, marginTop: 1 }}>{value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gap: 6, marginBottom: 10 }}>
+          {route.checkpoints.map((checkpoint, index) => {
+            const completed = completedCheckpointIds.has(checkpoint.id)
+            return (
+              <div key={checkpoint.id} style={{
+                display: 'grid',
+                gridTemplateColumns: '24px 1fr auto',
+                alignItems: 'center',
+                gap: 8,
+                padding: '7px 9px',
+                borderRadius: 12,
+                background: completed ? '#123524' : '#111827',
+                border: `1px solid ${completed ? '#22c55e' : '#334155'}`,
+              }}>
+                <span style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: '50%',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: completed ? '#22c55e' : '#fbbf24',
+                  color: '#111827',
+                  fontSize: 11,
+                  fontWeight: 950,
+                }}>
+                  {index + 1}
+                </span>
+                <span style={{ minWidth: 0, color: '#f8fafc', fontSize: 12, fontWeight: 850, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {checkpoint.label}
+                </span>
+                <span style={{ color: completed ? '#86efac' : '#94a3b8', fontSize: 10, fontWeight: 900 }}>
+                  {completed ? 'CLEAR' : 'WAIT'}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
+          {metrics.map(([label, value]) => (
+            <div key={label} style={{ padding: 8, borderRadius: 12, background: '#1e293b' }}>
+              <div style={{ fontSize: 9, color: '#94a3b8', fontWeight: 850, lineHeight: 1.2 }}>
+                {label}
+              </div>
+              <div style={{ fontSize: 17, fontWeight: 950, color: '#f8fafc', marginTop: 2 }}>
+                {formatDriveScore(value)}
+              </div>
+            </div>
+          ))}
+          <div style={{ padding: 8, borderRadius: 12, background: '#1e293b' }}>
+            <div style={{ fontSize: 9, color: '#94a3b8', fontWeight: 850, lineHeight: 1.2 }}>
+              DrivePoint Samples
+            </div>
+            <div style={{ fontSize: 17, fontWeight: 950, color: '#f8fafc', marginTop: 2 }}>
+              {points.length}
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onSaveResult}
+          disabled={!canSave}
+          style={{
+            width: '100%',
+            padding: '9px 10px',
+            borderRadius: 12,
+            border: 'none',
+            background: canSave ? '#22c55e' : '#334155',
+            color: canSave ? '#052e16' : '#94a3b8',
+            fontSize: 12,
+            fontWeight: 950,
+            cursor: canSave ? 'pointer' : 'default',
+            marginTop: 10,
+          }}
+        >
+          Save Drive Result
+        </button>
+        {bestSession && (
+          <div style={{ marginTop: 7, fontSize: 10, color: '#fde68a', lineHeight: 1.45, fontWeight: 800 }}>
+            Best saved score: {formatDriveScore(bestSession.score?.finalScore)} / 100.00
+          </div>
+        )}
+
+        <div style={{ marginTop: 9, fontSize: 11, color: '#cbd5e1', lineHeight: 1.45 }}>
+          {statusMessage || (activePoint ? `Now: ${Math.round(activePoint.speedKmh || 0)}km/h / accel ${Number(activePoint.acceleration || 0).toFixed(2)}` : 'Ready for demo or sensor challenge.')}
+        </div>
+        <div style={{ marginTop: 7, fontSize: 10, color: '#94a3b8', lineHeight: 1.45 }}>
+          {route.safetyNote}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function OnboardingSurvey({ onComplete }) {
   const [step, setStep]           = useState(0)
   const [nickname, setNickname]   = useState('')
@@ -1787,7 +2309,11 @@ function normalizeQuestForAlbum(quest, index) {
 function buildQuestSets(spots) {
   return spots
     .filter(spot => Array.isArray(spot.quests) && spot.quests.length > 0)
-    .slice(0, 6)
+    .sort((a, b) => {
+      const orderDiff = (a.quest_order ?? 999) - (b.quest_order ?? 999)
+      if (orderDiff !== 0) return orderDiff
+      return a.anime_title_en.localeCompare(b.anime_title_en) || a.spot_name_en.localeCompare(b.spot_name_en)
+    })
     .map(spot => ({
       spot,
       quests: spot.quests.slice(0, 3).map(normalizeQuestForAlbum),
@@ -1818,6 +2344,7 @@ function QuestHomePanel({
   albumEntries,
   uploadingQuestKey,
   onStartQuest,
+  onOpenDriveMode,
   onShowAlbum,
   onShowAlbumMap,
   onUploadQuestPhoto,
@@ -1849,14 +2376,17 @@ function QuestHomePanel({
       display: 'flex',
       flexDirection: 'column',
     }} aria-label="Kanagawa Quest Album home">
-      <div style={{ padding: '16px 18px 14px', background: 'linear-gradient(135deg, #1f2937, #4c1d95)', color: '#fff' }}>
+      <div style={{ padding: '16px 18px 14px', background: 'linear-gradient(135deg, #1f2937, #365314)', color: '#fff' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'start' }}>
           <div>
             <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: '0.16em', color: '#c4b5fd', textTransform: 'uppercase' }}>
-              Kanagawa Quest Album
+              Seichi Quest
             </div>
             <div style={{ fontSize: 24, fontWeight: 950, lineHeight: 1.05, marginTop: 5 }}>
-              Quest Home
+              Pick, Visit, Save
+            </div>
+            <div style={{ fontSize: 12, color: '#e5e7eb', lineHeight: 1.45, marginTop: 7, maxWidth: 310 }}>
+              Choose an anime route, clear a real-world quest, and keep the photo as an album stamp.
             </div>
           </div>
           <button
@@ -1883,7 +2413,7 @@ function QuestHomePanel({
               {progress.completedCount}<span style={{ color: '#c4b5fd' }}>/{progress.totalQuestCount}</span>
             </div>
             <div style={{ fontSize: 12, color: '#ddd6fe', fontWeight: 800, marginTop: 3 }}>
-              quests cleared · {albumEntries.length} album memories
+              quests cleared · {albumEntries.length} album stamps
             </div>
           </div>
           <div style={{ fontSize: 26 }}>🎫</div>
@@ -1919,11 +2449,19 @@ function QuestHomePanel({
           <article key={questSet.spot.id} style={{
             border: '1px solid #ede9fe',
             borderRadius: 18,
-            padding: 12,
+            padding: 0,
             marginBottom: 10,
             background: '#fff',
+            overflow: 'hidden',
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 9 }}>
+            {questSet.spot.photo_url && (
+              <img
+                src={questSet.spot.photo_url}
+                alt={questSet.spot.spot_name_en}
+                style={{ width: '100%', height: 118, objectFit: 'cover', display: 'block' }}
+              />
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '12px 12px 9px' }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 15, fontWeight: 950, color: '#111827', lineHeight: 1.25 }}>
                   {questSet.spot.spot_name_en}
@@ -1931,10 +2469,18 @@ function QuestHomePanel({
                 <div style={{ fontSize: 11, fontWeight: 850, color: THEME, marginTop: 2 }}>
                   {questSet.spot.anime_title_en}
                 </div>
+                {questSet.spot.quest_place && (
+                  <div style={{ fontSize: 11, color: '#64748b', marginTop: 3, lineHeight: 1.35 }}>
+                    {questSet.spot.quest_place}
+                  </div>
+                )}
               </div>
               <button
                 type="button"
-                onClick={() => onStartQuest(questSet.spot)}
+                onClick={() => {
+                  if (questSet.spot.id === INITIAL_D_DRIVE_SPOT_ID) onOpenDriveMode()
+                  else onStartQuest(questSet.spot)
+                }}
                 style={{
                   flexShrink: 0,
                   border: 'none',
@@ -1947,11 +2493,11 @@ function QuestHomePanel({
                   cursor: 'pointer',
                 }}
               >
-                Start
+                {questSet.spot.id === INITIAL_D_DRIVE_SPOT_ID ? 'Drive' : 'Start'}
               </button>
             </div>
 
-            <div style={{ display: 'grid', gap: 8 }}>
+            <div style={{ display: 'grid', gap: 8, padding: '0 12px 12px' }}>
               {questSet.quests.map((quest, questIndex) => {
                 const questKey = getQuestKey(questSet.spot.id, questIndex)
                 const isDone = albumEntries.some(entry => entry.questKey === questKey)
@@ -2316,6 +2862,18 @@ function App() {
 
   const triggeredRef = useRef(new Set())
   const [locateTick, setLocateTick] = useState(0)
+  const driveDemoTimerRef = useRef(null)
+  const driveGeoWatchRef = useRef(null)
+  const driveMotionHandlerRef = useRef(null)
+  const driveLatestAccelerationRef = useRef(0)
+  const driveLastPointRef = useRef(null)
+
+  const [driveModeOpen, setDriveModeOpen] = useState(false)
+  const [driveMode, setDriveMode] = useState('idle')
+  const [drivePoints, setDrivePoints] = useState([])
+  const [driveActivePoint, setDriveActivePoint] = useState(null)
+  const [driveStatusMessage, setDriveStatusMessage] = useState('')
+  const [driveSessions, setDriveSessions] = useState(() => loadDriveSessions())
 
   // Location permission is shown only after a location-based dashboard choice.
   // This keeps browser permission requests tied to an explicit user intent.
@@ -2331,6 +2889,10 @@ function App() {
   // activePos / browsingPos を先に宣言して、以降のすべての useEffect deps で TDZ にならないようにする
   const activePos = demoMode ? demoPos : livePos
   const browsingPos = activePos || YOKOHAMA_STATION
+  const usingDefaultReferencePoint =
+    !activePos ||
+    (demoMode && startPos?.lat === YOKOHAMA_STATION.lat && startPos?.lng === YOKOHAMA_STATION.lng)
+  const nearbyReferenceMode = usingDefaultReferencePoint ? 'yokohama-station' : demoMode ? 'demo' : 'live'
 
   const handleLocationAllow = useCallback(async () => {
     try { localStorage.setItem(LOCATION_CONSENTED_KEY, 'true') } catch {}
@@ -2411,6 +2973,182 @@ function App() {
     setShowSettings(false)
     setShowSurvey(ENABLE_ONBOARDING_SURVEY)
   }
+
+  const clearDriveRuntime = useCallback(() => {
+    if (driveDemoTimerRef.current) {
+      clearInterval(driveDemoTimerRef.current)
+      driveDemoTimerRef.current = null
+    }
+    if (driveGeoWatchRef.current != null && navigator.geolocation) {
+      navigator.geolocation.clearWatch(driveGeoWatchRef.current)
+      driveGeoWatchRef.current = null
+    }
+    if (driveMotionHandlerRef.current) {
+      window.removeEventListener('devicemotion', driveMotionHandlerRef.current, true)
+      driveMotionHandlerRef.current = null
+    }
+  }, [])
+
+  const resetDriveReadings = useCallback(() => {
+    driveLastPointRef.current = null
+    driveLatestAccelerationRef.current = 0
+    setDrivePoints([])
+    setDriveActivePoint(null)
+  }, [])
+
+  const appendDrivePoint = useCallback(point => {
+    const nextPoint = { ...point, timestamp: point.timestamp ?? Date.now() }
+    driveLastPointRef.current = nextPoint
+    setDriveActivePoint(nextPoint)
+    setDrivePoints(prev => [...prev, nextPoint].slice(-120))
+  }, [])
+
+  const driveCompletedCheckpoints = useMemo(
+    () => getCompletedCheckpointIds(drivePoints, HAKONE_DRIVE_ROUTE),
+    [drivePoints],
+  )
+
+  const driveScore = useMemo(
+    () => calculateDriveScore(drivePoints, driveCompletedCheckpoints, HAKONE_DRIVE_ROUTE.checkpoints.length),
+    [drivePoints, driveCompletedCheckpoints],
+  )
+
+  const openDriveMode = useCallback(() => {
+    setDriveModeOpen(true)
+    setQuestHomeOpen(false)
+    setQuestAlbumOpen(false)
+    setAlbumMapMode(false)
+    setCardExpanded(false)
+    setSelectedTourist(null)
+    setDriveStatusMessage(prev => prev || 'Drive Mode ready. Use Demo Drive for presentation or Try Real Drive on location.')
+    setSelected(prev => prev || spots.find(spot => spot.id === INITIAL_D_DRIVE_SPOT_ID) || null)
+  }, [spots])
+
+  const stopDrive = useCallback(() => {
+    clearDriveRuntime()
+    setDriveMode('idle')
+    setDriveStatusMessage('Drive stopped. Previous readings remain on screen.')
+  }, [clearDriveRuntime])
+
+  const closeDriveMode = useCallback(() => {
+    clearDriveRuntime()
+    setDriveModeOpen(false)
+    setDriveMode('idle')
+    setDriveStatusMessage('')
+  }, [clearDriveRuntime])
+
+  const saveDriveResult = useCallback(() => {
+    if (!drivePoints.length) return
+    const session = {
+      id: `drive-${Date.now()}`,
+      routeId: HAKONE_DRIVE_ROUTE.id,
+      routeTitle: HAKONE_DRIVE_ROUTE.title,
+      mode: driveMode,
+      completedAt: new Date().toISOString(),
+      pointCount: drivePoints.length,
+      completedCheckpointIds: [...driveCompletedCheckpoints],
+      score: driveScore,
+    }
+    setDriveSessions(prev => {
+      const next = [session, ...prev].slice(0, 12)
+      saveDriveSessions(next)
+      return next
+    })
+    setDriveStatusMessage('Drive result saved. It will remain available as your best score.')
+  }, [driveCompletedCheckpoints, driveMode, drivePoints.length, driveScore])
+
+  const startDemoDrive = useCallback(() => {
+    clearDriveRuntime()
+    resetDriveReadings()
+    setDriveModeOpen(true)
+    setDriveMode('demo')
+    setDriveStatusMessage('Demo Drive replaying prepared DrivePoint logs.')
+
+    let index = 0
+    const playNextPoint = () => {
+      const point = HAKONE_DRIVE_ROUTE.demoDrivePoints[index]
+      if (!point) {
+        clearDriveRuntime()
+        setDriveMode('complete')
+        setDriveStatusMessage('Demo Drive complete. Safe pilgrimage profile generated.')
+        return
+      }
+      appendDrivePoint({ ...point, timestamp: Date.now() })
+      index += 1
+    }
+
+    playNextPoint()
+    driveDemoTimerRef.current = setInterval(playNextPoint, 700)
+  }, [appendDrivePoint, clearDriveRuntime, resetDriveReadings])
+
+  const startRealDrive = useCallback(async () => {
+    clearDriveRuntime()
+    resetDriveReadings()
+    setDriveModeOpen(true)
+    setDriveMode('real')
+    setDriveStatusMessage('Requesting GPS and motion sensors...')
+
+    if (!navigator.geolocation) {
+      setDriveMode('error')
+      setDriveStatusMessage('GPS is not available in this browser. Use Demo Drive for the presentation.')
+      return
+    }
+
+    const motionEvent = window.DeviceMotionEvent
+    if (motionEvent) {
+      const handler = event => {
+        const source = event.acceleration || event.accelerationIncludingGravity || {}
+        const x = Number(source.x) || 0
+        const y = Number(source.y) || 0
+        const z = Number(source.z) || 0
+        driveLatestAccelerationRef.current = Math.sqrt(x * x + y * y + z * z) / 9.8
+      }
+
+      try {
+        if (typeof motionEvent.requestPermission === 'function') {
+          const result = await motionEvent.requestPermission()
+          if (result === 'granted') {
+            window.addEventListener('devicemotion', handler, true)
+            driveMotionHandlerRef.current = handler
+          }
+        } else {
+          window.addEventListener('devicemotion', handler, true)
+          driveMotionHandlerRef.current = handler
+        }
+      } catch {
+        driveLatestAccelerationRef.current = 0
+      }
+    }
+
+    driveGeoWatchRef.current = navigator.geolocation.watchPosition(
+      ({ coords }) => {
+        const now = Date.now()
+        const previous = driveLastPointRef.current
+        const nextPos = { lat: coords.latitude, lng: coords.longitude }
+        let speedKmh = coords.speed != null && coords.speed >= 0 ? coords.speed * 3.6 : 0
+        if (!speedKmh && previous) {
+          const dtSeconds = Math.max(1, (now - previous.timestamp) / 1000)
+          speedKmh = (haversine(previous, nextPos) / dtSeconds) * 3.6
+        }
+        appendDrivePoint({
+          timestamp: now,
+          lat: nextPos.lat,
+          lng: nextPos.lng,
+          speedKmh,
+          acceleration: driveLatestAccelerationRef.current || 0,
+        })
+        setDriveStatusMessage('Real Drive logging GPS + DeviceMotion. Keep it slow and respectful.')
+      },
+      () => {
+        clearDriveRuntime()
+        setDriveMode('error')
+        setDriveStatusMessage('Real Drive could not get GPS permission. Demo Drive is ready as fallback.')
+      },
+      { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 },
+    )
+  }, [appendDrivePoint, clearDriveRuntime, resetDriveReadings])
+
+  useEffect(() => () => clearDriveRuntime(), [clearDriveRuntime])
 
   const [searchQuery, setSearchQuery]         = useState('')
   const [searchAnime, setSearchAnime]         = useState(null)
@@ -2800,6 +3538,11 @@ function App() {
               </div>
             </InfoWindow>
           )}
+          <DriveRouteOverlay
+            route={driveModeOpen ? HAKONE_DRIVE_ROUTE : null}
+            activePoint={driveActivePoint}
+            completedCheckpointIds={driveCompletedCheckpoints}
+          />
 
           {/* 近接ラベル（範囲内スポットのピン真上に表示） */}
           {nearbySpots
@@ -3028,6 +3771,18 @@ function App() {
           }}
         >✅ {questProgress.completedCount}/{questProgress.totalQuestCount || 0}</button>
 
+        <button
+          onClick={openDriveMode}
+          title="Drive Mode"
+          style={{
+            height: 30, padding: '0 10px', borderRadius: 10,
+            border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 900,
+            background: driveModeOpen ? '#fef3c7' : 'rgba(0,0,0,0.06)',
+            color: driveModeOpen ? '#92400e' : '#555',
+            letterSpacing: '0.04em',
+          }}
+        >🏁 Drive</button>
+
         <span style={{ width: 1, height: 18, background: 'rgba(0,0,0,0.1)' }} />
 
         {/* DEMO / LIVE 切替 */}
@@ -3113,7 +3868,34 @@ function App() {
         />
       )}
       {selected && cardExpanded && (
-        <Card spot={selected} currentPos={browsingPos} onClose={closeCard} userPrefs={userPrefs} isFavorite={favorites.has(selected.id)} onToggleFavorite={toggleFavorite} weather={weather} defaultExpanded={true} />
+        <Card
+          spot={selected}
+          currentPos={browsingPos}
+          onClose={closeCard}
+          userPrefs={userPrefs}
+          isFavorite={favorites.has(selected.id)}
+          onToggleFavorite={toggleFavorite}
+          weather={weather}
+          defaultExpanded={true}
+          onOpenDriveMode={openDriveMode}
+        />
+      )}
+      {driveModeOpen && (
+        <DriveModePanel
+          route={HAKONE_DRIVE_ROUTE}
+          mode={driveMode}
+          statusMessage={driveStatusMessage}
+          points={drivePoints}
+          activePoint={driveActivePoint}
+          score={driveScore}
+          completedCheckpointIds={driveCompletedCheckpoints}
+          savedSessions={driveSessions}
+          onDemoDrive={startDemoDrive}
+          onRealDrive={startRealDrive}
+          onStop={stopDrive}
+          onSaveResult={saveDriveResult}
+          onClose={closeDriveMode}
+        />
       )}
       {questHomeOpen && (
         <QuestHomePanel
@@ -3125,6 +3907,7 @@ function App() {
             handleSpotSelect(spot)
             setQuestHomeOpen(false)
           }}
+          onOpenDriveMode={openDriveMode}
           onShowAlbum={() => {
             setQuestAlbumOpen(true)
             setQuestHomeOpen(false)
