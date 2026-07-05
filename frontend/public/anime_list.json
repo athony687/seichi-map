@@ -33,7 +33,7 @@
     "title_short_en": "Bocchi the Rock!",
     "color": "#e91e8c",
     "description_en": "A band coming-of-age story set in Shimokitazawa and Shinjuku.",
-    "spot_ids": ["shimokitazawa-bocchi-01", "shimokitazawa-bocchi-02", "kanazawahakkei-bocchi-01"]
+    "spot_ids": ["shimokitazawa-bocchi-01", "shimokitazawa-bocchi-02", "kanazawahakkei-bocchi-01", "bocchi-kokera-01", "bocchi-enoshima-escar-01", "bocchi-enoshima-shrine-01"]
   },
   {
     "id": "girlsbandcry",
