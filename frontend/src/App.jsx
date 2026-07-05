@@ -579,15 +579,36 @@ function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavori
         onClick={() => setExpanded(e => !e)}
         style={{
           background: `linear-gradient(135deg, ${THEME} 0%, #6d28d9 50%, ${THEME_DARK} 100%)`,
-          padding: '16px 80px 16px 20px', cursor: 'pointer',
-          position: 'relative',
+          padding: '14px 16px 14px 20px', cursor: 'pointer', flexShrink: 0,
         }}
       >
-        {/* アニメタイトル */}
-        <div style={{
-          fontSize: 10, color: 'rgba(255,255,255,0.65)', fontWeight: 700,
-          letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 5,
-        }}>{spot.anime_title_en}</div>
+        {/* 1行目：アニメタイトル ＋ お気に入り・閉じるボタン */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 5 }}>
+          <div style={{
+            fontSize: 10, color: 'rgba(255,255,255,0.65)', fontWeight: 700,
+            letterSpacing: '0.12em', textTransform: 'uppercase', paddingTop: 2,
+          }}>{spot.anime_title_en}</div>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0, marginLeft: 10 }}
+            onClick={e => e.stopPropagation()}>
+            <button
+              onClick={e => { e.stopPropagation(); onToggleFavorite(spot.id) }}
+              style={{
+                background: 'rgba(255,255,255,0.22)', border: 'none',
+                fontSize: 15, width: 30, height: 30,
+                borderRadius: '50%', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                backdropFilter: 'blur(8px)',
+              }}
+            >{isFavorite ? '❤️' : '🤍'}</button>
+            <button onClick={e => { e.stopPropagation(); onClose() }} style={{
+              background: 'rgba(255,255,255,0.22)', border: 'none',
+              color: '#fff', fontSize: 14, width: 30, height: 30,
+              borderRadius: '50%', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              backdropFilter: 'blur(8px)', fontWeight: 700,
+            }}>✕</button>
+          </div>
+        </div>
 
         {/* スポット名 */}
         <div style={{ fontSize: 19, fontWeight: 900, color: '#fff', lineHeight: 1.2, marginBottom: 8 }}>
@@ -613,49 +634,24 @@ function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavori
           )}
         </div>
 
-        {(() => { const msg = getWeatherMessage(spot.tags, weather); return msg ? (
+        {/* 天気バー ＋ 展開トグル（同じ行に並べて干渉を防ぐ） */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+          {(() => { const msg = getWeatherMessage(spot.tags, weather); return msg ? (
+            <div style={{
+              padding: '3px 10px', borderRadius: 20,
+              background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(4px)',
+              fontSize: 11, color: '#fff', fontWeight: 600,
+            }}>{msg}</div>
+          ) : <span /> })()}
           <div style={{
-            marginTop: 8, padding: '3px 10px', borderRadius: 20,
-            background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(4px)',
-            fontSize: 11, color: '#fff', display: 'inline-block', fontWeight: 600,
-          }}>{msg}</div>
-        ) : null })()}
-
-        {/* 展開トグル */}
-        <div style={{
-          position: 'absolute', bottom: 14, right: expanded ? 76 : 14,
-          display: 'inline-flex', alignItems: 'center', gap: 3,
-          padding: '3px 10px', borderRadius: 20,
-          background: 'rgba(255,255,255,0.18)',
-          fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.9)', letterSpacing: '0.05em',
-          transition: 'right 0.2s',
-        }}>
-          {expanded ? '▲ CLOSE' : '▼ MORE'}
+            display: 'inline-flex', alignItems: 'center', gap: 3,
+            padding: '3px 10px', borderRadius: 20,
+            background: 'rgba(255,255,255,0.18)',
+            fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.9)', letterSpacing: '0.05em',
+          }}>
+            {expanded ? '▲ CLOSE' : '▼ MORE'}
+          </div>
         </div>
-      </div>
-
-      {/* お気に入り＋閉じるボタン */}
-      <div style={{
-        position: 'absolute', top: 12, right: 12,
-        display: 'flex', gap: 6, alignItems: 'center',
-      }}>
-        <button
-          onClick={e => { e.stopPropagation(); onToggleFavorite(spot.id) }}
-          style={{
-            background: 'rgba(255,255,255,0.22)', border: 'none',
-            fontSize: 15, width: 30, height: 30,
-            borderRadius: '50%', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            backdropFilter: 'blur(8px)',
-          }}
-        >{isFavorite ? '❤️' : '🤍'}</button>
-        <button onClick={onClose} style={{
-          background: 'rgba(255,255,255,0.22)', border: 'none',
-          color: '#fff', fontSize: 14, width: 30, height: 30,
-          borderRadius: '50%', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          backdropFilter: 'blur(8px)', fontWeight: 700,
-        }}>✕</button>
       </div>
 
       {expanded && (
