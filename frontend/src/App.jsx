@@ -23,6 +23,7 @@ const GENERIC_INTRO = `Welcome to this anime pilgrimage spot! This location appe
 const KANAGAWA_CENTER = { lat: 35.4478, lng: 139.6425 }
 const YOKOHAMA_STATION = { lat: 35.4658, lng: 139.6223 }
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
+const staticJsonUrl = path => `${path}?v=${Date.now()}`
 const PROXIMITY_METERS = 500
 const MISSION_TRIGGER_METERS = 500  // ミッション発動半径（デモでも動くよう大きめ）
 const THEME = '#7c3aed'
@@ -3643,11 +3644,11 @@ function App() {
 
   // データ読み込み
   useEffect(() => {
-    fetch('/tourist_spots.json').then(r => r.json()).then(setTouristSpots).catch(() => {})
+    fetch(staticJsonUrl('/tourist_spots.json'), { cache: 'no-store' }).then(r => r.json()).then(setTouristSpots).catch(() => {})
   }, [])
 
   useEffect(() => {
-    fetch('/seichi_data.json')
+    fetch(staticJsonUrl('/seichi_data.json'), { cache: 'no-store' })
       .then(r => r.json())
       .then(raw => {
         const data = raw.filter(s =>

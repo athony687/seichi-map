@@ -6,7 +6,21 @@
     "title_short_en": "Bunny Girl Senpai",
     "color": "#2196f3",
     "description_en": "A story of supernatural phenomena tied to adolescent emotions, set in Fujisawa and Kamakura.",
-    "spot_ids": ["kugenuma-bunnygirl-01", "aobuta-fujisawa-station-01", "aobuta-katase-enoshima-01", "aobuta-enoshima-koya-01"]
+    "spot_ids": [
+      "aobuta-01-fujisawa-station",
+      "aobuta-02-dennys-fujisawa-exterior",
+      "aobuta-03-dennys-fujisawa-omelette",
+      "aobuta-04-katase-enoshima-station",
+      "aobuta-05-benten-bridge",
+      "aobuta-06-enoshima-aquarium",
+      "aobuta-07-enoshima-koya-exterior",
+      "aobuta-08-enoshima-koya-shirasu-don",
+      "aobuta-09-kamakura-kokomae-crossing",
+      "aobuta-10-shichirigahama-beach",
+      "aobuta-11-toshimaya-hato-sable",
+      "aobuta-12-hakkeijima-station",
+      "aobuta-13-hakkeijima-sea-paradise"
+    ]
   },
   {
     "id": "megami-cafe",
@@ -15,7 +29,14 @@
     "title_short_en": "Goddess Cafe Terrace",
     "color": "#ff9800",
     "description_en": "A heartwarming story set around a seaside cafe in Kamakura and Enoshima.",
-    "spot_ids": ["miura-megami-poem-01", "megami-miura-market-01"]
+    "spot_ids": [
+      "megami-01-coffee-house-poem",
+      "megami-02-yokohama-baysis",
+      "megami-03-kannai-north-crossing",
+      "megami-04-miura-vegetable-market",
+      "megami-05-miura-beach",
+      "megami-06-jogashima-park"
+    ]
   },
   {
     "id": "initiald",
