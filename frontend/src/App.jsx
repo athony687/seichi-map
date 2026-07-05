@@ -1558,6 +1558,55 @@ function DriveModePanel({
     ['Respect Protocol', score.respectScore],
   ]
   const recentEvents = points.filter(point => point.event).slice(-4).reverse()
+  const analysisRunning = mode === 'demo' || mode === 'real'
+  const rawSpeed = Number(activePoint?.rawSpeedKmh) || 0
+  const filteredSpeed = Number(activePoint?.speedKmh) || 0
+  const kalmanDelta = Math.abs(rawSpeed - filteredSpeed)
+  const syncRate = route.checkpoints.length
+    ? completedCheckpointIds.size / route.checkpoints.length
+    : 0
+  const sensorActive = !!activePoint
+  const eventActive = recentEvents.length > 0
+  const turnRate = Math.abs(Number(activePoint?.turnRateDegPerSec) || 0)
+  const motionG = Math.abs(Number(activePoint?.motionG ?? activePoint?.acceleration) || 0)
+  const analysisRows = [
+    {
+      label: 'KALMAN FILTER',
+      value: `${Math.round(rawSpeed)} -> ${Math.round(filteredSpeed)} km/h`,
+      pct: Math.min(100, 18 + kalmanDelta * 10 + filteredSpeed * 1.4),
+      active: sensorActive,
+      tone: '#38bdf8',
+    },
+    {
+      label: 'SENSOR STREAM',
+      value: sensorActive ? `${points.length} samples / ${motionG.toFixed(2)}g` : 'waiting for DrivePoint',
+      pct: Math.min(100, points.length * 12),
+      active: sensorActive,
+      tone: '#22c55e',
+    },
+    {
+      label: 'TURN RATE',
+      value: `${Math.round(turnRate)} deg/s`,
+      pct: Math.min(100, turnRate * 3),
+      active: turnRate > 0,
+      tone: turnRate >= DRIVE_HARD_TURN_DEG_PER_SEC ? '#f59e0b' : '#a78bfa',
+    },
+    {
+      label: 'EVENT DETECTOR',
+      value: eventActive ? recentEvents[0].event.type : 'monitoring smooth drive',
+      pct: eventActive ? 100 : Math.min(100, score.eventCount * 28),
+      active: eventActive,
+      alert: eventActive,
+      tone: eventActive ? '#f97316' : '#64748b',
+    },
+    {
+      label: 'CHECKPOINT SYNC',
+      value: `${completedCheckpointIds.size}/${route.checkpoints.length} linked`,
+      pct: Math.round(syncRate * 100),
+      active: syncRate > 0,
+      tone: '#fbbf24',
+    },
+  ]
 
   return (
     <div style={{
@@ -1707,6 +1756,107 @@ function DriveModePanel({
               <div key={label} style={{ borderRadius: 10, background: '#111827', padding: '7px 8px' }}>
                 <div style={{ fontSize: 9, color: '#94a3b8', fontWeight: 850 }}>{label}</div>
                 <div style={{ fontSize: 15, color: '#f8fafc', fontWeight: 950, marginTop: 1 }}>{value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div
+          className={`drive-analysis-hud${analysisRunning ? ' drive-analysis-hud--running' : ''}`}
+          style={{
+            position: 'relative',
+            overflow: 'hidden',
+            padding: '10px 11px',
+            borderRadius: 14,
+            background: 'linear-gradient(135deg, rgba(15,23,42,0.98), rgba(8,47,73,0.92))',
+            border: '1px solid rgba(56,189,248,0.35)',
+            boxShadow: analysisRunning ? '0 0 22px rgba(56,189,248,0.14)' : 'none',
+            marginBottom: 10,
+          }}
+        >
+          {analysisRunning && <div className="drive-analysis-scan" />}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <div>
+              <div style={{ fontSize: 9, color: '#7dd3fc', fontWeight: 950, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+                Live Analysis HUD
+              </div>
+              <div style={{ fontSize: 11, color: '#cbd5e1', fontWeight: 800, marginTop: 1 }}>
+                RAW GPS SPEED / FILTERED SPEED
+              </div>
+            </div>
+            <div style={{
+              flexShrink: 0,
+              padding: '3px 7px',
+              borderRadius: 999,
+              background: analysisRunning ? 'rgba(34,197,94,0.16)' : 'rgba(100,116,139,0.18)',
+              color: analysisRunning ? '#86efac' : '#94a3b8',
+              border: `1px solid ${analysisRunning ? 'rgba(34,197,94,0.42)' : 'rgba(148,163,184,0.28)'}`,
+              fontSize: 9,
+              fontWeight: 950,
+              letterSpacing: '0.08em',
+            }}>
+              {analysisRunning ? 'ANALYZING' : 'STANDBY'}
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gap: 7 }}>
+            {analysisRows.map(row => (
+              <div key={row.label} style={{
+                display: 'grid',
+                gridTemplateColumns: '108px minmax(0, 1fr)',
+                gap: 8,
+                alignItems: 'center',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                  <span className={`drive-analysis-dot${row.active ? ' drive-analysis-dot--active' : ''}${row.alert ? ' drive-analysis-dot--alert' : ''}`} style={{ background: row.tone }} />
+                  <span style={{
+                    color: row.alert ? '#fed7aa' : '#e2e8f0',
+                    fontSize: 9,
+                    fontWeight: 950,
+                    letterSpacing: '0.06em',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}>
+                    {row.label}
+                  </span>
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 3 }}>
+                    <span style={{
+                      color: row.alert ? '#fdba74' : '#bae6fd',
+                      fontSize: 10,
+                      fontWeight: 850,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}>
+                      {row.value}
+                    </span>
+                    <span style={{ color: '#64748b', fontSize: 9, fontWeight: 850, flexShrink: 0 }}>
+                      {Math.round(row.pct)}%
+                    </span>
+                  </div>
+                  <div style={{
+                    height: 5,
+                    borderRadius: 999,
+                    overflow: 'hidden',
+                    background: 'rgba(15,23,42,0.95)',
+                    border: '1px solid rgba(148,163,184,0.14)',
+                  }}>
+                    <div
+                      className={analysisRunning && row.active ? 'drive-analysis-meter' : ''}
+                      style={{
+                        width: `${Math.max(4, Math.min(100, row.pct))}%`,
+                        height: '100%',
+                        borderRadius: 999,
+                        background: `linear-gradient(90deg, ${row.tone}, rgba(255,255,255,0.88))`,
+                        boxShadow: row.active ? `0 0 10px ${row.tone}` : 'none',
+                        transition: 'width 280ms ease',
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
             ))}
           </div>

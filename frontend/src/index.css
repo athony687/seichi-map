@@ -61,6 +61,83 @@ button:focus-visible {
   to   { transform: translateY(0);   opacity: 1; }
 }
 
+@keyframes drive-scan {
+  0% { transform: translateY(-120%); opacity: 0; }
+  14% { opacity: 0.72; }
+  100% { transform: translateY(520%); opacity: 0; }
+}
+
+@keyframes drive-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.72; }
+  50% { transform: scale(1.55); opacity: 1; }
+}
+
+@keyframes drive-meter {
+  0% { filter: brightness(0.9); background-position: 0% 50%; }
+  50% { filter: brightness(1.45); background-position: 100% 50%; }
+  100% { filter: brightness(0.9); background-position: 0% 50%; }
+}
+
+.drive-analysis-hud::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(125, 211, 252, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 211, 252, 0.05) 1px, transparent 1px);
+  background-size: 100% 18px, 22px 100%;
+  opacity: 0.5;
+}
+
+.drive-analysis-hud > * {
+  position: relative;
+  z-index: 1;
+}
+
+.drive-analysis-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 28px;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(56, 189, 248, 0.24), transparent);
+  animation: drive-scan 1.9s linear infinite;
+}
+
+.drive-analysis-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+  opacity: 0.52;
+  box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+}
+
+.drive-analysis-dot--active {
+  animation: drive-pulse 1.4s ease-in-out infinite;
+  box-shadow: 0 0 10px currentColor;
+}
+
+.drive-analysis-dot--alert {
+  animation-duration: 0.62s;
+}
+
+.drive-analysis-meter {
+  background-size: 180% 100%;
+  animation: drive-meter 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drive-analysis-scan,
+  .drive-analysis-dot--active,
+  .drive-analysis-meter {
+    animation: none;
+  }
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
