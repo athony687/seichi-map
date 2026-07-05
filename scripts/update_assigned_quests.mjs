@@ -266,13 +266,6 @@ const assignedSpots = [
         photo_prompt: 'Upload a photo taken only after safely stopping.',
         impression_prompt: 'What safety rule did you follow?',
       },
-      {
-        category: 'Score',
-        title: 'Demo Driveで説明する',
-        description: '発表ではDemo Driveを押すだけでルートとスコアが見える。',
-        photo_prompt: 'Upload a screenshot or photo that represents the touge quest.',
-        impression_prompt: 'What score story would you explain?',
-      },
     ],
   },
 ]
