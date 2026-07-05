@@ -619,7 +619,7 @@ function ProximityLabel({ spot, onTap }) {
 }
 
 // ── スポットカード（距離表示付き）────────────────────────────────────────
-function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavorite, weather, defaultExpanded, onOpenDriveMode }) {
+function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavorite, weather, defaultExpanded, onOpenDriveMode, onAlbumUpdate }) {
   const staticIntro = spot.generic_intro_en || (!isPlaceholder(spot.intro_short_en) ? spot.intro_short_en : GENERIC_INTRO)
   const [intro, setIntro]   = useState(introCache[spot.id] || staticIntro)
   const [loading, setLoading] = useState(!introCache[spot.id])
@@ -1307,9 +1307,13 @@ const loadSelectedAnime = () => { try { const r = localStorage.getItem(SELECTED_
 const saveSelectedAnime = a => { try { if (a == null) localStorage.removeItem(SELECTED_ANIME_KEY); else localStorage.setItem(SELECTED_ANIME_KEY, JSON.stringify(a)) } catch {} }
 const saveFavorites = f => localStorage.setItem(FAVORITES_KEY, JSON.stringify([...f]))
 
-function QuestPanel({ spot }) {
+function QuestPanel({ spot, onAlbumUpdate }) {
   const quests = spot.quests || []
   const [completed, setCompleted] = useState(new Set())
+  const [uploadingIndex, setUploadingIndex] = useState(null)
+  const fileRef = useRef(null)
+  const pendingRef = useRef(null)
+
   useEffect(() => { loadQuestCompletions().then(setCompleted) }, [])
 
   if (!quests.length) return null
@@ -1326,6 +1330,36 @@ function QuestPanel({ spot }) {
       saveQuestCompletions(next)  // fire-and-forget async
       return next
     })
+  }
+
+  const handlePhotoChange = async e => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file || !pendingRef.current) return
+    const { quest, index } = pendingRef.current
+    pendingRef.current = null
+    const questKey = getQuestKey(spot.id, index)
+    setUploadingIndex(index)
+    try {
+      const albumPhoto = await createAlbumPhotoFromFile(file)
+      const nextAlbum = await addAlbumEntry({
+        questKey,
+        spotId: spot.id,
+        questIndex: index,
+        animeTitle: spot.anime_title_en,
+        spotName: spot.spot_name_en,
+        questTitle: quest.title,
+        area: spot.area || '',
+        lat: spot.lat,
+        lng: spot.lng,
+        albumPhoto,
+        impression: '',
+      })
+      setCompleted(prev => new Set([...prev, questKey]))
+      onAlbumUpdate?.(nextAlbum)
+    } finally {
+      setUploadingIndex(null)
+    }
   }
 
   return (
@@ -1365,9 +1399,20 @@ function QuestPanel({ spot }) {
         )}
       </div>
 
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handlePhotoChange}
+        style={{ display: 'none' }}
+      />
+
       <div style={{ display: 'grid', gap: 8 }}>
         {quests.map((quest, index) => {
           const isDone = completed.has(getQuestKey(spot.id, index))
+          const isPhotoQuest = !!(quest.photo_prompt || quest.photoPrompt)
+          const isUploading = uploadingIndex === index
           return (
             <div
               key={`${quest.category}-${quest.title}`}
@@ -1403,24 +1448,53 @@ function QuestPanel({ spot }) {
                   {quest.description}
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={e => { e.stopPropagation(); toggleQuest(index) }}
-                style={{
-                  minWidth: 78,
-                  padding: '7px 9px',
-                  borderRadius: 10,
-                  border: 'none',
-                  background: isDone ? '#16a34a' : THEME,
-                  color: '#fff',
-                  fontSize: 11,
-                  fontWeight: 850,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {isDone ? 'Done' : 'Complete'}
-              </button>
+              {isPhotoQuest ? (
+                <button
+                  type="button"
+                  onClick={e => {
+                    e.stopPropagation()
+                    if (!isDone && !isUploading) {
+                      pendingRef.current = { quest, index }
+                      fileRef.current?.click()
+                    }
+                  }}
+                  disabled={isUploading || isDone}
+                  style={{
+                    minWidth: 78,
+                    padding: '7px 9px',
+                    borderRadius: 10,
+                    border: 'none',
+                    background: isDone ? '#16a34a' : isUploading ? '#9ca3af' : THEME,
+                    color: '#fff',
+                    fontSize: 11,
+                    fontWeight: 850,
+                    cursor: isDone || isUploading ? 'default' : 'pointer',
+                    whiteSpace: 'nowrap',
+                    opacity: isUploading ? 0.7 : 1,
+                  }}
+                >
+                  {isDone ? '✅ Done' : isUploading ? 'Saving…' : '📷 Photo'}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={e => { e.stopPropagation(); toggleQuest(index) }}
+                  style={{
+                    minWidth: 78,
+                    padding: '7px 9px',
+                    borderRadius: 10,
+                    border: 'none',
+                    background: isDone ? '#16a34a' : THEME,
+                    color: '#fff',
+                    fontSize: 11,
+                    fontWeight: 850,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {isDone ? 'Done' : 'Complete'}
+                </button>
+              )}
             </div>
           )
         })}
@@ -4304,6 +4378,7 @@ function App() {
           weather={weather}
           defaultExpanded={true}
           onOpenDriveMode={openDriveMode}
+          onAlbumUpdate={nextAlbum => setQuestAlbum(nextAlbum)}
         />
       )}
       {driveModeOpen && (
