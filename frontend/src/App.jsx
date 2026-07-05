@@ -3475,7 +3475,12 @@ function App() {
   const [uploadingQuestKey, setUploadingQuestKey] = useState(null)
   const [shareCardDataUrl, setShareCardDataUrl] = useState(null)
 
-  const questSets = useMemo(() => buildQuestSets(spots), [spots])
+  const questSets = useMemo(() => {
+    const filtered = selectedAnime
+      ? spots.filter(s => selectedAnime.spot_ids.includes(s.id))
+      : spots
+    return buildQuestSets(filtered)
+  }, [spots, selectedAnime])
   const totalQuestCount = useMemo(() => getTotalQuestCount(questSets), [questSets])
   const questProgress = useMemo(
     () => calculateQuestProgress(totalQuestCount, questAlbum),
