@@ -833,9 +833,9 @@ function useLiveGPS(enabled) {
 function GpsLocateButton({ status, onLocate }) {
   const cfg = {
     idle:    null,
-    pending: { icon: '⌛', label: 'Locating…',   dot: '#9ca3af', disabled: true },
-    ok:      { icon: '⊕',  label: 'My Location', dot: '#1d6ef5', disabled: false },
-    error:   { icon: '⚠',  label: 'Yokohama',    dot: '#f59e0b', disabled: false },
+    pending: { dot: '#9ca3af', label: 'Locating…', disabled: true },
+    ok:      { dot: '#1d6ef5', label: 'My Location', disabled: false },
+    error:   { dot: '#f59e0b', label: 'GPS Error',   disabled: false },
   }
   const c = cfg[status]
   if (!c) return null
@@ -843,21 +843,17 @@ function GpsLocateButton({ status, onLocate }) {
     <button
       onClick={c.disabled ? undefined : onLocate}
       style={{
-        position: 'absolute', bottom: 24, right: 16, zIndex: 10,
-        background: 'rgba(255,255,255,0.92)',
-        backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255,255,255,0.8)',
-        color: '#1a1a2e', borderRadius: 22,
-        padding: '8px 14px 8px 10px',
-        display: 'flex', alignItems: 'center', gap: 7,
-        cursor: c.disabled ? 'default' : 'pointer',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.1)',
-        fontSize: 12, fontWeight: 700, opacity: c.disabled ? 0.5 : 1,
-        userSelect: 'none', transition: 'opacity 0.2s',
+        height: 30, padding: '0 10px', borderRadius: 10,
+        border: 'none', cursor: c.disabled ? 'default' : 'pointer',
+        background: 'rgba(0,0,0,0.06)',
+        display: 'flex', alignItems: 'center', gap: 6,
+        fontSize: 10, fontWeight: 800, color: '#555',
+        opacity: c.disabled ? 0.5 : 1,
+        userSelect: 'none', transition: 'opacity 0.2s', whiteSpace: 'nowrap',
       }}
     >
-      <span style={{ width: 8, height: 8, borderRadius: '50%', background: c.dot, flexShrink: 0 }} />
-      <span>{c.label}</span>
+      <span style={{ width: 7, height: 7, borderRadius: '50%', background: c.dot, flexShrink: 0 }} />
+      {c.label}
     </button>
   )
 }
@@ -4070,6 +4066,11 @@ function App() {
           }}
         >✅ {questProgress.completedCount}/{questProgress.totalQuestCount || 0}</button>
 
+        <GpsLocateButton
+          status={gpsStatus}
+          onLocate={() => setLocateTick(t => t + 1)}
+        />
+
         <button
           onClick={openDriveMode}
           title="Drive Mode"
@@ -4084,10 +4085,6 @@ function App() {
 
       </div>
 
-      <GpsLocateButton
-        status={gpsStatus}
-        onLocate={() => setLocateTick(t => t + 1)}
-      />
       {selected && cardExpanded && (
         <Card
           spot={selected}
