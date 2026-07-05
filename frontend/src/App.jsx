@@ -565,6 +565,8 @@ function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavori
     <div style={{
       position: 'absolute', bottom: 84, left: 12, right: 12,
       maxWidth: 400, margin: '0 auto',
+      maxHeight: 'calc(100svh - 110px)',
+      display: 'flex', flexDirection: 'column',
       background: 'rgba(255,255,255,0.97)',
       backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
       borderRadius: 24,
@@ -657,7 +659,7 @@ function Card({ spot, currentPos, onClose, userPrefs, isFavorite, onToggleFavori
       </div>
 
       {expanded && (
-        <div>
+        <div style={{ overflowY: 'auto', overscrollBehavior: 'contain', flex: 1 }}>
           {spot.photo_url && (
             <img
               src={spot.photo_url}
