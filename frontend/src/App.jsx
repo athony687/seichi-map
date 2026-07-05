@@ -36,6 +36,8 @@ const INITIAL_D_DRIVE_SPOT_ID = 'hakone-initiald-01'
 const DRIVE_CHECKPOINT_RADIUS_METERS = 180
 const DRIVE_SESSIONS_KEY = 'seichi_drive_sessions'
 const DRIVE_ACCELERATION_ALPHA = 0.25
+const DRIVE_SPEED_KALMAN_PROCESS_NOISE = 0.08
+const DRIVE_SPEED_KALMAN_MEASUREMENT_NOISE = 6
 const DRIVE_HARD_ACCELERATION_G = 0.55
 const DRIVE_HARD_TURN_DEG_PER_SEC = 24
 
@@ -44,7 +46,7 @@ const HAKONE_DRIVE_ROUTE = {
   spotId: INITIAL_D_DRIVE_SPOT_ID,
   title: 'Hakone Old Road Safe Drive',
   subtitle: 'Sacred place as a road, not a pin.',
-  tags: ['GPS + DeviceMotion', 'Safety Score', 'Demo Drive'],
+  tags: ['GPS + DeviceMotion', 'Kalman Speed', 'Safety Score', 'Demo Drive'],
   safetyNote: 'This mode scores smoothness, safe pacing, and respect. It is not a speed challenge.',
   routePoints: [
     { lat: 35.2327, lng: 139.1047 },
@@ -211,6 +213,25 @@ function smoothValue(previous, next, alpha = DRIVE_ACCELERATION_ALPHA) {
   if (!Number.isFinite(next)) return previous || 0
   if (!Number.isFinite(previous)) return next
   return previous + (next - previous) * alpha
+}
+
+function createSpeedKalmanFilter() {
+  return {
+    estimate: null,
+    errorCovariance: 1,
+    update(measurement) {
+      if (!Number.isFinite(measurement)) return this.estimate || 0
+      if (this.estimate == null) {
+        this.estimate = measurement
+        return this.estimate
+      }
+      this.errorCovariance += DRIVE_SPEED_KALMAN_PROCESS_NOISE
+      const gain = this.errorCovariance / (this.errorCovariance + DRIVE_SPEED_KALMAN_MEASUREMENT_NOISE)
+      this.estimate = this.estimate + gain * (measurement - this.estimate)
+      this.errorCovariance = (1 - gain) * this.errorCovariance
+      return this.estimate
+    },
+  }
 }
 
 function classifyDriveEvent(point) {
@@ -1757,6 +1778,14 @@ function DriveModePanel({
               {Math.round(score.maxTurnRate || 0)}deg/s
             </div>
           </div>
+          <div style={{ padding: 8, borderRadius: 12, background: '#1e293b' }}>
+            <div style={{ fontSize: 9, color: '#94a3b8', fontWeight: 850, lineHeight: 1.2 }}>
+              Kalman Speed
+            </div>
+            <div style={{ fontSize: 17, fontWeight: 950, color: '#f8fafc', marginTop: 2 }}>
+              {activePoint ? `${Math.round(activePoint.rawSpeedKmh || 0)} -> ${Math.round(activePoint.speedKmh || 0)}` : '0 -> 0'}
+            </div>
+          </div>
         </div>
 
         <div style={{ marginTop: 10, padding: 9, borderRadius: 12, background: '#111827', border: '1px solid #334155' }}>
@@ -1803,7 +1832,7 @@ function DriveModePanel({
         )}
 
         <div style={{ marginTop: 9, fontSize: 11, color: '#cbd5e1', lineHeight: 1.45 }}>
-          {statusMessage || (activePoint ? `Now: ${Math.round(activePoint.speedKmh || 0)}km/h / accel ${Number(activePoint.acceleration || 0).toFixed(2)} / turn ${Math.round(Math.abs(activePoint.turnRateDegPerSec || 0))}deg/s` : 'Ready for demo or sensor challenge.')}
+          {statusMessage || (activePoint ? `Now: raw ${Math.round(activePoint.rawSpeedKmh || 0)}km/h -> Kalman ${Math.round(activePoint.speedKmh || 0)}km/h / accel ${Number(activePoint.acceleration || 0).toFixed(2)} / turn ${Math.round(Math.abs(activePoint.turnRateDegPerSec || 0))}deg/s` : 'Ready for demo or sensor challenge.')}
         </div>
         <div style={{ marginTop: 7, fontSize: 10, color: '#94a3b8', lineHeight: 1.45 }}>
           {route.safetyNote}
@@ -3111,7 +3140,7 @@ function App() {
   const driveGeoWatchRef = useRef(null)
   const driveMotionHandlerRef = useRef(null)
   const driveLatestAccelerationRef = useRef(0)
-  const driveSmoothedAccelerationRef = useRef(null)
+  const driveSpeedKalmanRef = useRef(createSpeedKalmanFilter())
   const driveLastPointRef = useRef(null)
 
   const [driveModeOpen, setDriveModeOpen] = useState(false)
@@ -3238,7 +3267,7 @@ function App() {
   const resetDriveReadings = useCallback(() => {
     driveLastPointRef.current = null
     driveLatestAccelerationRef.current = 0
-    driveSmoothedAccelerationRef.current = null
+    driveSpeedKalmanRef.current = createSpeedKalmanFilter()
     setDrivePoints([])
     setDriveActivePoint(null)
   }, [])
@@ -3246,8 +3275,12 @@ function App() {
   const appendDrivePoint = useCallback(point => {
     const timestamp = point.timestamp ?? Date.now()
     const previous = driveLastPointRef.current
-    const bearing = previous ? bearingDegrees(previous, point) : null
+    const rawSpeedKmh = Math.max(0, Number(point.rawSpeedKmh ?? point.speedKmh) || 0)
+    const kalmanSpeedKmh = driveSpeedKalmanRef.current.update(rawSpeedKmh)
     const dtSeconds = previous ? Math.max(0.7, (timestamp - previous.timestamp) / 1000) : 0
+    const speedDeltaMps = previous ? ((kalmanSpeedKmh - (previous.speedKmh || 0)) / 3.6) : 0
+    const acceleration = dtSeconds ? speedDeltaMps / dtSeconds / 9.8 : 0
+    const bearing = previous ? bearingDegrees(previous, point) : null
     const turnDelta = previous && previous.bearing != null && bearing != null
       ? angleDeltaDegrees(previous.bearing, bearing)
       : 0
@@ -3255,6 +3288,9 @@ function App() {
     const nextPoint = {
       ...point,
       timestamp,
+      rawSpeedKmh,
+      speedKmh: kalmanSpeedKmh,
+      acceleration,
       bearing,
       turnRateDegPerSec,
     }
@@ -3393,16 +3429,11 @@ function App() {
           const dtSeconds = Math.max(1, (now - previous.timestamp) / 1000)
           speedKmh = (haversine(previous, nextPos) / dtSeconds) * 3.6
         }
-        const dtSeconds = previous ? Math.max(1, (now - previous.timestamp) / 1000) : 0
-        const speedDeltaMps = previous ? ((speedKmh - (previous.speedKmh || 0)) / 3.6) : 0
-        const rawSignedAccelerationG = dtSeconds ? speedDeltaMps / dtSeconds / 9.8 : 0
-        driveSmoothedAccelerationRef.current = smoothValue(driveSmoothedAccelerationRef.current, rawSignedAccelerationG)
         appendDrivePoint({
           timestamp: now,
           lat: nextPos.lat,
           lng: nextPos.lng,
-          speedKmh,
-          acceleration: driveSmoothedAccelerationRef.current || 0,
+          rawSpeedKmh: speedKmh,
           motionG: driveLatestAccelerationRef.current || 0,
         })
         setDriveStatusMessage('Real Drive logging GPS + DeviceMotion. Keep it slow and respectful.')
