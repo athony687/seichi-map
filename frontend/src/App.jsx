@@ -35,6 +35,9 @@ const ENABLE_ONBOARDING_SURVEY = false
 const INITIAL_D_DRIVE_SPOT_ID = 'hakone-initiald-01'
 const DRIVE_CHECKPOINT_RADIUS_METERS = 180
 const DRIVE_SESSIONS_KEY = 'seichi_drive_sessions'
+const DRIVE_ACCELERATION_ALPHA = 0.25
+const DRIVE_HARD_ACCELERATION_G = 0.55
+const DRIVE_HARD_TURN_DEG_PER_SEC = 24
 
 const HAKONE_DRIVE_ROUTE = {
   id: 'hakone-old-road-drive',
@@ -186,6 +189,42 @@ function haversine(a, b) {
     Math.sin(dLat / 2) ** 2 +
     Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2
   return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s))
+}
+
+function bearingDegrees(a, b) {
+  const lat1 = a.lat * Math.PI / 180
+  const lat2 = b.lat * Math.PI / 180
+  const dLng = (b.lng - a.lng) * Math.PI / 180
+  const y = Math.sin(dLng) * Math.cos(lat2)
+  const x = Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng)
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360
+}
+
+function angleDeltaDegrees(a, b) {
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return 0
+  return ((b - a + 540) % 360) - 180
+}
+
+function smoothValue(previous, next, alpha = DRIVE_ACCELERATION_ALPHA) {
+  if (!Number.isFinite(next)) return previous || 0
+  if (!Number.isFinite(previous)) return next
+  return previous + (next - previous) * alpha
+}
+
+function classifyDriveEvent(point) {
+  const acceleration = Number(point.acceleration) || 0
+  const turnRate = Math.abs(Number(point.turnRateDegPerSec) || 0)
+  if (acceleration >= DRIVE_HARD_ACCELERATION_G) {
+    return { type: 'Hard acceleration', severity: 'warn' }
+  }
+  if (acceleration <= -DRIVE_HARD_ACCELERATION_G) {
+    return { type: 'Hard braking', severity: 'warn' }
+  }
+  if (turnRate >= DRIVE_HARD_TURN_DEG_PER_SEC) {
+    return { type: 'Sharp turn', severity: 'warn' }
+  }
+  return null
 }
 
 function formatDistance(meters) {
@@ -1325,6 +1364,9 @@ function calculateDriveScore(points, completedCheckpointIds, checkpointTotal) {
       finalScore: 0,
       avgSpeed: 0,
       maxSpeed: 0,
+      avgTurnRate: 0,
+      maxTurnRate: 0,
+      eventCount: 0,
       durationSeconds: 0,
       completedCount: 0,
       checkpointTotal,
@@ -1333,8 +1375,12 @@ function calculateDriveScore(points, completedCheckpointIds, checkpointTotal) {
 
   const speeds = points.map(p => Number(p.speedKmh) || 0)
   const accelerations = points.map(p => Math.abs(Number(p.acceleration) || 0))
+  const turnRates = points.map(p => Math.abs(Number(p.turnRateDegPerSec) || 0))
+  const eventCount = points.filter(point => point.event).length
   const avgAcceleration = accelerations.reduce((sum, value) => sum + value, 0) / accelerations.length
   const maxAcceleration = Math.max(...accelerations, 0)
+  const avgTurnRate = turnRates.reduce((sum, value) => sum + value, 0) / turnRates.length
+  const maxTurnRate = Math.max(...turnRates, 0)
   const avgSpeed = speeds.reduce((sum, value) => sum + value, 0) / speeds.length
   const maxSpeed = Math.max(...speeds, 0)
   const overPaceCount = speeds.filter(speed => speed > 45).length
@@ -1346,8 +1392,8 @@ function calculateDriveScore(points, completedCheckpointIds, checkpointTotal) {
     : 0
 
   const smoothness = clampScore(100 - avgAcceleration * 95 - speedVariance * 0.7)
-  const cornerStability = clampScore(100 - maxAcceleration * 70 - speedVariance * 0.35)
-  const safetyPace = clampScore(100 - overPaceCount * 18 - Math.max(0, avgSpeed - 35) * 1.2)
+  const cornerStability = clampScore(100 - maxAcceleration * 55 - avgTurnRate * 1.1 - maxTurnRate * 0.45 - speedVariance * 0.25)
+  const safetyPace = clampScore(100 - overPaceCount * 18 - eventCount * 8 - Math.max(0, avgSpeed - 35) * 1.2)
   const respectScore = clampScore(96 - overPaceCount * 6)
   const finalScore =
     smoothness * 0.30 +
@@ -1365,6 +1411,9 @@ function calculateDriveScore(points, completedCheckpointIds, checkpointTotal) {
     finalScore,
     avgSpeed,
     maxSpeed,
+    avgTurnRate,
+    maxTurnRate,
+    eventCount,
     durationSeconds,
     completedCount: completedCheckpointIds.size,
     checkpointTotal,
@@ -1486,6 +1535,7 @@ function DriveModePanel({
     ['Pilgrimage Sync Rate', score.checkpointScore],
     ['Respect Protocol', score.respectScore],
   ]
+  const recentEvents = points.filter(point => point.event).slice(-4).reverse()
 
   return (
     <div style={{
@@ -1630,6 +1680,7 @@ function DriveModePanel({
               ['Checkpoints', `${score.completedCount}/${score.checkpointTotal}`],
               ['Avg km/h', Math.round(score.avgSpeed || 0)],
               ['Time', formatDriveDuration(score.durationSeconds)],
+              ['Events', score.eventCount || 0],
             ].map(([label, value]) => (
               <div key={label} style={{ borderRadius: 10, background: '#111827', padding: '7px 8px' }}>
                 <div style={{ fontSize: 9, color: '#94a3b8', fontWeight: 850 }}>{label}</div>
@@ -1697,6 +1748,32 @@ function DriveModePanel({
               {points.length}
             </div>
           </div>
+          <div style={{ padding: 8, borderRadius: 12, background: '#1e293b' }}>
+            <div style={{ fontSize: 9, color: '#94a3b8', fontWeight: 850, lineHeight: 1.2 }}>
+              Max Turn Rate
+            </div>
+            <div style={{ fontSize: 17, fontWeight: 950, color: '#f8fafc', marginTop: 2 }}>
+              {Math.round(score.maxTurnRate || 0)}deg/s
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 10, padding: 9, borderRadius: 12, background: '#111827', border: '1px solid #334155' }}>
+          <div style={{ fontSize: 9, color: '#94a3b8', fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>
+            Event Log
+          </div>
+          {recentEvents.length ? recentEvents.map(point => (
+            <div key={`${point.timestamp}-${point.event.type}`} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8, padding: '5px 0', borderTop: '1px solid rgba(148,163,184,0.18)' }}>
+              <span style={{ color: '#fde68a', fontSize: 11, fontWeight: 850 }}>{point.event.type}</span>
+              <span style={{ color: '#cbd5e1', fontSize: 10, fontWeight: 800 }}>
+                {Math.round(point.speedKmh || 0)}km/h / {Math.round(Math.abs(point.turnRateDegPerSec || 0))}deg/s
+              </span>
+            </div>
+          )) : (
+            <div style={{ color: '#94a3b8', fontSize: 11, lineHeight: 1.4 }}>
+              No sudden events detected.
+            </div>
+          )}
         </div>
 
         <button
@@ -1725,7 +1802,7 @@ function DriveModePanel({
         )}
 
         <div style={{ marginTop: 9, fontSize: 11, color: '#cbd5e1', lineHeight: 1.45 }}>
-          {statusMessage || (activePoint ? `Now: ${Math.round(activePoint.speedKmh || 0)}km/h / accel ${Number(activePoint.acceleration || 0).toFixed(2)}` : 'Ready for demo or sensor challenge.')}
+          {statusMessage || (activePoint ? `Now: ${Math.round(activePoint.speedKmh || 0)}km/h / accel ${Number(activePoint.acceleration || 0).toFixed(2)} / turn ${Math.round(Math.abs(activePoint.turnRateDegPerSec || 0))}deg/s` : 'Ready for demo or sensor challenge.')}
         </div>
         <div style={{ marginTop: 7, fontSize: 10, color: '#94a3b8', lineHeight: 1.45 }}>
           {route.safetyNote}
@@ -2866,6 +2943,7 @@ function App() {
   const driveGeoWatchRef = useRef(null)
   const driveMotionHandlerRef = useRef(null)
   const driveLatestAccelerationRef = useRef(0)
+  const driveSmoothedAccelerationRef = useRef(null)
   const driveLastPointRef = useRef(null)
 
   const [driveModeOpen, setDriveModeOpen] = useState(false)
@@ -2992,12 +3070,28 @@ function App() {
   const resetDriveReadings = useCallback(() => {
     driveLastPointRef.current = null
     driveLatestAccelerationRef.current = 0
+    driveSmoothedAccelerationRef.current = null
     setDrivePoints([])
     setDriveActivePoint(null)
   }, [])
 
   const appendDrivePoint = useCallback(point => {
-    const nextPoint = { ...point, timestamp: point.timestamp ?? Date.now() }
+    const timestamp = point.timestamp ?? Date.now()
+    const previous = driveLastPointRef.current
+    const bearing = previous ? bearingDegrees(previous, point) : null
+    const dtSeconds = previous ? Math.max(0.7, (timestamp - previous.timestamp) / 1000) : 0
+    const turnDelta = previous && previous.bearing != null && bearing != null
+      ? angleDeltaDegrees(previous.bearing, bearing)
+      : 0
+    const turnRateDegPerSec = dtSeconds ? turnDelta / dtSeconds : 0
+    const nextPoint = {
+      ...point,
+      timestamp,
+      bearing,
+      turnRateDegPerSec,
+    }
+    const event = classifyDriveEvent(nextPoint)
+    if (event) nextPoint.event = event
     driveLastPointRef.current = nextPoint
     setDriveActivePoint(nextPoint)
     setDrivePoints(prev => [...prev, nextPoint].slice(-120))
@@ -3101,7 +3195,8 @@ function App() {
         const x = Number(source.x) || 0
         const y = Number(source.y) || 0
         const z = Number(source.z) || 0
-        driveLatestAccelerationRef.current = Math.sqrt(x * x + y * y + z * z) / 9.8
+        const rawAccelerationG = Math.sqrt(x * x + y * y + z * z) / 9.8
+        driveLatestAccelerationRef.current = smoothValue(driveLatestAccelerationRef.current, rawAccelerationG)
       }
 
       try {
@@ -3130,12 +3225,17 @@ function App() {
           const dtSeconds = Math.max(1, (now - previous.timestamp) / 1000)
           speedKmh = (haversine(previous, nextPos) / dtSeconds) * 3.6
         }
+        const dtSeconds = previous ? Math.max(1, (now - previous.timestamp) / 1000) : 0
+        const speedDeltaMps = previous ? ((speedKmh - (previous.speedKmh || 0)) / 3.6) : 0
+        const rawSignedAccelerationG = dtSeconds ? speedDeltaMps / dtSeconds / 9.8 : 0
+        driveSmoothedAccelerationRef.current = smoothValue(driveSmoothedAccelerationRef.current, rawSignedAccelerationG)
         appendDrivePoint({
           timestamp: now,
           lat: nextPos.lat,
           lng: nextPos.lng,
           speedKmh,
-          acceleration: driveLatestAccelerationRef.current || 0,
+          acceleration: driveSmoothedAccelerationRef.current || 0,
+          motionG: driveLatestAccelerationRef.current || 0,
         })
         setDriveStatusMessage('Real Drive logging GPS + DeviceMotion. Keep it slow and respectful.')
       },
